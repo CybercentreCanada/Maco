@@ -46,7 +46,17 @@ output.other["author_lunch_time"] = "3pm"
 print(output.dict(exclude_defaults=True))
 
 # prints out
-{'family': 'wanabee', 'version': '2019', 'category': ['cryptominer', 'clickfraud'], 'campaign_id': ['859186-3224-9284'], 'inject_exe': ['explorer.exe'], 'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'}, 'binaries': [{'datatype': 'config', 'data': b'sam I am', 'encryption': {'algorithm': 'rot26', 'mode': 'block'}}]}
+{
+    'family': 'wanabee', 
+    'version': '2019', 
+    'category': ['cryptominer', 'clickfraud'], 
+    'campaign_id': ['859186-3224-9284'], 'inject_exe': ['explorer.exe'], 
+    'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'}, 
+    'binaries': [{
+        'datatype': 'config', 'data': b'sam I am', 
+        'encryption': {'algorithm': 'rot26', 'mode': 'block'}
+    }]
+}
 ```
 
 And you can create model instances from dictionaries
@@ -67,7 +77,13 @@ output = {
 print(model.ExtractorModel(**output))
 
 # prints out
-family='wanabee2' version='2022' category=[] attack=[] capability_enabled=[] capability_disabled=[] campaign_id=[] identifier=[] decoded_strings=[] password=[] mutex=[] pipe=[] sleep_delay=None inject_exe=[] other={} binaries=[] ftp=[] smtp=[] http=[] ssh=[SSH(username='wanna', password='bee2', hostname='10.1.10.100', port=None, usage=None)] proxy=[] dns=[] tcp=[] udp=[] encryption=[] service=[] cryptocurrency=[] paths=[] registry=[]
+family='wanabee2' version='2022' category=[] attack=[] capability_enabled=[]
+capability_disabled=[] campaign_id=[] identifier=[] decoded_strings=[] 
+password=[] mutex=[] pipe=[] sleep_delay=None inject_exe=[] other={} 
+binaries=[] ftp=[] smtp=[] http=[] 
+ssh=[SSH(username='wanna', password='bee2', hostname='10.1.10.100', port=None, usage=None)] 
+proxy=[] dns=[] tcp=[] udp=[] encryption=[] service=[] cryptocurrency=[] 
+paths=[] registry=[]
 ```
 
 ## Extractor Example
@@ -164,20 +180,31 @@ This script has multiple yara rules and coverage of the data model.
 
 path: /usr/lib/udev/hwdb.bin
 run Complex extractor from rules ['ComplexAlt']
-{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], "binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", "encryption": {"algorithm": "something"}}], "http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/9956330", "usage": "c2"}], "encryption": [{"algorithm": "sha256"}]}
+{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], 
+"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", 
+"encryption": {"algorithm": "something"}}], 
+"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/9956330", "usage": "c2"}], 
+"encryption": [{"algorithm": "sha256"}]}
 
 path: /usr/lib/udev/hwdb.d/20-OUI.hwdb
 run Complex extractor from rules ['ComplexAlt']
-{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], "binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", "encryption": {"algorithm": "something"}}], "http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1986908", "usage": "c2"}], "encryption": [{"algorithm": "sha256"}]}
+{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], 
+"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", 
+"encryption": {"algorithm": "something"}}], 
+"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1986908", "usage": "c2"}], 
+"encryption": [{"algorithm": "sha256"}]}
 
 path: /usr/lib/udev/hwdb.d/20-usb-vendor-model.hwdb
 run Complex extractor from rules ['ComplexAlt']
-{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], "binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", "encryption": {"algorithm": "something"}}], "http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1257481", "usage": "c2"}], "encryption": [{"algorithm": "sha256"}]}
+{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], 
+"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", 
+"encryption": {"algorithm": "something"}}], 
+"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1257481", "usage": "c2"}], 
+"encryption": [{"algorithm": "sha256"}]}
 
 
 15884 analysed, 3 hits, 3 extracted
 ```
-
 
 The demo extractors are designed to trigger when run over the 'demo_extractors' folder.
 e.g. `maco demo_extractors demo_extractors`
