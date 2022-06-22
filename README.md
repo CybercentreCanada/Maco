@@ -145,7 +145,7 @@ All required python packages are in the requirements.txt
 <!-- TODO update instructions when this is on pypi -->
 Install this package with `pip`.
 
-# Usage
+# CLI Usage
 
 
 ```
@@ -171,6 +171,8 @@ optional arguments:
   --blacklist BLACKLIST
                         comma separated extractors to not run
 ```
+
+## CLI output example
 
 ```
 > maco demo_extractors/ /usr/lib --whitelist Complex
