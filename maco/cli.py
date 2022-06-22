@@ -139,7 +139,7 @@ def main():
     logger_ex = logging.getLogger("maco.extractor")
     if args.verbose == 0:
         logger_ex.setLevel(logging.WARNING)
-    if args.verbose == 1:
+    elif args.verbose == 1:
         logger_ex.setLevel(logging.INFO)
     else:
         logger_ex.setLevel(logging.DEBUG)

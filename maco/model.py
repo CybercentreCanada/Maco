@@ -168,8 +168,8 @@ class ExtractorModel(ForbidModel):
 
     family: str  # family of malware that was detected
     version: str = None  # version/variant of malware
-    category: List[CategoryEnum] = None  # capability/purpose of the malware
-    attack: List[str] = None  # mitre att&ck reference ids, e.g. 'T1129'
+    category: List[CategoryEnum] = []  # capability/purpose of the malware
+    attack: List[str] = []  # mitre att&ck reference ids, e.g. 'T1129'
 
     #
     # simple config properties
