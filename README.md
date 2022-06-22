@@ -45,12 +45,13 @@ output.other["author_lunch"] = "green eggs and ham"
 output.other["author_lunch_time"] = "3pm"
 print(output.dict(exclude_defaults=True))
 
-# prints out
+# Generated model
 {
     'family': 'wanabee', 
     'version': '2019', 
     'category': ['cryptominer', 'clickfraud'], 
-    'campaign_id': ['859186-3224-9284'], 'inject_exe': ['explorer.exe'], 
+    'campaign_id': ['859186-3224-9284'], 
+    'inject_exe': ['explorer.exe'], 
     'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'}, 
     'binaries': [{
         'datatype': 'config', 'data': b'sam I am', 
@@ -76,7 +77,7 @@ output = {
 }
 print(model.ExtractorModel(**output))
 
-# prints out
+# Generated model
 family='wanabee2' version='2022' category=[] attack=[] capability_enabled=[]
 capability_disabled=[] campaign_id=[] identifier=[] decoded_strings=[] 
 password=[] mutex=[] pipe=[] sleep_delay=None inject_exe=[] other={} 
