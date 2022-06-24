@@ -121,8 +121,8 @@ def main():
         "--exclude", type=str, help="comma separated extractors to not run"
     )
     args = parser.parse_args()
-    wl = args.include.split(",") if args.include else []
-    bl = args.exclude.split(",") if args.exclude else []
+    inc = args.include.split(",") if args.include else []
+    exc = args.exclude.split(",") if args.exclude else []
 
     # set up logging for lib, only show debug with 3+ verbose
     logger_lib = logging.getLogger("maco.lib")
@@ -155,7 +155,7 @@ def main():
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    process_filesystem(args.extractors, args.samples, wl, bl, pretty=args.pretty)
+    process_filesystem(args.extractors, args.samples, inc, exc, pretty=args.pretty)
 
 
 if __name__ == "__main__":
