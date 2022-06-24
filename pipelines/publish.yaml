@@ -12,7 +12,7 @@ pool:
   vmImage: "ubuntu-20.04"
 
 jobs:
-- job: Test
+- job: test
   displayName: Test
   strategy:
     matrix:
@@ -34,8 +34,8 @@ jobs:
       python -m pip install -U tox
       python -m tox -e py
 
-- job: Build and Deploy
-  dependsOn: Test
+- job: build_and_deploy
+  dependsOn: test
   displayName: Build and Deploy
   variables:
   - group: deployment-information
