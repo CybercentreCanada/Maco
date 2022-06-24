@@ -51,13 +51,11 @@ def process_file(
 def process_filesystem(
     path_extractors: str,
     path_samples: str,
-    whitelist: List[str],
-    blacklist: List[str],
+    include: List[str],
+    exclude: List[str],
     pretty: bool,
 ):
-    collected = collector.Collector(
-        path_extractors, whitelist=whitelist, blacklist=blacklist
-    )
+    collected = collector.Collector(path_extractors, include=include, exclude=exclude)
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
     for _, extractor in collected.extractors.items():
@@ -118,15 +116,13 @@ def main():
         "--pretty", action="store_true", help="pretty print json output"
     )
     parser.add_argument("--logfile", type=str, help="file to log output")
+    parser.add_argument("--include", type=str, help="comma separated extractors to run")
     parser.add_argument(
-        "--whitelist", type=str, help="comma separated extractors to run"
-    )
-    parser.add_argument(
-        "--blacklist", type=str, help="comma separated extractors to not run"
+        "--exclude", type=str, help="comma separated extractors to not run"
     )
     args = parser.parse_args()
-    wl = args.whitelist.split(",") if args.whitelist else []
-    bl = args.blacklist.split(",") if args.blacklist else []
+    inc = args.include.split(",") if args.include else []
+    exc = args.exclude.split(",") if args.exclude else []
 
     # set up logging for lib, only show debug with 3+ verbose
     logger_lib = logging.getLogger("maco.lib")
@@ -159,7 +155,7 @@ def main():
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    process_filesystem(args.extractors, args.samples, wl, bl, pretty=args.pretty)
+    process_filesystem(args.extractors, args.samples, inc, exc, pretty=args.pretty)
 
 
 if __name__ == "__main__":

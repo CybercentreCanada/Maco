@@ -23,13 +23,13 @@ class Collector:
     def __init__(
         self,
         path_extractors: str,
-        whitelist: List[str] = None,
-        blacklist: List[str] = None,
+        include: List[str] = None,
+        exclude: List[str] = None,
     ):
         """Discover and load extractors from file system."""
         self.path = path_extractors
-        self.whitelist = whitelist
-        self.blacklist = blacklist
+        self.include = include
+        self.exclude = exclude
 
         self.extractors = self._find_extractors()
 
@@ -75,7 +75,7 @@ class Collector:
                 continue
             logger.debug(f"inspecting '{module_name}' for extractors")
             # raise an exception if one of the potential extractors can't be imported
-            # note that excluding an extractor through white/blacklist does not prevent it being imported
+            # note that excluding an extractor through include/exclude does not prevent it being imported
             module = importlib.import_module(module_name)
 
             # find extractors in the module
@@ -88,11 +88,11 @@ class Collector:
                     continue
                 # check if we want this extractor
                 name = member.__name__
-                if self.blacklist and name in self.blacklist:
-                    logger.debug(f"blacklist excluded '{name}'")
+                if self.exclude and name in self.exclude:
+                    logger.debug(f"exclude excluded '{name}'")
                     continue
-                if self.whitelist and name not in self.whitelist:
-                    logger.debug(f"whitelist excluded '{name}'")
+                if self.include and name not in self.include:
+                    logger.debug(f"include excluded '{name}'")
                     continue
                 # initialise and register
                 logger.debug(f"register '{name}'")
