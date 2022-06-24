@@ -31,7 +31,7 @@ class BaseTest(unittest.TestCase):
     def setUp(self) -> None:
         if not self.name or not self.path:
             raise Exception("name and path must be set")
-        self.c = collector.Collector(self.path, whitelist=self.name)
+        self.c = collector.Collector(self.path, include=self.name)
         self.assertIn(self.name, self.c.extractors)
         self.assertEqual(len(self.c.extractors), 1)
         return super().setUp()

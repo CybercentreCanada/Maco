@@ -150,8 +150,8 @@ Install this package with `pip`.
 
 ```
 > maco --help
-usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE] [--whitelist WHITELIST]
-            [--blacklist BLACKLIST]
+usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE] [--include INCLUDE]
+            [--exclude EXCLUDE]
             extractors samples
 
 Run extractors over samples.
@@ -166,16 +166,16 @@ optional arguments:
                         cli debug
   --pretty              pretty print json output
   --logfile LOGFILE     file to log output
-  --whitelist WHITELIST
+  --include INCLUDE
                         comma separated extractors to run
-  --blacklist BLACKLIST
+  --exclude EXCLUDE
                         comma separated extractors to not run
 ```
 
 ## CLI output example
 
 ```
-> maco demo_extractors/ /usr/lib --whitelist Complex
+> maco demo_extractors/ /usr/lib --include Complex
 extractors loaded: ['Complex']
 
 complex by blue 2022-06-14 TLP:WHITE
