@@ -4,7 +4,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
     packages=find_packages(".", exclude=["test", "tests", "extractors"]),
