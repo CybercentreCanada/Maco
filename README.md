@@ -139,37 +139,33 @@ Some things to keep in mind
 
 Python 3.7+
 
+Install this package with `pip install maco`.
+
 All required python packages are in the requirements.txt
 
-
-<!-- TODO update instructions when this is on pypi -->
-Install this package with `pip`.
 
 # CLI Usage
 
 
 ```
 > maco --help
-usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE] [--include INCLUDE]
-            [--exclude EXCLUDE]
-            extractors samples
+usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE] 
+    [--include INCLUDE] [--exclude EXCLUDE] [-f] extractors samples
 
 Run extractors over samples.
 
 positional arguments:
-  extractors            path to extractors
-  samples               path to samples
+  extractors         path to extractors
+  samples            path to samples
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -v, --verbose         print debug logging. -v extractor info, -vv extractor debug, -vvv
-                        cli debug
-  --pretty              pretty print json output
-  --logfile LOGFILE     file to log output
-  --include INCLUDE
-                        comma separated extractors to run
-  --exclude EXCLUDE
-                        comma separated extractors to not run
+  -h, --help         show this help message and exit
+  -v, --verbose      print debug logging. -v extractor info, -vv extractor debug, -vvv cli debug
+  --pretty           pretty print json output
+  --logfile LOGFILE  file to log output
+  --include INCLUDE  comma separated extractors to run
+  --exclude EXCLUDE  comma separated extractors to not run
+  -f, --force        ignore yara rules and execute all extractors
 ```
 
 ## CLI output example

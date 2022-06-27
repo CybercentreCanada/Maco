@@ -17,11 +17,18 @@ def process_file(
     collected: collector.Collector,
     path_file: str,
     stream: BinaryIO,
+    *,
     pretty: bool,
+    force: bool,
 ):
     """Process a filestream with the extractors and rules."""
     # find extractors that should run based on yara rules
-    runs = collected.match(stream)
+    if not force:
+        runs = collected.match(stream)
+    else:
+        # execute all extractors with no yara information
+        # note - extractors may rely on a yara hit so this may cause errors
+        runs = {x: [] for x in collected.extractors.keys()}
     if not runs:
         return
     # run extractor for the set of hits
@@ -53,8 +60,15 @@ def process_filesystem(
     path_samples: str,
     include: List[str],
     exclude: List[str],
+    *,
     pretty: bool,
+    force: bool,
 ):
+    if force:
+        logger.warning(
+            "force execute will cause errors if an extractor "
+            "requires a yara rule hit during execution"
+        )
     collected = collector.Collector(path_extractors, include=include, exclude=exclude)
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
@@ -84,7 +98,9 @@ def process_filesystem(
                 path_file = os.path.join(path, file)
                 try:
                     with open(path_file, "rb") as stream:
-                        resp = process_file(collected, path_file, stream, pretty)
+                        resp = process_file(
+                            collected, path_file, stream, pretty=pretty, force=force
+                        )
                         if resp:
                             num_hits += 1
                             if any(x for x in resp.values()):
@@ -119,6 +135,12 @@ def main():
     parser.add_argument("--include", type=str, help="comma separated extractors to run")
     parser.add_argument(
         "--exclude", type=str, help="comma separated extractors to not run"
+    )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="ignore yara rules and execute all extractors",
     )
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []
@@ -155,7 +177,14 @@ def main():
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    process_filesystem(args.extractors, args.samples, inc, exc, pretty=args.pretty)
+    process_filesystem(
+        args.extractors,
+        args.samples,
+        inc,
+        exc,
+        pretty=args.pretty,
+        force=args.force,
+    )
 
 
 if __name__ == "__main__":
