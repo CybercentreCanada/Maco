@@ -5,7 +5,7 @@ import yara
 
 from maco import extractor, model
 
-from . import complex_utils
+from demo_extractors.complex import complex_utils
 
 
 class Complex(extractor.Extractor):

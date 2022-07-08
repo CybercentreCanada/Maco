@@ -5,7 +5,7 @@ import yara
 
 from maco import extractor, model
 
-from . import shared
+from demo_extractors import shared
 
 
 class LimitOther(extractor.Extractor):
