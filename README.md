@@ -2,9 +2,11 @@
 
 Maco is a framework for **ma**lware **co**nfig extractors.
 
-We made it because we need to share extractors and outputs between multiple different systems.
+It aim for solve two problems:
+* Define a standardize ontology (or model) for extractor output. This greatly help for databasing extracted values.
+* Provide a standard way of identifying which parsers to run and how to execute it.
 
-Maco provides
+Maco components
 * model.py
     * a data model for common output of an extractor
 * extractor.py
@@ -18,7 +20,7 @@ Maco provides
 
 
 ## Model Example
-
+see [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields
 You can use the model independently of the rest of the framework. 
 This is still useful for compatibility between systems!
 
@@ -169,6 +171,7 @@ optional arguments:
 ```
 
 ## CLI output example
+The CLI is helpful for using your extractors in a standalone system, such as on in reverse engenering environment.
 
 ```
 > maco demo_extractors/ /usr/lib --include Complex
