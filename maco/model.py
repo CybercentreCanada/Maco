@@ -23,6 +23,8 @@ class ConnUsageEnum(str, Enum):
     download = "download"  # fetch dynamic config, second stage, etc
     propagate = "propagate"  # spread through the network
     tunnel = "tunnel"  # communicate through the network
+    ransom = "ransom"  # payment
+    decoy = "decoy"  # Decoy connections to obfuscate malicious
     other = "other"
 
 
@@ -326,6 +328,7 @@ class ExtractorModel(ForbidModel):
         client_ip: str = None
         client_port: int = None
         server_ip: str = None
+        server_domain: str = None
         server_port: int = None
 
         usage: ConnUsageEnum = None
