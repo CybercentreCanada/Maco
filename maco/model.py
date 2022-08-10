@@ -23,6 +23,8 @@ class ConnUsageEnum(str, Enum):
     download = "download"  # fetch dynamic config, second stage, etc
     propagate = "propagate"  # spread through the network
     tunnel = "tunnel"  # communicate through the network
+    ransom = "ransom"  # payment
+    decoy = "decoy"  # Decoy connections to obfuscate malicious
     other = "other"
 
 
