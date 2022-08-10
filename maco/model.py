@@ -328,6 +328,7 @@ class ExtractorModel(ForbidModel):
         client_ip: str = None
         client_port: int = None
         server_ip: str = None
+        server_domain: str = None
         server_port: int = None
 
         usage: ConnUsageEnum = None
