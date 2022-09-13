@@ -59,9 +59,9 @@ print(output.dict(exclude_defaults=True))
     'category': ['cryptominer', 'clickfraud'],
     'campaign_id': ['859186-3224-9284'],
     'inject_exe': ['explorer.exe'],
-    'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'}
-    'http': [{'uri': 'https://bad-domain.com/c2_payload', 'usage': 'c2', 'protocol': 'https'}]
-    'tcp': [{'server_ip': '127.0.0.1', 'usage': 'ransom'}]
+    'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'},
+    'http': [{'uri': 'https://bad-domain.com/c2_payload', 'usage': 'c2', 'protocol': 'https'}],
+    'tcp': [{'server_ip': '127.0.0.1', 'usage': 'ransom'}],
     'binaries': [{
         'datatype': 'config', 'data': b'sam I am',
         'encryption': {'algorithm': 'rot26', 'mode': 'block'}
