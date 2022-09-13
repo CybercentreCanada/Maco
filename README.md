@@ -20,16 +20,21 @@ Maco components
 
 
 ## Model Example
-see [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields
-You can use the model independently of the rest of the framework. 
+See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields
+You can use the model independently of the rest of the framework.
 This is still useful for compatibility between systems!
 
-```
+```python
 from maco import model
 # 'family' is the only required property on the model
 output = model.ExtractorModel(family="wanabee")
 output.version = "2019"  # variant first found in 2019
 output.category.extend([model.CategoryEnum.cryptominer, model.CategoryEnum.clickfraud])
+output.http.append(model.ExtractorModel.Http(protocol="https",
+                                             uri="https://bad-domain.com/c2_payload"),
+                                             usage="c2")
+output.tcp.append(model.ExtractorModel.TCP(server_ip="127.0.0.1",
+                                           usage="ransom")
 output.campaign_id.append("859186-3224-9284")
 output.inject_exe.append("explorer.exe")
 output.binaries.append(
@@ -49,14 +54,16 @@ print(output.dict(exclude_defaults=True))
 
 # Generated model
 {
-    'family': 'wanabee', 
-    'version': '2019', 
-    'category': ['cryptominer', 'clickfraud'], 
-    'campaign_id': ['859186-3224-9284'], 
-    'inject_exe': ['explorer.exe'], 
-    'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'}, 
+    'family': 'wanabee',
+    'version': '2019',
+    'category': ['cryptominer', 'clickfraud'],
+    'campaign_id': ['859186-3224-9284'],
+    'inject_exe': ['explorer.exe'],
+    'other': {'author_lunch': 'green eggs and ham', 'author_lunch_time': '3pm'}
+    'http': [{'uri': 'https://bad-domain.com/c2_payload', 'usage': 'c2', 'protocol': 'https'}]
+    'tcp': [{'server_ip': '127.0.0.1', 'usage': 'ransom'}]
     'binaries': [{
-        'datatype': 'config', 'data': b'sam I am', 
+        'datatype': 'config', 'data': b'sam I am',
         'encryption': {'algorithm': 'rot26', 'mode': 'block'}
     }]
 }
@@ -64,7 +71,7 @@ print(output.dict(exclude_defaults=True))
 
 And you can create model instances from dictionaries
 
-```
+```python
 from maco import model
 output = {
     "family": "wanabee2",
@@ -81,11 +88,11 @@ print(model.ExtractorModel(**output))
 
 # Generated model
 family='wanabee2' version='2022' category=[] attack=[] capability_enabled=[]
-capability_disabled=[] campaign_id=[] identifier=[] decoded_strings=[] 
-password=[] mutex=[] pipe=[] sleep_delay=None inject_exe=[] other={} 
-binaries=[] ftp=[] smtp=[] http=[] 
-ssh=[SSH(username='wanna', password='bee2', hostname='10.1.10.100', port=None, usage=None)] 
-proxy=[] dns=[] tcp=[] udp=[] encryption=[] service=[] cryptocurrency=[] 
+capability_disabled=[] campaign_id=[] identifier=[] decoded_strings=[]
+password=[] mutex=[] pipe=[] sleep_delay=None inject_exe=[] other={}
+binaries=[] ftp=[] smtp=[] http=[]
+ssh=[SSH(username='wanna', password='bee2', hostname='10.1.10.100', port=None, usage=None)]
+proxy=[] dns=[] tcp=[] udp=[] encryption=[] service=[] cryptocurrency=[]
 paths=[] registry=[]
 ```
 
@@ -96,7 +103,7 @@ and set some properties in the model.
 
 Your extractors will do a better job of finding useful information than this one!
 
-```
+```python
 class Elfy(extractor.Extractor):
     """Check basic elf property."""
 
@@ -149,9 +156,9 @@ All required python packages are in the requirements.txt
 # CLI Usage
 
 
-```
+```bash
 > maco --help
-usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE] 
+usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE]
     [--include INCLUDE] [--exclude EXCLUDE] [-f] extractors samples
 
 Run extractors over samples.
@@ -173,7 +180,7 @@ optional arguments:
 ## CLI output example
 The CLI is helpful for using your extractors in a standalone system, such as on in reverse engenering environment.
 
-```
+```bash
 > maco demo_extractors/ /usr/lib --include Complex
 extractors loaded: ['Complex']
 
@@ -182,26 +189,26 @@ This script has multiple yara rules and coverage of the data model.
 
 path: /usr/lib/udev/hwdb.bin
 run Complex extractor from rules ['ComplexAlt']
-{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], 
-"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", 
-"encryption": {"algorithm": "something"}}], 
-"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/9956330", "usage": "c2"}], 
+{"family": "complex", "version": "5", "decoded_strings": ["Paradise"],
+"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh",
+"encryption": {"algorithm": "something"}}],
+"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/9956330", "usage": "c2"}],
 "encryption": [{"algorithm": "sha256"}]}
 
 path: /usr/lib/udev/hwdb.d/20-OUI.hwdb
 run Complex extractor from rules ['ComplexAlt']
-{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], 
-"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", 
-"encryption": {"algorithm": "something"}}], 
-"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1986908", "usage": "c2"}], 
+{"family": "complex", "version": "5", "decoded_strings": ["Paradise"],
+"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh",
+"encryption": {"algorithm": "something"}}],
+"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1986908", "usage": "c2"}],
 "encryption": [{"algorithm": "sha256"}]}
 
 path: /usr/lib/udev/hwdb.d/20-usb-vendor-model.hwdb
 run Complex extractor from rules ['ComplexAlt']
-{"family": "complex", "version": "5", "decoded_strings": ["Paradise"], 
-"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh", 
-"encryption": {"algorithm": "something"}}], 
-"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1257481", "usage": "c2"}], 
+{"family": "complex", "version": "5", "decoded_strings": ["Paradise"],
+"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh",
+"encryption": {"algorithm": "something"}}],
+"http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1257481", "usage": "c2"}],
 "encryption": [{"algorithm": "sha256"}]}
 
 
