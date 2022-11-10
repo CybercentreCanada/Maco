@@ -12,7 +12,11 @@ class TestExample(base_test.BaseTest):
         self.assertEqual(ret["family"], "example")
 """
 
+import io
+import os
 import unittest
+
+import cart
 
 from maco import collector
 
@@ -44,3 +48,15 @@ class BaseTest(unittest.TestCase):
         hits = runs[self.name]
         resp = self.c.extract(stream, hits, self.name)
         return resp
+
+    def load_cart(self, filepath: str) -> io.BytesIO:
+        """Load and unneuter a test file (likely malware) into memory for processing."""
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(filepath)
+        with open(filepath, "rb") as f:
+            unpacked = io.BytesIO()
+            # just bubble exceptions if it isn't cart
+            cart.unpack_stream(f, unpacked)
+        # seek to start of the unneutered stream
+        unpacked.seek(0)
+        return unpacked
