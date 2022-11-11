@@ -61,9 +61,9 @@ class BaseTest(unittest.TestCase):
     def load_cart(self, filepath: str) -> io.BytesIO:
         """Load and unneuter a test file (likely malware) into memory for processing."""
         # it is nice if we can load files relative to whatever is implementing base_test
-        folder = os.path.split(self._get_location())[0]
+        dirpath = os.path.split(self._get_location())[0]
         # either filepath is absolute, or should be loaded relative to child of base_test
-        filepath = os.path.join(folder, filepath)
+        filepath = os.path.join(dirpath, filepath)
         if not os.path.isfile(filepath):
             raise FileNotFoundError(filepath)
         with open(filepath, "rb") as f:
