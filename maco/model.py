@@ -372,6 +372,7 @@ class ExtractorModel(ForbidModel):
 
     class Path(ForbidModel):
         class UsageEnum(str, Enum):
+            c2 = "c2"  # file/folder issues commands to malware
             install = "install"  # install directory/filename for malware
             plugins = "plugins"  # load new capability from this directory
             logs = "logs"  # location to log activity
