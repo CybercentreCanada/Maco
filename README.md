@@ -158,8 +158,7 @@ All required python packages are in the requirements.txt
 
 ```bash
 > maco --help
-usage: maco [-h] [-v] [--pretty] [--logfile LOGFILE]
-    [--include INCLUDE] [--exclude EXCLUDE] [-f] extractors samples
+usage: maco [-h] [-v] [--pretty] [--base64] [--logfile LOGFILE] [--include INCLUDE] [--exclude EXCLUDE] [-f] extractors samples
 
 Run extractors over samples.
 
@@ -171,6 +170,7 @@ optional arguments:
   -h, --help         show this help message and exit
   -v, --verbose      print debug logging. -v extractor info, -vv extractor debug, -vvv cli debug
   --pretty           pretty print json output
+  --base64           Include base64 encoded binary data in output (can be large, consider printing to file rather than console)
   --logfile LOGFILE  file to log output
   --include INCLUDE  comma separated extractors to run
   --exclude EXCLUDE  comma separated extractors to not run
@@ -190,7 +190,7 @@ This script has multiple yara rules and coverage of the data model.
 path: /usr/lib/udev/hwdb.bin
 run Complex extractor from rules ['ComplexAlt']
 {"family": "complex", "version": "5", "decoded_strings": ["Paradise"],
-"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh",
+"binaries": [{"datatype": "payload", "size": 9, "hex_sample": "736F6D652064617461", "sha256": "1307990e6ba5ca145eb35e99182a9bec46531bc54ddf656a602c780fa0240dee",
 "encryption": {"algorithm": "something"}}],
 "http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/9956330", "usage": "c2"}],
 "encryption": [{"algorithm": "sha256"}]}
@@ -198,7 +198,7 @@ run Complex extractor from rules ['ComplexAlt']
 path: /usr/lib/udev/hwdb.d/20-OUI.hwdb
 run Complex extractor from rules ['ComplexAlt']
 {"family": "complex", "version": "5", "decoded_strings": ["Paradise"],
-"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh",
+"binaries": [{"datatype": "payload", "size": 9, "hex_sample": "736F6D652064617461", "sha256": "1307990e6ba5ca145eb35e99182a9bec46531bc54ddf656a602c780fa0240dee",
 "encryption": {"algorithm": "something"}}],
 "http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1986908", "usage": "c2"}],
 "encryption": [{"algorithm": "sha256"}]}
@@ -206,7 +206,7 @@ run Complex extractor from rules ['ComplexAlt']
 path: /usr/lib/udev/hwdb.d/20-usb-vendor-model.hwdb
 run Complex extractor from rules ['ComplexAlt']
 {"family": "complex", "version": "5", "decoded_strings": ["Paradise"],
-"binaries": [{"datatype": "payload", "data": "c29tZSBkYXRh",
+"binaries": [{"datatype": "payload", "size": 9, "hex_sample": "736F6D652064617461", "sha256": "1307990e6ba5ca145eb35e99182a9bec46531bc54ddf656a602c780fa0240dee",
 "encryption": {"algorithm": "something"}}],
 "http": [{"protocol": "https", "hostname": "blarg5.com", "path": "/malz/1257481", "usage": "c2"}],
 "encryption": [{"algorithm": "sha256"}]}
