@@ -46,7 +46,10 @@ class Extractor:
         self.yara_rule = textwrap.dedent(self.yara_rule)
         # check yara rules conform to expected structure
         # we throw away these compiled rules as we need all rules in system compiled together
-        rules = yara.compile(source=self.yara_rule)
+        try:
+            rules = yara.compile(source=self.yara_rule)
+        except yara.SyntaxError as e:
+            raise InvalidExtractor(f"{self.name} - invalid yara rule") from e
         # need to track which plugin owns the rules
         self.yara_rule_names = [x.identifier for x in rules]
         if not len(list(rules)):
