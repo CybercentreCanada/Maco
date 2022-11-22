@@ -3,14 +3,15 @@ import argparse
 import base64
 import binascii
 import hashlib
+import io
 import json
 import logging
 import os
-from typing import BinaryIO, Dict, List
+from typing import BinaryIO, List
 
-import yara
+import cart
 
-from maco import collector, extractor
+from maco import collector
 
 logger = logging.getLogger("maco.lib.cli")
 
@@ -25,6 +26,19 @@ def process_file(
     include_base64: bool,
 ):
     """Process a filestream with the extractors and rules."""
+    unneutered = io.BytesIO()
+    try:
+        cart.unpack_stream(stream, unneutered)
+    except Exception:
+        # use original stream if anything goes wrong here
+        # i.e. invalid/malformed cart
+        pass
+    else:
+        # use unneutered stream
+        stream = unneutered
+    # unpack will read some bytes either way so reset position
+    stream.seek(0)
+
     # find extractors that should run based on yara rules
     if not force:
         runs = collected.match(stream)
@@ -34,6 +48,7 @@ def process_file(
         runs = {x: [] for x in collected.extractors.keys()}
     if not runs:
         return
+
     # run extractor for the set of hits
     logger.info(f"path: {path_file}")
     ret = {}
