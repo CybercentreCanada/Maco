@@ -12,7 +12,12 @@ class TestExample(base_test.BaseTest):
         self.assertEqual(ret["family"], "example")
 """
 
+import importlib
+import io
+import os
 import unittest
+
+import cart
 
 from maco import collector
 
@@ -44,3 +49,27 @@ class BaseTest(unittest.TestCase):
         hits = runs[self.name]
         resp = self.c.extract(stream, hits, self.name)
         return resp
+
+    def _get_location(self) -> str:
+        """Return path to child class that implements this class."""
+        # import child module
+        module = type(self).__module__
+        i = importlib.import_module(module)
+        # get location to child module
+        return i.__file__
+
+    def load_cart(self, filepath: str) -> io.BytesIO:
+        """Load and unneuter a test file (likely malware) into memory for processing."""
+        # it is nice if we can load files relative to whatever is implementing base_test
+        dirpath = os.path.split(self._get_location())[0]
+        # either filepath is absolute, or should be loaded relative to child of base_test
+        filepath = os.path.join(dirpath, filepath)
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(filepath)
+        with open(filepath, "rb") as f:
+            unpacked = io.BytesIO()
+            # just bubble exceptions if it isn't cart
+            cart.unpack_stream(f, unpacked)
+        # seek to start of the unneutered stream
+        unpacked.seek(0)
+        return unpacked
