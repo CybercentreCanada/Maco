@@ -18,7 +18,7 @@ class Extractor:
     Override this docstring with a good description of your extractor.
     """
 
-    family: Union[str, List[str]] = None  # family of malware that is detected by the extractor
+    family: Union[str, List[str]] = None  # family or families of malware that is detected by the extractor
     author: str = None  # author of the extractor (name@organisation)
     last_modified: str = None  # last modified date (YYYY-MM-DD)
     sharing: str = "TLP:WHITE"  # who can this be shared with?
