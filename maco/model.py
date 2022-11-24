@@ -216,7 +216,7 @@ class ExtractorModel(ForbidModel):
         # other information for the extracted binary rather than the config
         # data stored here must always be JSON-serialisable
         # e.g. filename, extension, relationship label
-        other: Dict[str, Union[List[str], List[int]]] = {}
+        other: Dict[str, Any] = {}
 
         Encryption = Encryption  # convenience for ret.encryption.append(ret.Encryption(*properties))
         encryption: Encryption = None  # encryption information for the binary
