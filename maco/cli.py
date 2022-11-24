@@ -7,6 +7,7 @@ import io
 import json
 import logging
 import os
+import sys
 from typing import BinaryIO, List
 
 import cart
@@ -189,7 +190,7 @@ def main():
     # set up logging for lib, only show debug with 3+ verbose
     logger_lib = logging.getLogger("maco.lib")
     logger_lib.setLevel(logging.DEBUG if args.verbose > 2 else logging.INFO)
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     logger_lib.addHandler(ch)
 
@@ -201,7 +202,7 @@ def main():
         logger_ex.setLevel(logging.INFO)
     else:
         logger_ex.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(levelname)s - %(message)s")
     ch.setFormatter(formatter)
