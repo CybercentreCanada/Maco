@@ -1,7 +1,7 @@
 """Base class for an extractor script."""
 import logging
 import textwrap
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, List, Optional, Union
 
 import yara
 
@@ -18,7 +18,7 @@ class Extractor:
     Override this docstring with a good description of your extractor.
     """
 
-    family: str = None  # family of malware that is detected by the extractor
+    family: Union[str, List[str]] = None  # family or families of malware that is detected by the extractor
     author: str = None  # author of the extractor (name@organisation)
     last_modified: str = None  # last modified date (YYYY-MM-DD)
     sharing: str = "TLP:WHITE"  # who can this be shared with?
@@ -46,7 +46,10 @@ class Extractor:
         self.yara_rule = textwrap.dedent(self.yara_rule)
         # check yara rules conform to expected structure
         # we throw away these compiled rules as we need all rules in system compiled together
-        rules = yara.compile(source=self.yara_rule)
+        try:
+            rules = yara.compile(source=self.yara_rule)
+        except yara.SyntaxError as e:
+            raise InvalidExtractor(f"{self.name} - invalid yara rule") from e
         # need to track which plugin owns the rules
         self.yara_rule_names = [x.identifier for x in rules]
         if not len(list(rules)):

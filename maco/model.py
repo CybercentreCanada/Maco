@@ -168,7 +168,7 @@ class ExtractorModel(ForbidModel):
         * Some use cases always seem to exist where a property should not be set
     """
 
-    family: str  # family of malware that was detected
+    family: Union[str, List[str]]  # family or families of malware that was detected
     version: str = None  # version/variant of malware
     category: List[CategoryEnum] = []  # capability/purpose of the malware
     attack: List[str] = []  # mitre att&ck reference ids, e.g. 'T1129'
@@ -216,7 +216,7 @@ class ExtractorModel(ForbidModel):
         # other information for the extracted binary rather than the config
         # data stored here must always be JSON-serialisable
         # e.g. filename, extension, relationship label
-        other: Dict[str, Union[List[str], List[int]]] = {}
+        other: Dict[str, Any] = {}
 
         Encryption = Encryption  # convenience for ret.encryption.append(ret.Encryption(*properties))
         encryption: Encryption = None  # encryption information for the binary
@@ -280,7 +280,7 @@ class ExtractorModel(ForbidModel):
 
         user_agent: str = None  # user agent sent by malware
         method: str = None  # get put delete etc
-        header: str = None  # custom/additional HTTP header details
+        headers: Dict[str, str] = None  # custom/additional HTTP headers
         max_size: int = None
 
         usage: ConnUsageEnum = None
@@ -373,6 +373,7 @@ class ExtractorModel(ForbidModel):
     class Path(ForbidModel):
         class UsageEnum(str, Enum):
             c2 = "c2"  # file/folder issues commands to malware
+            config = "config"  # config is loaded from this path
             install = "install"  # install directory/filename for malware
             plugins = "plugins"  # load new capability from this directory
             logs = "logs"  # location to log activity

@@ -1,14 +1,18 @@
 """CLI example of how extractors can be executed."""
 import argparse
 import base64
+import binascii
+import hashlib
+import io
 import json
 import logging
 import os
-from typing import BinaryIO, Dict, List
+import sys
+from typing import BinaryIO, List
 
-import yara
+import cart
 
-from maco import collector, extractor
+from maco import collector
 
 logger = logging.getLogger("maco.lib.cli")
 
@@ -20,8 +24,22 @@ def process_file(
     *,
     pretty: bool,
     force: bool,
+    include_base64: bool,
 ):
     """Process a filestream with the extractors and rules."""
+    unneutered = io.BytesIO()
+    try:
+        cart.unpack_stream(stream, unneutered)
+    except Exception:
+        # use original stream if anything goes wrong here
+        # i.e. invalid/malformed cart
+        pass
+    else:
+        # use unneutered stream
+        stream = unneutered
+    # unpack will read some bytes either way so reset position
+    stream.seek(0)
+
     # find extractors that should run based on yara rules
     if not force:
         runs = collected.match(stream)
@@ -31,6 +49,7 @@ def process_file(
         runs = {x: [] for x in collected.extractors.keys()}
     if not runs:
         return
+
     # run extractor for the set of hits
     logger.info(f"path: {path_file}")
     ret = {}
@@ -47,7 +66,18 @@ def process_file(
         # encode binary data so we can print as json
         if resp:
             for row in resp.get("binaries", []):
-                row["data"] = base64.b64encode(row["data"]).decode("utf8")
+                row["sha256"] = hashlib.sha256(row["data"]).hexdigest()
+                # number of bytes in the binary
+                row["size"] = len(row["data"])
+                # small sample of first part of binary
+                row["hex_sample"] = (
+                    binascii.hexlify(row["data"][:32]).decode("utf8").upper()
+                )
+                if include_base64:
+                    # this can be large
+                    row["base64"] = base64.b64encode(row["data"]).decode("utf8")
+                # do not print raw bytes to console
+                row.pop("data")
         ret[extractor_name] = resp
         logger.info(json.dumps(resp, indent=2 if pretty else None))
     logger.info("")
@@ -63,6 +93,7 @@ def process_filesystem(
     *,
     pretty: bool,
     force: bool,
+    include_base64: bool,
 ):
     if force:
         logger.warning(
@@ -99,7 +130,12 @@ def process_filesystem(
                 try:
                     with open(path_file, "rb") as stream:
                         resp = process_file(
-                            collected, path_file, stream, pretty=pretty, force=force
+                            collected,
+                            path_file,
+                            stream,
+                            pretty=pretty,
+                            force=force,
+                            include_base64=include_base64,
                         )
                         if resp:
                             num_hits += 1
@@ -131,6 +167,11 @@ def main():
     parser.add_argument(
         "--pretty", action="store_true", help="pretty print json output"
     )
+    parser.add_argument(
+        "--base64",
+        action="store_true",
+        help="Include base64 encoded binary data in output (can be large, consider printing to file rather than console)",
+    )
     parser.add_argument("--logfile", type=str, help="file to log output")
     parser.add_argument("--include", type=str, help="comma separated extractors to run")
     parser.add_argument(
@@ -149,7 +190,7 @@ def main():
     # set up logging for lib, only show debug with 3+ verbose
     logger_lib = logging.getLogger("maco.lib")
     logger_lib.setLevel(logging.DEBUG if args.verbose > 2 else logging.INFO)
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     logger_lib.addHandler(ch)
 
@@ -161,7 +202,7 @@ def main():
         logger_ex.setLevel(logging.INFO)
     else:
         logger_ex.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(levelname)s - %(message)s")
     ch.setFormatter(formatter)
@@ -184,6 +225,7 @@ def main():
         exc,
         pretty=args.pretty,
         force=args.force,
+        include_base64=args.base64,
     )
 
 

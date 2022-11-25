@@ -32,7 +32,7 @@ class TestExtractor(unittest.TestCase):
         class Tmp1(Tmp):
             yara_rule: str = "t"
 
-        self.assertRaises(yara.SyntaxError, Tmp1)
+        self.assertRaises(extractor.InvalidExtractor, Tmp1)
 
         class Tmp1(Tmp):
             yara_rule = """
