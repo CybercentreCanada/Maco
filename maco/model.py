@@ -168,7 +168,7 @@ class ExtractorModel(ForbidModel):
         * Some use cases always seem to exist where a property should not be set
     """
 
-    family: str  # family of malware that was detected
+    family: Union[str, List[str]]  # family or families of malware that was detected
     version: str = None  # version/variant of malware
     category: List[CategoryEnum] = []  # capability/purpose of the malware
     attack: List[str] = []  # mitre att&ck reference ids, e.g. 'T1129'
