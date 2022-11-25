@@ -280,7 +280,7 @@ class ExtractorModel(ForbidModel):
 
         user_agent: str = None  # user agent sent by malware
         method: str = None  # get put delete etc
-        header: str = None  # custom/additional HTTP header details
+        headers: Dict[str, str] = None  # custom/additional HTTP headers
         max_size: int = None
 
         usage: ConnUsageEnum = None
