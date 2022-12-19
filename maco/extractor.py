@@ -57,10 +57,10 @@ class Extractor:
         for x in rules:
             if not x.identifier.startswith(name):
                 raise InvalidExtractor(
-                    "{x.identifier} yara rule must start with '{name}'"
+                    f"{x.identifier} yara rule must start with '{name}'"
                 )
             if x.is_global:
-                raise InvalidExtractor("{x.identifier} yara rule must not be global")
+                raise InvalidExtractor(f"{x.identifier} yara rule must not be global")
 
     def run(
         self, stream: BinaryIO, matches: List[yara.Match]
