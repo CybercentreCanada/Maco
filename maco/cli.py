@@ -204,7 +204,10 @@ def main():
         logger_ex.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s")
+    formatter = logging.Formatter(
+        fmt="%(asctime)s, [%(levelname)s] %(module)s.%(funcName)s: %(message)s",
+        datefmt="%Y-%m-%d (%H:%M:%S)"
+    )
     ch.setFormatter(formatter)
     logger_ex.addHandler(ch)
 
@@ -214,7 +217,6 @@ def main():
         logger_lib.setLevel(logging.DEBUG)
         fh = logging.FileHandler(args.logfile)
         fh.setLevel(logging.DEBUG)
-        formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
