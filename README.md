@@ -18,6 +18,7 @@ Maco components
 * base_test.py
     * assist with writing unit tests for your extractors
 
+**Note: If you're interested in using only the model in your project, you can install `maco-model` which is a smaller package containing only the model definition**
 
 ## Model Example
 See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields
