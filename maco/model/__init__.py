@@ -1,1 +1,1 @@
-from maco.model.model import ExtractorModel
+from maco.model.model import *
