@@ -55,7 +55,7 @@ jobs:
       set -x
       cd model_setup
       python -m build --outdir ../dist
-      ls dist
+      ls ../dist
     displayName: Build (Model Only)
 
 
