@@ -49,7 +49,15 @@ jobs:
       python -m pip install -U build
       python -m build
       ls dist
-    displayName: Build
+    displayName: Build (Full)
+
+  - script: |
+      set -x
+      cd model_setup
+      python -m build --outdir ../dist
+      ls ../dist
+    displayName: Build (Model Only)
+
 
   - script: |
       set -xv  # Echo commands before they are run
