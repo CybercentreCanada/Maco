@@ -53,9 +53,8 @@ jobs:
 
   - script: |
       set -x
-      rm setup.py
-      mv setup_model_only.py setup.py
-      python -m build
+      cd model_setup
+      python -m build --outdir ../dist
       ls dist
     displayName: Build (Model Only)
 
