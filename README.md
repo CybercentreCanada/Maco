@@ -32,10 +32,10 @@ output = model.ExtractorModel(family="wanabee")
 output.version = "2019"  # variant first found in 2019
 output.category.extend([model.CategoryEnum.cryptominer, model.CategoryEnum.clickfraud])
 output.http.append(model.ExtractorModel.Http(protocol="https",
-                                             uri="https://bad-domain.com/c2_payload"),
-                                             usage="c2")
-output.tcp.append(model.ExtractorModel.TCP(server_ip="127.0.0.1",
-                                           usage="ransom")
+                                             uri="https://bad-domain.com/c2_payload",
+                                             usage="c2"))
+output.tcp.append(model.ExtractorModel.Connection(server_ip="127.0.0.1",
+                                           usage="ransom"))
 output.campaign_id.append("859186-3224-9284")
 output.inject_exe.append("explorer.exe")
 output.binaries.append(
