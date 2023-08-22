@@ -57,6 +57,7 @@ class Collector:
         path_parent, foldername = os.path.split(self.path)
         # add to near front of path to win name collisions
         sys.path.insert(1, path_parent)
+        sys.path.insert(1, self.path)
         logger.debug(f"{path_parent=}")
         logger.debug(f"{foldername=}")
         logger.debug(f"{sys.path=}")
@@ -76,7 +77,11 @@ class Collector:
             logger.debug(f"inspecting '{module_name}' for extractors")
             # raise an exception if one of the potential extractors can't be imported
             # note that excluding an extractor through include/exclude does not prevent it being imported
-            module = importlib.import_module(module_name)
+            try:
+                module = importlib.import_module(module_name)
+            except Exception as e:
+                logger.warning(f"Problem importing module '{module_name}': {e}")
+                continue
 
             # find extractors in the module
             for _, member in inspect.getmembers(module):
