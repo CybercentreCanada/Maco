@@ -219,7 +219,7 @@ class ExtractorModel(ForbidModel):
         other: Dict[str, Any] = {}
 
         Encryption = Encryption  # convenience for ret.encryption.append(ret.Encryption(*properties))
-        encryption: Encryption = None  # encryption information for the binary
+        encryption: Union[List[Encryption], Encryption] = None  # encryption information for the binary
 
     binaries: List[Binary] = []
 
