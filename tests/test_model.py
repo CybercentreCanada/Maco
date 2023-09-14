@@ -6,11 +6,6 @@ from pydantic import ValidationError
 from maco import model
 
 
-def verify(config: Dict) -> Dict:
-    """Verify the returned data matches the schema."""
-    return model.ExtractorModel.parse_obj(config).dict(exclude_defaults=True)
-
-
 class TestModel(unittest.TestCase):
     def test_model_invalid(self):
         # family not supplied
@@ -21,17 +16,17 @@ class TestModel(unittest.TestCase):
         self.assertRaises(ValueError, setattr, *(ret, "invalid", 12345))
         # invalid type
         ret.sleep_delay = "test"
-        self.assertRaises(ValidationError, verify, ret)
+        self.assertRaises(ValidationError, self.verify, ret)
 
     def test_model_1(self):
         # object example
         tmp = model.ExtractorModel(family="scuba")
         tmp.campaign_id.append("5467")
-        verify(tmp.dict())
+        self.verify(tmp.dict(), exclude_defaults=False)
 
     def test_model_2(self):
         # dict example
-        verify(
+        self.verify(
             {
                 "family": "scuba",
                 "version": "30-01-2023",
@@ -48,20 +43,33 @@ class TestModel(unittest.TestCase):
 
     def test_model_3(self):
         # dict example large
-        verify(
+        self.maxDiff = None
+
+        self.verify(
             {
                 "family": "scuba",
                 "version": "lotso_stuff",
                 "binaries": [
                     {
                         "data": rb"\x10\x20\x30\x40",
+                        "encryption": {"algorithm": "alxor", "usage": "binary"},
                         "other": {
                             "datatype": ["payload"],
                             "extension": [".invalid"],
                             "label": ["xor 0x04 at 0x2130-0x2134"],
                             "some_junk": [1, 2, 3, 4, 5, 6],
                         },
-                    }
+                    },
+                    {
+                        "data": rb"\x50\x60\x70\x80",
+                        "encryption": [
+                            {"algorithm": "alxor", "usage": "binary"},
+                            {"algorithm": "RC4", "usage": "binary"},
+                        ],  
+                        "other": {
+                            "datatype": ["payload"],
+                        },
+                    },
                 ],
                 "ftp": [{"hostname": "somewhere", "usage": "c2"}],
                 "smtp": [{"hostname": "here.com", "usage": "upload"}],
@@ -116,3 +124,9 @@ class TestModel(unittest.TestCase):
                 "other": {"misc_data": {"nested": 5}},
             }
         )
+        
+    def verify(self, config: Dict, exclude_defaults: bool = True) -> Dict:
+        """Verify the returned data matches the schema."""
+        model_dict = model.ExtractorModel.parse_obj(config).dict(exclude_defaults=exclude_defaults)
+        self.assertEqual(model_dict, config)
+        return model_dict
