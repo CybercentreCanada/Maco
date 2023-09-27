@@ -296,7 +296,7 @@ class MachineReadableDict(TypedDict):
 class MachineReadableFormatter:
     c2_list: List = [] # Merge all net object into the list
 
-    data: MachineReadableDict = {
+    formatted: MachineReadableDict = {
         'family': "",
         'version': "",
         'campaign': "",
@@ -334,18 +334,18 @@ class MachineReadableFormatter:
                         element.flattened(depth = 2)
 
             if key == "family":
-                self.data['family'] = value
+                self.formatted['family'] = value
             
             elif key == "campaign_id":
-                self.data['campaign'] = value
+                self.formatted['campaign'] = value
             
             elif key == "version":
-                self.data['version'] = value
+                self.formatted['version'] = value
 
             elif key == "identifier":
-                self.data['identifier'] = value 
+                self.formatted['identifier'] = value 
         
-        return self.data
+        return self.formatted
 
     @staticmethod
     def encryption(entry):
@@ -353,68 +353,68 @@ class MachineReadableFormatter:
 
     @staticmethod
     def binary(entry):
-        MachineReadableFormatter.data['binary'].append(sha256(entry.data).hexdigest())
+        MachineReadableFormatter.formatted['binary'].append(sha256(entry.data).hexdigest())
 
     @staticmethod
     def ftp(entry):
         if entry.hostname:
             formatted_ftp_hostname = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_ftp_hostname)
+            MachineReadableFormatter.formatted['network'].append(formatted_ftp_hostname)
     
     @staticmethod
     def smtp(entry):
         if entry.hostname:
             formatted_smtp_hostname = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_smtp_hostname)
+            MachineReadableFormatter.formatted['network'].append(formatted_smtp_hostname)
         if entry.mail_from:
-            MachineReadableFormatter.data['email_from'].append(entry.mail_from)
+            MachineReadableFormatter.formatted['email_from'].append(entry.mail_from)
         if entry.subject:
-            MachineReadableFormatter.data['email_subject'].append(entry.subject)
+            MachineReadableFormatter.formatted['email_subject'].append(entry.subject)
 
     @staticmethod
     def http(entry):
         if entry.uri:
-            MachineReadableFormatter.data['network'].append(entry.uri)
+            MachineReadableFormatter.formatted['network'].append(entry.uri)
         if entry.hostname:
-            MachineReadableFormatter.data['network'].append(entry.hostname)
+            MachineReadableFormatter.formatted['network'].append(entry.hostname)
 
     @staticmethod
     def ssh(entry):
         if entry.hostname:
             formatted_ssh_hostname = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_ssh_hostname)
+            MachineReadableFormatter.formatted['network'].append(formatted_ssh_hostname)
     
     @staticmethod
     def proxy(entry):
         if entry.hostname:
             formatted_proxy_hostname = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_proxy_hostname)
+            MachineReadableFormatter.formatted['network'].append(formatted_proxy_hostname)
 
 
     @staticmethod
     def dns(entry):
         if entry.ip:
             formatted_dns = f"{entry.ip}{f':{entry.port}' if entry.port else ''}" 
-            MachineReadableFormatter.data['network'].append(formatted_dns)
+            MachineReadableFormatter.formatted['network'].append(formatted_dns)
 
     @staticmethod
     def connection(entry):
         if entry.client_ip:
             formatted_client_ip = f"{entry.client_port}{f':{entry.client_port}' if entry.client_port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_client_ip)
+            MachineReadableFormatter.formatted['network'].append(formatted_client_ip)
 
         if entry.server_ip:
             formatted_server_ip = f"{entry.server_ip}{f':{entry.server_port}' if entry.server_port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_server_ip)
+            MachineReadableFormatter.formatted['network'].append(formatted_server_ip)
 
         if entry.server_domain:
             formatted_domain = f"{entry.server_domain}{f':{entry.server_port}' if entry.server_port else ''}"
-            MachineReadableFormatter.data['network'].append(formatted_domain)
+            MachineReadableFormatter.formatted['network'].append(formatted_domain)
  
     @staticmethod
     def service(entry):
         if entry.name:
-            MachineReadableFormatter.data['service'].append(entry.name)
+            MachineReadableFormatter.formatted['service'].append(entry.name)
 
     @staticmethod
     def cryptocurrency(entry):
@@ -423,9 +423,9 @@ class MachineReadableFormatter:
     @staticmethod
     def path(entry):
         if entry.path:
-            MachineReadableFormatter.data['path'].append(entry.path)
+            MachineReadableFormatter.formatted['path'].append(entry.path)
 
     @staticmethod
     def registry(entry):
         if entry.key:
-            MachineReadableFormatter.data['registry'].append(entry.key)
+            MachineReadableFormatter.formatted['registry'].append(entry.key)
