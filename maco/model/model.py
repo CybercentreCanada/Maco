@@ -1,9 +1,15 @@
 """Malware config extractor output model."""
 from enum import Enum
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 
 from pydantic import BaseModel, Extra
+from abc import abstractmethod
 
+from .formatter import HumanReadableFormatter, MachineReadableFormatter, FlattenedDict
+
+class Formatter(Enum):
+    HUMAN = 1
+    MACHINE = 2
 
 class ForbidModel(BaseModel):
     """We want to forbid extra properties, so that the 'other' field is used instead."""
