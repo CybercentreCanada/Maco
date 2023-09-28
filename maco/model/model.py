@@ -16,9 +16,13 @@ class ForbidModel(BaseModel):
 
     class Config:
         # forbid extra properties
-        extra = Extra.forbids
+        extra = Extra.forbid
         # enums should output strings, values rather than instance
         use_enum_values = True
+
+    @abstractmethod
+    def flattened():
+        pass
 
 
 class ConnUsageEnum(str, Enum):
@@ -216,12 +220,12 @@ class ExtractorModel(ForbidModel):
             fh = HumanReadableFormatter()
             formatted = fh.flatten(self)
             # Reset the static variable
-            HumanReadableFormatter.formatted = FlattenedDict
+            HumanReadableFormatter.formatted = FlattenedDict()
             return formatted
         elif depth == Formatter.MACHINE:
             fm = MachineReadableFormatter()
             formatted = fm.flatten(self)
-            MachineReadableFormatter.formatted = MachineReadableFormatter.default
+            fm.reset()
             return formatted
 
     #

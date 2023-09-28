@@ -294,12 +294,11 @@ class MachineReadableDict(TypedDict):
 
 
 class MachineReadableFormatter:
-    c2_list: List = [] # Merge all net object into the list
 
     formatted: MachineReadableDict = {
         'family': "",
         'version': "",
-        'campaign': "",
+        'campaign': [],
         'identifier': "",
         'network': [],
         'registry': [],
@@ -310,20 +309,12 @@ class MachineReadableFormatter:
         'email_subject': []
     }
 
-
-    default: MachineReadableDict = {
-        'family': "",
-        'version': "",
-        'campaign': "",
-        'identifier': "",
-        'network': [],
-        'registry': [],
-        'path': [],
-        'service': [],
-        'binary': [],
-        'email_from': [],
-        'email_subject': []
-    }
+    def reset(self):
+        for k, _ in self.formatted.items():
+            if k in ['family', 'version', 'identifier']:
+                self.formatted[k] = ""
+            else:
+                self.formatted[k] = [] 
 
     def flatten(self, maco) -> MachineReadableDict:           
         for key, value in maco.__dict__.items():
@@ -345,7 +336,7 @@ class MachineReadableFormatter:
             elif key == "identifier":
                 self.formatted['identifier'] = value 
         
-        return self.formatted
+        return self.formatted.copy()
 
     @staticmethod
     def encryption(entry):
