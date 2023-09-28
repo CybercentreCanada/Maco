@@ -18,14 +18,13 @@ class ForbidModel(BaseModel):
         # enums should output strings, values rather than instance
         use_enum_values = True
 
-    def flattened(self, depth: int = Formatter.HUMAN) -> Optional[List[Dict[str, str]]]:
+    def flattened(self, depth: int = Formatter.HUMAN.value) -> Optional[List[Dict[str, str]]]:
         # Formatter name should correspond to the name of the class
         fmtr_name = self.__repr_name__().lower()
-
-        if depth == Formatter.HUMAN and hasattr(HumanReadableFormatter, fmtr_name):
+        if depth == Formatter.HUMAN.value and hasattr(HumanReadableFormatter, fmtr_name):
             # Human-Readable formatting
             return getattr(HumanReadableFormatter, fmtr_name)(self)
-        elif depth == Formatter.MACHINE and hasattr(MachineReadableFormatter, fmtr_name):
+        elif depth == Formatter.MACHINE.value and hasattr(MachineReadableFormatter, fmtr_name):
             # Machine-parseable formatting
             return getattr(MachineReadableFormatter, fmtr_name)(self)
 
