@@ -3,9 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Union, Optional
 
 from pydantic import BaseModel, Extra
-from abc import abstractmethod
-
-from .formatter import HumanReadableFormatter, MachineReadableFormatter, FlattenedDict
+from maco.model.formatter import HumanReadableFormatter, MachineReadableFormatter, FlattenedDict
 
 class Formatter(Enum):
     HUMAN = 1
@@ -20,9 +18,20 @@ class ForbidModel(BaseModel):
         # enums should output strings, values rather than instance
         use_enum_values = True
 
-    @abstractmethod
-    def flattened():
-        pass
+    def flattened(self, depth: int = Formatter.HUMAN) -> Optional[List[Dict[str, str]]]:
+        # Formatter name should correspond to the name of the class
+        fmtr_name = self.__repr_name__().lower()
+
+        if depth == Formatter.HUMAN and hasattr(HumanReadableFormatter, fmtr_name):
+            # Human-Readable formatting
+            return getattr(HumanReadableFormatter, fmtr_name)(self)
+        elif depth == Formatter.MACHINE and hasattr(MachineReadableFormatter, fmtr_name):
+            # Machine-parseable formatting
+            return getattr(MachineReadableFormatter, fmtr_name)(self)
+
+        # If formatter hasn't been defined for model, raise exception
+        raise NotImplementedError()
+
 
 
 class ConnUsageEnum(str, Enum):
@@ -62,12 +71,6 @@ class Encryption(ForbidModel):
     constants: List[str] = []
 
     usage: UsageEnum = None
-
-    def flattened(self, depth: int = 1):
-        if depth == 1:
-            return HumanReadableFormatter.encryption(self)
-        if depth == 2:
-            return  MachineReadableFormatter.encryption(self)
 
 
 class CategoryEnum(str, Enum):
@@ -250,12 +253,6 @@ class ExtractorModel(ForbidModel):
         Encryption = Encryption  # convenience for ret.encryption.append(ret.Encryption(*properties))
         encryption: Union[List[Encryption], Encryption] = None  # encryption information for the binary
 
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1: 
-                return HumanReadableFormatter.binary(self)
-            if depth == 2:
-                return MachineReadableFormatter.binary(self)
-
     binaries: List[Binary] = []
 
     #
@@ -274,12 +271,6 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum = None
 
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.ftp(self)
-            if depth == 2:
-                return MachineReadableFormatter.ftp(self)
-
     ftp: List[FTP] = []
 
     class SMTP(ForbidModel):
@@ -296,12 +287,6 @@ class ExtractorModel(ForbidModel):
         subject: str = None
 
         usage: ConnUsageEnum = None
-
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.smtp(self)
-            if depth == 2:
-                return MachineReadableFormatter.smtp(self)
 
     smtp: List[SMTP] = []  # SMTP server for malware
 
@@ -332,12 +317,6 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum = None
 
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.http(self)
-            if depth == 2:
-                return MachineReadableFormatter.http(self)
-
     http: List[Http] = []
 
     class SSH(ForbidModel):
@@ -349,12 +328,6 @@ class ExtractorModel(ForbidModel):
         port: int = None
 
         usage: ConnUsageEnum = None
-
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.ssh(self)
-            if depth == 2:
-                return MachineReadableFormatter.ssh(self)
 
     ssh: List[SSH] = []
 
@@ -369,12 +342,6 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum = None
 
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.proxy(self)
-            if depth == 2:
-                return MachineReadableFormatter.proxy(self)
-
     proxy: List[Proxy] = []
 
     class DNS(ForbidModel):
@@ -384,12 +351,6 @@ class ExtractorModel(ForbidModel):
         port: int = None  # usually 53
 
         usage: ConnUsageEnum = None
-
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.dns(self)
-            if depth == 2:
-                return MachineReadableFormatter.dns(self)
 
     dns: List[DNS] = []  # custom DNS address to use for name resolution
 
@@ -403,12 +364,6 @@ class ExtractorModel(ForbidModel):
         server_port: int = None
 
         usage: ConnUsageEnum = None
-
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.connection(self)
-            if depth == 2:
-                return MachineReadableFormatter.connection(self)
 
     tcp: List[Connection] = []
     udp: List[Connection] = []
@@ -429,12 +384,6 @@ class ExtractorModel(ForbidModel):
         display_name: str = None  # display name for service
         description: str = None  # description for service
 
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.service(self)
-            if depth == 2:
-                return MachineReadableFormatter.service(self)
-
     service: List[Service] = []
 
     class Cryptocurrency(ForbidModel):
@@ -450,12 +399,6 @@ class ExtractorModel(ForbidModel):
         ransom_amount: float = None  # number of coins required (if hardcoded)
 
         usage: UsageEnum
-
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.cryptocurrency(self)
-            if depth == 2:
-                return MachineReadableFormatter.cryptocurrency(self)
 
     cryptocurrency: List[Cryptocurrency] = []
 
@@ -473,12 +416,6 @@ class ExtractorModel(ForbidModel):
         path: str
         usage: UsageEnum = None
 
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.path(self)
-            if depth == 2:
-                return MachineReadableFormatter.path(self)
-
     paths: List[Path] = []  # files/directories used by malware
 
     class Registry(ForbidModel):
@@ -491,11 +428,5 @@ class ExtractorModel(ForbidModel):
 
         key: str
         usage: UsageEnum = None
-
-        def flattened(self, depth: int = 1) -> Optional[List[Dict[str, str]]]:
-            if depth == 1:
-                return HumanReadableFormatter.registry(self)
-            if depth == 2:
-                return MachineReadableFormatter.registry(self)
 
     registry: List[Registry] = []
