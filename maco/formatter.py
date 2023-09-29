@@ -13,10 +13,9 @@ class InvalidFormatterException(Exception):
     pass
 
 class Formatter:
-    formatter: BaseFormatter
 
     def __init__(self,  type: FormatterOption, 
-                        custom_formatter: BaseFormatter = None):
+                        custom_formatter = None):
         
         if type == FormatterOption.CUSTOM:
             if not isinstance(custom_formatter, BaseFormatter):

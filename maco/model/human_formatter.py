@@ -38,7 +38,6 @@ class HumanFormatter(BaseFormatter):
 
     def format(self, model: ExtractorModel):
         formatted_dict = CustomDict()
-
         for key, value in model.__dict__.items():
             if type(value) == list:
                 for iterator, entry in enumerate(value):
@@ -55,17 +54,8 @@ class HumanFormatter(BaseFormatter):
                 formatted_dict[key] = value
         return formatted_dict
 
-
-
     def encryption(self, entry: Encryption) -> Union[Dict[str, str], List[Dict[str,str]]]:
-        fields: List[dict[str, str]] = []
-        for field in entry.__fields__.keys():
-            value = entry.__dict__[field]
-            if not value:
-                continue
-            key = f"Encryption {field.capitalize()}"
-            fields.append({key: value})
-        return fields
+        return self.generic_formatter(entry, "Encryption")
     
     def binary(self, entry: ExtractorModel.Binary):
         fields: List[dict[str, str]] = []
@@ -98,15 +88,13 @@ class HumanFormatter(BaseFormatter):
         if entry.hostname:
             fields.append({key: self.format(entry.hostname, entry.port)})
         
-        self.generic_formatter(entry, "SMTP", ["hostname", "port"])
+        fields.extend(self.generic_formatter(entry, "SMTP", ["hostname", "port"]))
         return fields
 
     
     def http(self, entry: ExtractorModel.Http):
         title = "HTTPS" if entry.protocol.lower() == "https" else "HTTP"
-
         fields: List[dict[str, str]] = []
-
         if entry.uri:
             key = f"{title} URI{f'- {entry.usage.upper()}' if entry.usage else ''}"
             value = entry.uri
@@ -114,9 +102,8 @@ class HumanFormatter(BaseFormatter):
 
         elif entry.hostname:               # If we don't have the full URI
             key = f"{title} Hostname{f'- {entry.usage.upper()}' if entry.usage else ''}"
-            value = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
-            fields.append({key: value})
-    
+            value = self.format_port(entry.hostname, entry.port)
+            fields.append({key: value})    
         fields.extend(self.generic_formatter(entry, title, ["uri", "hostname", "port", "protocol"]))
         return fields
     
@@ -124,15 +111,16 @@ class HumanFormatter(BaseFormatter):
         fields: List[dict[str, str]]
         key: str = f"SSH {f'- {entry.usage.upper()}' if entry.usage else ''}"
         if entry.hostname:
-            value = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
+            value = self.format_port(entry.hostname, entry.port)
             fields.append({key: value})
         fields.extend(self.generic_formatter(entry, "SSH", ["hostname", "port"]))
+        return fields
     
     def proxy(self, entry: ExtractorModel.Proxy):
         fields: List[dict[str, str]] = []
         key: str = f"Proxy {f'- {entry.usage.upper()}' if entry.usage else ''}"
         if entry.hostname:
-            value = f"{entry.hostname}{f':{entry.port}' if entry.port else ''}"
+            value = self.format_port(entry.hostname, entry.port)
             fields.append({key: value})
         fields.extend(self.generic_formatter(entry, "Proxy", ["hostname", "port"]))
         return fields
@@ -141,22 +129,22 @@ class HumanFormatter(BaseFormatter):
         if not entry.ip:
             return
         key: str = f"DNS {f'- {entry.usage.upper()}' if entry.usage else ''}"
-        value = f"{entry.ip}{f':{entry.port}' if entry.port else ''}"
+        value = self.format_port(entry.ip, entry.port)
         return {key: value}
     
     def connection(self, entry: ExtractorModel.Connection):
         if entry.server_ip or entry.server_domain:
             key = f"TCP/UDP Connection (Server) {f'- {entry.usage.upper()}' if entry.usage else ''}"
             if entry.server_ip:
-                value = f"{entry.server_ip}"
+                value = entry.server_ip
             else:
-                value = f"{entry.server_domain}"
-            value = f"{value}{f':{entry.server_port}' if entry.server_port else ''}"
+                value = entry.server_domain
+            value = self.format_port(value, entry.server_port)
             return {key: value}
 
         if entry.client_ip:
             key = f"TCP/UDP Connection (Client) {f'- {entry.usage.upper()}' if entry.usage else ''}"
-            value = f"{entry.client_ip}{f':{entry.client_port}' if entry.client_port else ''}"
+            value = self.format_port(entry.client_ip, entry.client_port)
             return {key: value}
 
     def service(self, entry: ExtractorModel.Service):
