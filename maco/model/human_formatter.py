@@ -43,8 +43,7 @@ class HumanFormatter(BaseFormatter):
             if type(value) == list:
                 for iterator, entry in enumerate(value):
                     if isinstance(entry, ForbidModel):
-                        dataclass_name = entry.__repr_name__().lower()
-                        formatted_value = getattr(self, dataclass_name)(entry)
+                        formatted_value = self.invoke_formatter(entry)
                         if len(value) == 1:
                             formatted_dict.add(formatted_value)
                         else:

@@ -1,8 +1,8 @@
 from enum import Enum
 
 from .model.human_formatter import HumanFormatter, BaseFormatter
+from .model.machine_formatter import MachineFormatter
 from .model import ExtractorModel
-
 
 class FormatterOption(Enum):
     HUMAN = 1
@@ -20,11 +20,11 @@ class Formatter:
         
         if type == FormatterOption.CUSTOM:
             if not isinstance(custom_formatter, BaseFormatter):
-                raise InvalidFormatterException("Formatter must inherit from BaseFormatter")
+                raise InvalidFormatterException("Custom formatter must inherit from BaseFormatter")
             self.formatter = custom_formatter()
 
         elif type == FormatterOption.MACHINE:
-            raise InvalidFormatterException("Not implemented yet") 
+            self.formatter = MachineFormatter()
         
         elif type == FormatterOption.HUMAN:
             self.formatter = HumanFormatter()

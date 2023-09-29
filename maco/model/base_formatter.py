@@ -58,8 +58,13 @@ class BaseFormatter(ABC):
     @abstractmethod
     def registry(self, entry: ExtractorModel.Registry):
         pass
-
+    
+    def invoke_formatter(self, entry):
+        """
+        Method will invoke the correct function to handle formatting.
+        """
+        dataclass_name = entry.__repr_name__().lower()
+        return getattr(self, dataclass_name)(entry)
 
     def format_port(self, ip_or_domain: str, port: str):
         return f"{ip_or_domain}{f':{port}' if port else ''}"
-    
