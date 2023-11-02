@@ -51,7 +51,7 @@ output.binaries.append(
 # data about the malware that doesn't fit the model
 output.other["author_lunch"] = "green eggs and ham"
 output.other["author_lunch_time"] = "3pm"
-print(output.dict(exclude_defaults=True))
+print(output.model_dump(exclude_defaults=True))
 
 # Generated model
 {
@@ -147,7 +147,7 @@ Some things to keep in mind
 # Requirements
 
 
-Python 3.7+
+Python 3.8+
 
 Install this package with `pip install maco`.
 

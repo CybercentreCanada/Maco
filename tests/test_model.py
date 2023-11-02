@@ -16,13 +16,13 @@ class TestModel(unittest.TestCase):
         self.assertRaises(ValueError, setattr, *(ret, "invalid", 12345))
         # invalid type
         ret.sleep_delay = "test"
-        self.assertRaises(ValidationError, self.verify, ret)
+        self.assertRaises(ValidationError, self.verify, ret.model_dump())
 
     def test_model_1(self):
         # object example
         tmp = model.ExtractorModel(family="scuba")
         tmp.campaign_id.append("5467")
-        self.verify(tmp.dict(), exclude_defaults=False)
+        self.verify(tmp.model_dump(), exclude_defaults=False)
 
     def test_model_2(self):
         # dict example
@@ -65,7 +65,7 @@ class TestModel(unittest.TestCase):
                         "encryption": [
                             {"algorithm": "alxor", "usage": "binary"},
                             {"algorithm": "RC4", "usage": "binary"},
-                        ],  
+                        ],
                         "other": {
                             "datatype": ["payload"],
                         },
@@ -124,9 +124,11 @@ class TestModel(unittest.TestCase):
                 "other": {"misc_data": {"nested": 5}},
             }
         )
-        
+
     def verify(self, config: Dict, exclude_defaults: bool = True) -> Dict:
         """Verify the returned data matches the schema."""
-        model_dict = model.ExtractorModel.parse_obj(config).dict(exclude_defaults=exclude_defaults)
+        model_dict = model.ExtractorModel.model_validate(config).model_dump(
+            exclude_defaults=exclude_defaults
+        )
         self.assertEqual(model_dict, config)
         return model_dict
