@@ -1,9 +1,8 @@
 """Malware config extractor output model."""
 from enum import Enum
-from typing import Any, Dict, List, Union, Optional, Type
-from typing_extensions import Unpack, Annotated
+from typing import Any, Dict, List, Union, Optional
 
-from pydantic import ConfigDict, BaseModel, Field, PrivateAttr
+from pydantic import ConfigDict, BaseModel
 
 
 class ForbidModel(BaseModel):
