@@ -1,18 +1,14 @@
 """Malware config extractor output model."""
 from enum import Enum
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 
-from pydantic import BaseModel, Extra
+from pydantic import ConfigDict, BaseModel
 
 
 class ForbidModel(BaseModel):
     """We want to forbid extra properties, so that the 'other' field is used instead."""
 
-    class Config:
-        # forbid extra properties
-        extra = Extra.forbid
-        # enums should output strings, values rather than instance
-        use_enum_values = True
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
 
 class ConnUsageEnum(str, Enum):
@@ -38,20 +34,20 @@ class Encryption(ForbidModel):
         ransom = "ransom"
         other = "other"
 
-    algorithm: str = None
-    public_key: str = None
-    key: str = None  # private key or symmetric key
-    provider: str = None  # encryption library used. openssl, homebrew, etc.
+    algorithm: Optional[str] = None
+    public_key: Optional[str] = None
+    key: Optional[str] = None  # private key or symmetric key
+    provider: Optional[str] = None  # encryption library used. openssl, homebrew, etc.
 
-    mode: str = None  # block vs stream
+    mode: Optional[str] = None  # block vs stream
     # base 64'd binary data for these details?
     # TODO to confirm usage of these different properties
-    iv: str = None  # initialisation vector
-    seed: str = None
-    nonce: str = None
+    iv: Optional[str] = None  # initialisation vector
+    seed: Optional[str] = None
+    nonce: Optional[str] = None
     constants: List[str] = []
 
-    usage: UsageEnum = None
+    usage: Optional[UsageEnum] = None
 
 
 class CategoryEnum(str, Enum):
@@ -169,7 +165,7 @@ class ExtractorModel(ForbidModel):
     """
 
     family: Union[str, List[str]]  # family or families of malware that was detected
-    version: str = None  # version/variant of malware
+    version: Optional[str] = None  # version/variant of malware
     category: List[CategoryEnum] = []  # capability/purpose of the malware
     attack: List[str] = []  # mitre att&ck reference ids, e.g. 'T1129'
 
@@ -189,7 +185,7 @@ class ExtractorModel(ForbidModel):
     password: List[str] = []  # Any password extracted from the binary
     mutex: List[str] = []  # mutex to prevent multiple instances
     pipe: List[str] = []  # pipe name used for communication
-    sleep_delay: int = None  # time to sleep/delay execution (milliseconds)
+    sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
     inject_exe: List[str] = []  # name of executable to inject into
 
     # configuration or clustering/research data that doesnt fit the other fields
@@ -210,7 +206,7 @@ class ExtractorModel(ForbidModel):
             config = "config"  # sometimes malware uses json/formatted text for config
             other = "other"
 
-        datatype: TypeEnum = None  # what the binary data is used for
+        datatype: Optional[TypeEnum] = None  # what the binary data is used for
         data: bytes  # binary data, not json compatible
 
         # other information for the extracted binary rather than the config
@@ -218,8 +214,14 @@ class ExtractorModel(ForbidModel):
         # e.g. filename, extension, relationship label
         other: Dict[str, Any] = {}
 
-        Encryption = Encryption  # convenience for ret.encryption.append(ret.Encryption(*properties))
-        encryption: Union[List[Encryption], Encryption] = None  # encryption information for the binary
+        # convenience for ret.encryption.append(ret.Encryption(*properties))
+        # Define as class as only way to allow for this to be accessed and not have pydantic try to parse it.
+        class Encryption(Encryption):
+            pass
+
+        encryption: Union[
+            List[Encryption], Encryption, None
+        ] = None  # encryption information for the binary
 
     binaries: List[Binary] = []
 
@@ -230,14 +232,14 @@ class ExtractorModel(ForbidModel):
     class FTP(ForbidModel):
         """Usage of FTP connection."""
 
-        username: str = None
-        password: str = None
-        hostname: str = None
-        port: int = None
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        path: str = None
+        path: Optional[str] = None
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     ftp: List[FTP] = []
 
@@ -245,16 +247,16 @@ class ExtractorModel(ForbidModel):
         """Usage of SMTP."""
 
         # credentials and location of server
-        username: str = None
-        password: str = None
-        hostname: str = None
-        port: int = None
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
         mail_to: List[str] = []  # receivers
-        mail_from: str = None  # sender
-        subject: str = None
+        mail_from: Optional[str] = None  # sender
+        subject: Optional[str] = None
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     smtp: List[SMTP] = []  # SMTP server for malware
 
@@ -266,72 +268,72 @@ class ExtractorModel(ForbidModel):
         # as we lose that information.
         # e.g. extra '?' or '/' when unnecessary.
         # or something that is technically an invalid uri but still works
-        uri: str = None
+        uri: Optional[str] = None
 
         # on the other hand we might not have enough info to construct a uri
-        protocol: str = None  # http,https
-        username: str = None
-        password: str = None
-        hostname: str = None
-        port: int = None
-        path: str = None
-        query: str = None
-        fragment: str = None
+        protocol: Optional[str] = None  # http,https
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
+        path: Optional[str] = None
+        query: Optional[str] = None
+        fragment: Optional[str] = None
 
-        user_agent: str = None  # user agent sent by malware
-        method: str = None  # get put delete etc
-        headers: Dict[str, str] = None  # custom/additional HTTP headers
-        max_size: int = None
+        user_agent: Optional[str] = None  # user agent sent by malware
+        method: Optional[str] = None  # get put delete etc
+        headers: Optional[Dict[str, str]] = None  # custom/additional HTTP headers
+        max_size: Optional[int] = None
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     http: List[Http] = []
 
     class SSH(ForbidModel):
         """Usage of ssh connection."""
 
-        username: str = None
-        password: str = None
-        hostname: str = None
-        port: int = None
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     ssh: List[SSH] = []
 
     class Proxy(ForbidModel):
         """Usage of proxy connection."""
 
-        protocol: str = None  # socks5,http
-        username: str = None
-        password: str = None
-        hostname: str = None
-        port: int = None
+        protocol: Optional[str] = None  # socks5,http
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     proxy: List[Proxy] = []
 
     class DNS(ForbidModel):
         """Direct usage of DNS."""
 
-        ip: str = None
-        port: int = None  # usually 53
+        ip: Optional[str] = None
+        port: Optional[int] = None  # usually 53
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     dns: List[DNS] = []  # custom DNS address to use for name resolution
 
     class Connection(ForbidModel):
         """Generic TCP/UDP usage."""
 
-        client_ip: str = None
-        client_port: int = None
-        server_ip: str = None
-        server_domain: str = None
-        server_port: int = None
+        client_ip: Optional[str] = None
+        client_port: Optional[int] = None
+        server_ip: Optional[str] = None
+        server_domain: Optional[str] = None
+        server_port: Optional[int] = None
 
-        usage: ConnUsageEnum = None
+        usage: Optional[ConnUsageEnum] = None
 
     tcp: List[Connection] = []
     udp: List[Connection] = []
@@ -339,18 +341,20 @@ class ExtractorModel(ForbidModel):
     #
     # complex configuration properties
     #
-    Encryption = (
-        Encryption  # convenience for ret.encryption.append(ret.Encryption(*properties))
-    )
+    # convenience for ret.encryption.append(ret.Encryption(*properties))
+    # Define as class as only way to allow for this to be accessed and not have pydantic try to parse it.
+    class Encryption(Encryption):
+        pass
+
     encryption: List[Encryption] = []
 
     class Service(ForbidModel):
         """OS service usage by malware."""
 
-        dll: str = None  # dll that the service is loaded from
-        name: str = None  # service/driver name for persistence
-        display_name: str = None  # display name for service
-        description: str = None  # description for service
+        dll: Optional[str] = None  # dll that the service is loaded from
+        name: Optional[str] = None  # service/driver name for persistence
+        display_name: Optional[str] = None  # display name for service
+        description: Optional[str] = None  # description for service
 
     service: List[Service] = []
 
@@ -362,9 +366,9 @@ class ExtractorModel(ForbidModel):
             miner = "miner"  # use gpu/cpu to mint coins
             other = "other"
 
-        coin: str = None  # BTC,ETH,USDT,BNB, etc
-        address: str = None
-        ransom_amount: float = None  # number of coins required (if hardcoded)
+        coin: Optional[str] = None  # BTC,ETH,USDT,BNB, etc
+        address: Optional[str] = None
+        ransom_amount: Optional[float] = None  # number of coins required (if hardcoded)
 
         usage: UsageEnum
 
@@ -382,7 +386,7 @@ class ExtractorModel(ForbidModel):
 
         # C:\User\tmp\whatever.txt or /some/unix/folder/path
         path: str
-        usage: UsageEnum = None
+        usage: Optional[UsageEnum] = None
 
     paths: List[Path] = []  # files/directories used by malware
 
@@ -395,6 +399,6 @@ class ExtractorModel(ForbidModel):
             other = "other"
 
         key: str
-        usage: UsageEnum = None
+        usage: Optional[UsageEnum] = None
 
     registry: List[Registry] = []

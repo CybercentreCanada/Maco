@@ -1,3 +1,4 @@
+from typing import Optional
 import pydantic
 
 from maco import model
@@ -10,4 +11,4 @@ class MyCustomModel(model.ExtractorModel):
         key3: int
 
     # set a custom class here as valid for the 'other' property
-    other: Other = None
+    other: Optional[Other] = None
