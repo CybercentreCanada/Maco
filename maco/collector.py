@@ -21,7 +21,7 @@ logger = logging.getLogger("maco.lib.helpers")
 
 
 def _verify_response(resp: BaseModel) -> Dict:
-    """Verify an extractors response model and return a clean Dict representation."""
+    """Enforce types and verify properties, and remove defaults."""
     # check the response is valid for its own model
     # this is useful if a restriction on the 'other' dictionary is needed
     resp_model = type(resp)
@@ -159,7 +159,6 @@ class Collector:
             stream.seek(0)
 
         # enforce types and verify properties, and remove defaults
-        # Dumping to Json to allow for better type conversions (a set and a list are coerced correctly.)
         if resp is not None:
             resp = _verify_response(resp)
 
