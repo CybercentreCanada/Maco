@@ -6,7 +6,7 @@ import os
 import pkgutil
 import sys
 from typing import Any, BinaryIO, Dict, List
-from pydantic import TypeAdapter
+from pydantic import BaseModel
 
 import yara
 
@@ -18,6 +18,22 @@ class ExtractorLoadError(Exception):
 
 
 logger = logging.getLogger("maco.lib.helpers")
+
+
+def _verify_response(resp: BaseModel) -> Dict:
+    """Enforce types and verify properties, and remove defaults."""
+    # check the response is valid for its own model
+    # this is useful if a restriction on the 'other' dictionary is needed
+    resp_model = type(resp)
+    if resp_model != model.ExtractorModel:
+        resp = resp_model.model_validate(resp)
+    # check the response is valid according to the ExtractorModel
+    resp = model.ExtractorModel.model_validate(resp)
+    # coerce sets to correct types
+    # otherwise we end up with sets where we expect lists
+    resp = model.ExtractorModel(**resp.model_dump())
+    # dump model to dict
+    return resp.model_dump(exclude_defaults=True)
 
 
 class Collector:
@@ -143,18 +159,7 @@ class Collector:
             stream.seek(0)
 
         # enforce types and verify properties, and remove defaults
-        # Dumping to Json to allow for better type conversions (a set and a list are coerced correctly.)
         if resp is not None:
-            # check the response is valid for its own model
-            # this is useful if a restriction on the 'other' dictionary is needed
-            resp_model = type(resp)
-            if resp_model != model.ExtractorModel:
-                resp = TypeAdapter(resp_model).validate_json(resp.model_dump_json())
-            # check the response is valid according to the ExtractorModel
-            resp = (
-                TypeAdapter(model.ExtractorModel)
-                .validate_json(resp.model_dump_json())
-                .model_dump(exclude_defaults=True)
-            )
+            resp = _verify_response(resp)
 
         return resp
