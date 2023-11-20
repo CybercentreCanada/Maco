@@ -42,6 +42,7 @@ class TestModelObject(unittest.TestCase):
             mutex=["YEAH"],
             pipe=["xiod"],
             sleep_delay=45000,
+            sleep_delay_jitter=2500,
             inject_exe=["Teams.exe"],
             other={"misc_data": {"nested": 5}},
             binaries=[
@@ -233,6 +234,7 @@ class TestModelObject(unittest.TestCase):
                 "mutex": ["YEAH"],
                 "pipe": ["xiod"],
                 "sleep_delay": 45000,
+                "sleep_delay_jitter": 2500,
                 "inject_exe": ["Teams.exe"],
                 "other": {"misc_data": {"nested": 5}},
                 "binaries": [
