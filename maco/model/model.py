@@ -186,6 +186,7 @@ class ExtractorModel(ForbidModel):
     mutex: List[str] = []  # mutex to prevent multiple instances
     pipe: List[str] = []  # pipe name used for communication
     sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
+    sleep_delay_jitter: Optional[int] = None  # maximum additional time applied to sleep_delay (milliseconds)
     inject_exe: List[str] = []  # name of executable to inject into
 
     # configuration or clustering/research data that doesnt fit the other fields
