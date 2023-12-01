@@ -91,7 +91,7 @@ class CategoryEnum(str, Enum):
     # A program that loads another application / memory space.
     loader = "loader"
     # A type of malware that hides its code and purpose to make it more difficult for security software to detect or remove it.
-    obfusator = "obfuscator"
+    obfuscator = "obfuscator"
     # Point-of-sale malware is usually a type of malware that is used by cybercriminals to target point of sale (POS) and payment terminals with the intent to obtain credit card and debit card information.
     pos = "pos"
     # This type of trojan allows unauthorized parties to use the infected computer as a proxy server to access the Internet anonymously.
