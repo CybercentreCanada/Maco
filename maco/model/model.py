@@ -54,103 +54,103 @@ class CategoryEnum(str, Enum):
     # Software that shows you extra promotions that you cannot control as you use your PC.
     # You wouldn't see the extra ads if you didn't have adware installed.
     adware = "adware"
-    
+
     # Malware related to an Advanced Persistent Threat (APT) group.
     apt = "apt"
-    
+
     # A backdoor Trojan gives malicious users remote control over the infected computer. They enable the author to do anything they wish on the infected computer including sending, receiving, launching and deleting files, displaying data and rebooting the computer. Backdoor Trojans are often used to unite a group of victim computers to form a botnet or zombie network that can be used for criminal purposes.
     backdoor = "backdoor"
-    
+
     # Trojan Banker programs are designed to steal your account data for online banking systems, e-payment systems and credit or debit cards.
     banker = "banker"
-    
+
     # A malware variant that modifies the boot sectors of a hard drive, including the Master Boot Record (MBR) and Volume Boot Record (VBR).
     bootkit = "bootkit"
-    
+
     # A malicious bot is self-propagating malware designed to infect a host and connect back to a central server or servers that act as a command and control (C&C) center for an entire network of compromised devices, or botnet.
     bot = "bot"
-    
+
     # A browser hijacker is defined as a form of unwanted software that modifies a web browser's settings without the user's permission. The result is the placement of unwanted advertising into the browser, and possibly the replacement of an existing home page or search page with the hijacker page.
     browser_hijacker = "browser_hijacker"
-    
+
     # Trojan bruteforcer are trying to brute force website in order to achieve something else (EX: Finding  WordPress websites with default credentials).
     bruteforcer = "bruteforcer"
-    
+
     # A type of trojan that can use your PC to 'click' on websites or applications. They are usually used to make money for a malicious hacker by clicking on online advertisements and making it look like the website gets more traffic than it does. They can also be used to skew online polls, install programs on your PC, or make unwanted software appear more popular than it is.
     clickfraud = "clickfraud"
-    
+
     # Cryptocurrency mining malware.
     cryptominer = "cryptominer"
-    
+
     # These programs conduct DoS (Denial of Service) attacks against a targeted web address. By sending multiple requests from your computer and several other infected computers, the attack can overwhelm the target address leading to a denial of service.
     ddos = "ddos"
-    
+
     # Trojan Downloaders can download and install new versions of malicious programs in the target system.
     downloader = "downloader"
-    
+
     # These programs are used by hackers in order to install malware or to prevent the detection of malicious programs.
     dropper = "dropper"
-    
+
     # Exploit kits are programs that contain data or code that takes advantage of a vulnerability within an application that is running in the target system.
     exploitkit = "exploitkit"
-    
+
     # Trojan FakeAV programs simulate the activity of antivirus software. They are designed to extort money in return for the detection and removal of threat, even though the threats that they report are actually non-existent.
     fakeav = "fakeav"
-    
+
     # A type of tool that can be used to allow and maintain unauthorized access to your PC.
     hacktool = "hacktool"
-    
+
     # A program that collects your personal information, such as your browsing history, and uses it without adequate consent.
     infostealer = "infostealer"
-    
+
     # A keylogger monitors and logs every keystroke it can identify. Once installed, the virus either keeps track of all the keys and stores the information locally, after which the hacker needs physical access to the computer to retrieve the information, or the logs are sent over the internet back to the hacker.
     keylogger = "keylogger"
-    
+
     # A program that loads another application / memory space.
     loader = "loader"
-    
+
     # A type of malware that hides its code and purpose to make it more difficult for security software to detect or remove it.
     obfuscator = "obfuscator"
-    
+
     # Point-of-sale malware is usually a type of malware that is used by cybercriminals to target point of sale (POS) and payment terminals with the intent to obtain credit card and debit card information.
     pos = "pos"
-    
+
     # This type of trojan allows unauthorized parties to use the infected computer as a proxy server to access the Internet anonymously.
     proxy = "proxy"
-    
+
     # A program that can be used by a remote hacker to gain access and control of an infected machine.
     rat = "rat"
-    
+
     # This type of malware can modify data in the target computer so the operating system will stop running correctly or the data is no longer accessible. The criminal will only restore the computer state or data after a ransom is paid to them (mostly using cryptocurrency).
     ransomware = "ransomware"
-    
+
     # A reverse proxy is a server that receives requests from the internet and forwards them to a small set of servers.
     reverse_proxy = "reverse_proxy"
-    
+
     # Rootkits are designed to conceal certain objects or activities in the system. Often their main purpose is to prevent malicious programs being detected in order to extend the period in which programs can run on an infected computer.
     rootkit = "rootkit"
-    
+
     # This type of malware scan the internet / network(s) / system(s) / service(s) to collect information. That information could be used later to perpetuate an cyber attack.
     scanner = "scanner"
-    
+
     # Scareware is a form of malware which uses social engineering to cause shock, anxiety, or the perception of a threat in order to manipulate users into buying unwanted software.
     scareware = "scareware"
-    
+
     # Malware that is sending spam.
     spammer = "spammer"
-    
+
     # Generic or Unknown Trojan
     trojan = "trojan"
-    
+
     # A generic computer virus
     virus = "virus"
-    
+
     # A type of malware that destroy the data.
     wiper = "wiper"
-    
+
     # A web shell is a script that can be uploaded to a web server to enable remote administration of the machine.
     webshell = "webshell"
-    
+
     # A type of malware that spreads to other PCs.
     worm = "worm"
 
@@ -217,7 +217,6 @@ class ExtractorModel(ForbidModel):
     decoded_strings: List[str] = []  # decoded strings from within malware
     password: List[str] = []  # Any password extracted from the binary
     mutex: List[str] = []  # mutex to prevent multiple instances
-    pipe: List[str] = []  # pipe name used for communication
     sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
     sleep_delay_jitter: Optional[int] = None  # additional time applied to sleep_delay (milliseconds). Jitter implementations can vary but usually it is a value from which a random number is generated and added/subtracted to the sleep_delay to make behaviour more unpredictable
     inject_exe: List[str] = []  # name of executable to inject into
@@ -262,7 +261,6 @@ class ExtractorModel(ForbidModel):
     #
     # communication protocols
     #
-
     class FTP(ForbidModel):
         """Usage of FTP connection."""
 
@@ -347,6 +345,54 @@ class ExtractorModel(ForbidModel):
         usage: Optional[ConnUsageEnum] = None
 
     proxy: List[Proxy] = []
+
+    #
+    # inter process communication (IPC)
+    #
+    class Pipe(ForbidModel):
+        """ Usage of named pipe communications. """
+        # A record stored on disk, or a record synthesized on demand by a file
+        # server, which can be accessed by multiple processes.
+        file: Optional[List[str]] = None
+        # Data sent over a network interface, either to a different process on
+        # the same computer or to another computer on the network. Stream
+        # oriented (TCP; data written through a socket requires formatting to
+        # preserve message boundaries) or more rarely message-oriented (UDP,
+        # SCTP).
+        socket: Optional[List[str]] = None
+        # Similar to an internet socket, but all communication occurs within
+        # the kernel. Domain sockets use the file system as their address
+        # space. Processes reference a domain socket as an inode, and multiple
+        # processes can communicate with one socket.
+        unix_domain_socket: Optional[List[str]] = None
+        # A file mapped to RAM and can be modified by changing memory
+        # addresses directly instead of outputting to a stream. This shares
+        # the same benefits as a standard file.
+        memory_mapped_file: Optional[Union[bytes, List[str]]] = None
+        # A data stream similar to a socket, but which usually preserves
+        # message boundaries. Typically implemented by the operating system,
+        # they allow multiple processes to read and write to the message queue
+        # without being directly connected to each other.
+        message_queue: Optional[List[str]] = None
+        # A unidirectional data channel using standard input and output. Data
+        # written to the write-end of the pipe is buffered by the operating
+        # system until it is read from the read-end of the pipe. Two-way
+        # communication between processes can be achieved by using two pipes
+        # in opposite "directions".
+        anonymous_pipe: Optional[List[str]] = None
+        # A pipe that is treated like a file. Instead of using standard input
+        # and output as with an anonymous pipe, processes write to and read
+        # from a named pipe, as if it were a regular file.
+        named_pipe: Optional[List[str]] = None
+        # The process names involved in the IPC communication
+        process_names: Optional[List[str]] = None
+        # Multiple processes are given access to the same block of memory,
+        # which creates a shared buffer for the processes to communicate with
+        # each other.
+        shared_memory: Optional[bytes] = None
+        usage: Optional[ConnUsageEnum] = None
+
+    pipe: List[Pipe] = []  # pipe name used for communication
 
     class DNS(ForbidModel):
         """Direct usage of DNS."""
