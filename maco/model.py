@@ -220,6 +220,7 @@ class ExtractorModel(ForbidModel):
     sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
     sleep_delay_jitter: Optional[int] = None  # additional time applied to sleep_delay (milliseconds). Jitter implementations can vary but usually it is a value from which a random number is generated and added/subtracted to the sleep_delay to make behaviour more unpredictable
     inject_exe: List[str] = []  # name of executable to inject into
+    pipe: List[str] = []  # pipe name used for communication
 
     # configuration or clustering/research data that doesnt fit the other fields
     # * rarely used by decoders or specific to one decoder
@@ -349,7 +350,7 @@ class ExtractorModel(ForbidModel):
     #
     # inter process communication (IPC)
     #
-    class Pipe(ForbidModel):
+    class Ipc(ForbidModel):
         """ Usage of ipc communications. """
         # A record stored on disk, or a record synthesized on demand by a file
         # server, which can be accessed by multiple processes.
@@ -392,7 +393,7 @@ class ExtractorModel(ForbidModel):
         shared_memory: Optional[bytes] = None
         usage: Optional[ConnUsageEnum] = None
 
-    pipe: List[Pipe] = []  # pipe name used for communication
+    ipc: List[Ipc] = []  # ipc used for communication
 
     class DNS(ForbidModel):
         """Direct usage of DNS."""
