@@ -395,11 +395,17 @@ class ExtractorModel(ForbidModel):
 
     ipc: List[Ipc] = []  # ipc used for communication
 
+
+    #
+    # Domain Name Resolution (DNS) communication
+    #
     class DNS(ForbidModel):
-        """Direct usage of DNS."""
+        """ Direct usage of DNS. """
 
         ip: Optional[str] = None
-        port: Optional[int] = None  # usually 53
+        port: Optional[int] = None  # The default value is 53
+        hostname: Optional[str] = None # The DNS request hostname
+        record_type: Optional[str] = None # The DNS record type that is queried (Ex. DNS_TYPE_TEXT, DNS_TYPE_A).
 
         usage: Optional[ConnUsageEnum] = None
 
