@@ -449,7 +449,7 @@ class ExtractorModel(ForbidModel):
 
         ip: Optional[str] = None
         port: Optional[int] = None  # The default value is 53
-        hostname: Optional[str] = None  # The DNS request hostname
+        hostname: Optional[str] = None  # This is the query hostname
         record_type: Optional[RecordTypeEnum] = None  # The DNS record type that is queried
         usage: Optional[ConnUsageEnum] = None
 
