@@ -307,7 +307,7 @@ class ExtractorModel(ForbidModel):
         protocol: Optional[str] = None  # http,https
         username: Optional[str] = None
         password: Optional[str] = None
-        hostname: Optional[str] = None
+        hostname: Optional[str] = None  # (A host/hostname can be an IP, domain or hostname)
         port: Optional[int] = None
         path: Optional[str] = None
         query: Optional[str] = None
@@ -398,9 +398,59 @@ class ExtractorModel(ForbidModel):
     class DNS(ForbidModel):
         """Direct usage of DNS."""
 
-        ip: Optional[str] = None
-        port: Optional[int] = None  # usually 53
+        class RecordTypeEnum(str, Enum):
+            A = "A"
+            AAAA = "AAAA"
+            AFSDB = "AFSDB"
+            APL = "APL"
+            CAA = "CAA"
+            CDNSKEY = "CDNSKEY"
+            CDS = "CDS"
+            CERT = "CERT"
+            CNAME = "CNAME"
+            CSYNC = "CSYNC"
+            DHCID = "DHCID"
+            DLV = "DLV"
+            DNAME = "DNAME"
+            DNSKEY = "DNSKEY"
+            DS = "DS"
+            EUI48 = "EUI48"
+            EUI64 = "EUI64"
+            HINFO = "HINFO"
+            HIP = "HIP"
+            HTTPS = "HTTPS"
+            IPSECKEY = "IPSECKEY"
+            KEY = "KEY"
+            KX = "KX"
+            LOC = "LOC"
+            MX = "MX"
+            NAPTR = "NAPTR"
+            NS = "NS"
+            NSEC = "NSEC"
+            NSEC3 = "NSEC3"
+            NSEC3PARAM = "NSEC3PARAM"
+            OPENPGPKEY = "OPENPGPKEY"
+            PTR = "PTR"
+            RRSIG = "RRSIG"
+            RP = "RP"
+            SIG = "SIG"
+            SMIMEA = "SMIMEA"
+            SOA = "SOA"
+            SRV = "SRV"
+            SSHFP = "SSHFP"
+            SVCB = "SVCB"
+            TA = "TA"
+            TKEY = "TKEY"
+            TLSA = "TLSA"
+            TSIG = "TSIG"
+            TXT = "TXT"
+            URI = "URI"
+            ZONEMD = "ZONEMD"
 
+        ip: Optional[str] = None
+        port: Optional[int] = None  # The default value is 53
+        hostname: Optional[str] = None  # This is the query hostname
+        record_type: Optional[RecordTypeEnum] = None  # The DNS record type that is queried
         usage: Optional[ConnUsageEnum] = None
 
     dns: List[DNS] = []  # custom DNS address to use for name resolution
