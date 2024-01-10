@@ -90,13 +90,15 @@ def process_filesystem(
     pretty: bool,
     force: bool,
     include_base64: bool,
+    create_venv: bool = False,
 ):
     if force:
-        logger.warning("force execute will cause errors if an extractor " "requires a yara rule hit during execution")
-    collected = collector.Collector(path_extractors, include=include, exclude=exclude)
+        logger.warning("force execute will cause errors if an extractor requires a yara rule hit during execution")
+    collected = collector.Collector(path_extractors, include=include, exclude=exclude, create_venv=create_venv)
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
     for _, extractor in collected.extractors.items():
+        extractor = extractor["module"]
         logger.info(
             f"{extractor.family} by {extractor.author}"
             f" {extractor.last_modified} {extractor.sharing}"
@@ -169,6 +171,11 @@ def main():
         "--force",
         action="store_true",
         help="ignore yara rules and execute all extractors",
+    )
+    parser.add_argument(
+        "--create_venv",
+        action="store_true",
+        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory)",
     )
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []

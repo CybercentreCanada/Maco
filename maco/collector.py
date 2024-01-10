@@ -8,6 +8,7 @@ import pkgutil
 import subprocess
 import sys
 from glob import glob
+from sys import executable as python_exe
 from tempfile import NamedTemporaryFile
 from typing import Any, BinaryIO, Dict, List
 
@@ -74,15 +75,23 @@ def _verify_response(resp: BaseModel) -> Dict:
 
 class Collector:
     def __init__(
-        self,
-        path_extractors: str,
-        include: List[str] = None,
-        exclude: List[str] = None,
+        self, path_extractors: str, include: List[str] = None, exclude: List[str] = None, create_venv: bool = False
     ):
         """Discover and load extractors from file system."""
         self.path = path_extractors
         self.include = include
         self.exclude = exclude
+
+        if create_venv and os.path.isdir(path_extractors):
+            for root, _, files in os.walk(path_extractors):
+                if "requirements.txt" in files:
+                    # Create venv
+                    subprocess.run([python_exe, "-m", "venv", os.path.join(root, "venv")], capture_output=True)
+                    subprocess.run(
+                        [os.path.join(root, "venv/bin/pip"), "install", "-r", "requirements.txt"],
+                        cwd=root,
+                        capture_output=True,
+                    )
 
         self.extractors = self._find_extractors()
 
