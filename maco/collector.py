@@ -7,6 +7,7 @@ import os
 import pkgutil
 import subprocess
 import sys
+from base64 import b64decode
 from glob import glob
 from sys import executable as python_exe
 from tempfile import NamedTemporaryFile
@@ -20,6 +21,19 @@ from . import extractor, model
 
 class ExtractorLoadError(Exception):
     pass
+
+
+class Base64Decoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        if "__class__" not in obj:
+            return obj
+        type = obj["__class__"]
+        if type == "bytes":
+            return b64decode(obj["data"])
+        return obj
 
 
 logger = logging.getLogger("maco.lib.helpers")
@@ -40,10 +54,12 @@ mod = importlib.import_module("{module_name}")
 class Base64Encoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, bytes):
-            return b64encode(o).decode()
+            return dict(__class__="bytes", data=b64encode(o).decode())
         return json.JSONEncoder.default(self, o)
-
-result = mod.{module_class}().run(open("{sample_path}", 'rb'), matches=yara.compile(source=mod.{module_class}.yara_rule).match("{sample_path}"))
+matches = []
+if mod.{module_class}.yara_rule:
+    matches = yara.compile(source=mod.{module_class}.yara_rule).match("{sample_path}")
+result = mod.{module_class}().run(open("{sample_path}", 'rb'), matches=matches)
 
 with open("{output_path}", 'w') as fp:
     if not result:
@@ -261,7 +277,7 @@ class Collector:
                             try:
                                 # Load results and return them
                                 output.seek(0)
-                                return json.load(output)
+                                return json.load(output, cls=Base64Decoder)
                             except Exception:
                                 # If there was an error raised during runtime, then propagate
                                 delim = f'File "{extractor["module_path"]}"'
