@@ -10,9 +10,9 @@ import sys
 from glob import glob
 from tempfile import NamedTemporaryFile
 from typing import Any, BinaryIO, Dict, List
-from pydantic import BaseModel
 
 import yara
+from pydantic import BaseModel
 
 from . import extractor, model
 
@@ -55,6 +55,7 @@ with open("{output_path}", 'w') as fp:
             json.dump(result.dict(exclude_defaults=True, exclude_none=True), fp, cls=Base64Encoder)
 """
 
+
 def _verify_response(resp: BaseModel) -> Dict:
     """Enforce types and verify properties, and remove defaults."""
     # check the response is valid for its own model
@@ -86,7 +87,7 @@ class Collector:
         self.extractors = self._find_extractors()
 
         # compile yara rules gathered from extractors
-        rules_merged = "\n".join([x["module"].yara_rule or '' for x in self.extractors.values()])
+        rules_merged = "\n".join([x["module"].yara_rule or "" for x in self.extractors.values()])
         self.rules = yara.compile(source=rules_merged)
 
         # map rule names to extractors, since each extractor can have multiple rules
@@ -138,9 +139,7 @@ class Collector:
 
         # walk packages in the extractors directory to find all extactors
         extractors = {}
-        for module_path, module_name, ispkg in pkgutil.walk_packages(
-            mod.__path__, mod.__name__ + "."
-        ):
+        for module_path, module_name, ispkg in pkgutil.walk_packages(mod.__path__, mod.__name__ + "."):
             if ispkg:
                 # skip __init__.py
                 continue
@@ -244,9 +243,7 @@ class Collector:
                                 )
                             )
                             script.flush()
-                            custom_module = (
-                                script.name.split(".py")[0].replace(f"{self.path}/", "").replace("/", ".")
-                            )
+                            custom_module = script.name.split(".py")[0].replace(f"{self.path}/", "").replace("/", ".")
                             proc = subprocess.run(
                                 [python_exe, "-m", custom_module],
                                 cwd=self.path,

@@ -55,9 +55,7 @@ def process_file(
     ret = {}
     for extractor_name, hits in runs.items():
         # run and store results for extractor
-        logger.info(
-            f"run {extractor_name} extractor from rules {[x.rule for x in hits]}"
-        )
+        logger.info(f"run {extractor_name} extractor from rules {[x.rule for x in hits]}")
         try:
             resp = collected.extract(stream, hits, extractor_name)
         except Exception as e:
@@ -70,9 +68,7 @@ def process_file(
                 # number of bytes in the binary
                 row["size"] = len(row["data"])
                 # small sample of first part of binary
-                row["hex_sample"] = (
-                    binascii.hexlify(row["data"][:32]).decode("utf8").upper()
-                )
+                row["hex_sample"] = binascii.hexlify(row["data"][:32]).decode("utf8").upper()
                 if include_base64:
                     # this can be large
                     row["base64"] = base64.b64encode(row["data"]).decode("utf8")
@@ -96,10 +92,7 @@ def process_filesystem(
     include_base64: bool,
 ):
     if force:
-        logger.warning(
-            "force execute will cause errors if an extractor "
-            "requires a yara rule hit during execution"
-        )
+        logger.warning("force execute will cause errors if an extractor " "requires a yara rule hit during execution")
     collected = collector.Collector(path_extractors, include=include, exclude=exclude)
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
@@ -148,9 +141,7 @@ def process_filesystem(
         raise
     finally:
         logger.info("")
-        logger.info(
-            f"{num_analysed} analysed, {num_hits} hits, {num_extracted} extracted"
-        )
+        logger.info(f"{num_analysed} analysed, {num_hits} hits, {num_extracted} extracted")
 
 
 def main():
@@ -164,9 +155,7 @@ def main():
         default=0,
         help="print debug logging. -v extractor info, -vv extractor debug, -vvv cli debug",
     )
-    parser.add_argument(
-        "--pretty", action="store_true", help="pretty print json output"
-    )
+    parser.add_argument("--pretty", action="store_true", help="pretty print json output")
     parser.add_argument(
         "--base64",
         action="store_true",
@@ -174,9 +163,7 @@ def main():
     )
     parser.add_argument("--logfile", type=str, help="file to log output")
     parser.add_argument("--include", type=str, help="comma separated extractors to run")
-    parser.add_argument(
-        "--exclude", type=str, help="comma separated extractors to not run"
-    )
+    parser.add_argument("--exclude", type=str, help="comma separated extractors to not run")
     parser.add_argument(
         "-f",
         "--force",
@@ -205,8 +192,7 @@ def main():
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        fmt="%(asctime)s, [%(levelname)s] %(module)s.%(funcName)s: %(message)s",
-        datefmt="%Y-%m-%d (%H:%M:%S)"
+        fmt="%(asctime)s, [%(levelname)s] %(module)s.%(funcName)s: %(message)s", datefmt="%Y-%m-%d (%H:%M:%S)"
     )
     ch.setFormatter(formatter)
     logger_ex.addHandler(ch)
