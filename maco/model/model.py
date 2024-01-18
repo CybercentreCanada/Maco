@@ -1,8 +1,8 @@
 """Malware config extractor output model."""
 from enum import Enum
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ForbidModel(BaseModel):
@@ -219,7 +219,9 @@ class ExtractorModel(ForbidModel):
     mutex: List[str] = []  # mutex to prevent multiple instances
     pipe: List[str] = []  # pipe name used for communication
     sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
-    sleep_delay_jitter: Optional[int] = None  # additional time applied to sleep_delay (milliseconds). Jitter implementations can vary but usually it is a value from which a random number is generated and added/subtracted to the sleep_delay to make behaviour more unpredictable
+    sleep_delay_jitter: Optional[
+        int
+    ] = None  # additional time applied to sleep_delay (milliseconds). Jitter implementations can vary but usually it is a value from which a random number is generated and added/subtracted to the sleep_delay to make behaviour more unpredictable
     inject_exe: List[str] = []  # name of executable to inject into
 
     # configuration or clustering/research data that doesnt fit the other fields
@@ -253,9 +255,7 @@ class ExtractorModel(ForbidModel):
         class Encryption(Encryption):
             pass
 
-        encryption: Union[
-            List[Encryption], Encryption, None
-        ] = None  # encryption information for the binary
+        encryption: Union[List[Encryption], Encryption, None] = None  # encryption information for the binary
 
     binaries: List[Binary] = []
 
@@ -351,7 +351,8 @@ class ExtractorModel(ForbidModel):
     # inter process communication (IPC)
     #
     class IPC(ForbidModel):
-        """ Usage of named pipe communications. """
+        """Usage of named pipe communications."""
+
         # A record stored on disk, or a record synthesized on demand by a file
         # server, which can be accessed by multiple processes.
         file: Optional[List[str]] = None

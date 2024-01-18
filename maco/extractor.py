@@ -56,15 +56,11 @@ class Extractor:
             raise InvalidExtractor(f"{name} must define at least one yara rule")
         for x in rules:
             if not x.identifier.startswith(name):
-                raise InvalidExtractor(
-                    f"{x.identifier} yara rule must start with '{name}'"
-                )
+                raise InvalidExtractor(f"{x.identifier} yara rule must start with '{name}'")
             if x.is_global:
                 raise InvalidExtractor(f"{x.identifier} yara rule must not be global")
 
-    def run(
-        self, stream: BinaryIO, matches: List[yara.Match]
-    ) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BinaryIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
         """Run the analysis process and return dict matching.
 
         :param stream: file object from disk/network/memory.

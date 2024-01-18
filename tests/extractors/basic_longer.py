@@ -23,9 +23,7 @@ class BasicLonger(extractor.Extractor):
         }
         """
 
-    def run(
-        self, stream: BytesIO, matches: List[yara.Match]
-    ) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
         # use a custom model that inherits from ExtractorModel
         # this model defines what can go in the 'other' dict
         tmp = model.ExtractorModel(family="basic_longer")

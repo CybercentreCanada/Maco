@@ -3,7 +3,7 @@ from typing import Dict
 
 from pydantic import ValidationError
 
-from maco import model, collector
+from maco import collector, model
 
 
 class TestModelObject(unittest.TestCase):
@@ -216,9 +216,7 @@ class TestModelObject(unittest.TestCase):
                 em.Path(path="\\here\\is\\some\\place", usage="install"),
             ],
             registry=[
-                em.Registry(
-                    key="HKLM_LOCAL_USER/some/location/to/key", usage="store_data"
-                ),
+                em.Registry(key="HKLM_LOCAL_USER/some/location/to/key", usage="store_data"),
                 em.Registry(key="HKLM_LOCAL_USER/system/location", usage="read"),
             ],
         )
