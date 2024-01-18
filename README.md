@@ -159,7 +159,7 @@ All required python packages are in the requirements.txt
 
 ```bash
 > maco --help
-usage: maco [-h] [-v] [--pretty] [--base64] [--logfile LOGFILE] [--include INCLUDE] [--exclude EXCLUDE] [-f] extractors samples
+usage: maco [-h] [-v] [--pretty] [--base64] [--logfile LOGFILE] [--include INCLUDE] [--exclude EXCLUDE] [-f] [--create_venv] extractors samples
 
 Run extractors over samples.
 
@@ -176,6 +176,7 @@ optional arguments:
   --include INCLUDE  comma separated extractors to run
   --exclude EXCLUDE  comma separated extractors to not run
   -f, --force        ignore yara rules and execute all extractors
+  --create_venv      Creates venvs for every requirements.txt found (only applies when extractor path is a directory)
 ```
 
 ## CLI output example
