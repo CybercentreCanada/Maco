@@ -102,12 +102,18 @@ class Collector:
             for root, _, files in os.walk(path_extractors):
                 if "requirements.txt" in files:
                     # Create venv
-                    subprocess.run([python_exe, "-m", "venv", os.path.join(root, "venv")], capture_output=True)
-                    subprocess.run(
+                    venv_path = os.path.join(root, "venv")
+                    logger.debug(f"creating venv at: {venv_path}")
+                    subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+                    p = subprocess.run(
                         [os.path.join(root, "venv/bin/pip"), "install", "-r", "requirements.txt"],
                         cwd=root,
                         capture_output=True,
                     )
+                    rpath = os.path.join(root, "requirements.txt")
+                    if p.stderr:
+                        logger.error(f"error installing {rpath} into venv:\n{p.stderr}")
+                    logger.debug(f"installed {rpath} into venv:\n{p.stdout}")
 
         self.extractors = self._find_extractors()
 
