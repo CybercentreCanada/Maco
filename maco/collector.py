@@ -106,7 +106,7 @@ class Collector:
                     logger.debug(f"creating venv at: {venv_path}")
                     subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
                     p = subprocess.run(
-                        [os.path.join(root, "venv/bin/pip"), "install", "-r", "requirements.txt"],
+                        ["venv/bin/pip", "install", "-r", "requirements.txt", "--disable-pip-version-check"],
                         cwd=root,
                         capture_output=True,
                     )
