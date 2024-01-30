@@ -221,6 +221,7 @@ def main():
         pretty=args.pretty,
         force=args.force,
         include_base64=args.base64,
+        create_venv=args.create_venv
     )
 
 
