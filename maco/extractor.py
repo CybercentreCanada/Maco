@@ -1,4 +1,5 @@
 """Base class for an extractor script."""
+
 import logging
 import textwrap
 from typing import BinaryIO, List, Optional, Union
@@ -55,8 +56,6 @@ class Extractor:
         if not len(list(rules)):
             raise InvalidExtractor(f"{name} must define at least one yara rule")
         for x in rules:
-            if not x.identifier.startswith(name):
-                raise InvalidExtractor(f"{x.identifier} yara rule must start with '{name}'")
             if x.is_global:
                 raise InvalidExtractor(f"{x.identifier} yara rule must not be global")
 

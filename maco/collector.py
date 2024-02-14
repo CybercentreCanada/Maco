@@ -1,4 +1,5 @@
 """Convenience functions for discovering your extractors."""
+
 import importlib
 import inspect
 import json
@@ -118,13 +119,11 @@ class Collector:
         self.extractors = self._find_extractors()
 
         # compile yara rules gathered from extractors
-        rules_merged = "\n".join([x["module"].yara_rule or "" for x in self.extractors.values()])
-        self.rules = yara.compile(source=rules_merged)
-
-        # map rule names to extractors, since each extractor can have multiple rules
-        self.rule_map = {}
-        for k, v in self.extractors.items():
-            self.rule_map.update({r: k for r in v["module"]().yara_rule_names})
+        namespaced_rules = {
+            extractor_name: extractor_props["module"].yara_rule
+            for extractor_name, extractor_props in self.extractors.items()
+        }
+        self.rules = yara.compile(sources=namespaced_rules)
 
     def _find_extractors(self):
         """Find extractors from the supplied path."""
@@ -237,7 +236,7 @@ class Collector:
         # get all rules that hit for each extractor
         runs = {}
         for match in matches:
-            runs.setdefault(self.rule_map[match.rule], []).append(match)
+            runs.setdefault(match.namespace, []).append(match)
 
         return runs
 
