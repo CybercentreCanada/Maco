@@ -1,4 +1,5 @@
 """Malware config extractor output model."""
+
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -156,7 +157,7 @@ class CategoryEnum(str, Enum):
 
 
 class ExtractorModel(ForbidModel):
-    """Captured config/iocs, unpacked binaries and other malware properties from a robo-analyst.
+    r"""Captured config/iocs, unpacked binaries and other malware properties from a robo-analyst.
 
     This model defines common fields for output of a script targeting a specific malware family.
     Usage of this model will allow for easier sharing of scripts between different authors and systems.
@@ -219,9 +220,10 @@ class ExtractorModel(ForbidModel):
     mutex: List[str] = []  # mutex to prevent multiple instances
     pipe: List[str] = []  # pipe name used for communication
     sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
-    sleep_delay_jitter: Optional[
-        int
-    ] = None  # additional time applied to sleep_delay (milliseconds). Jitter implementations can vary but usually it is a value from which a random number is generated and added/subtracted to the sleep_delay to make behaviour more unpredictable
+    # additional time applied to sleep_delay (milliseconds).
+    # Jitter implementations can vary but usually it is a value from which a random number is generated and
+    # added/subtracted to the sleep_delay to make behaviour more unpredictable
+    sleep_delay_jitter: Optional[int] = None
     inject_exe: List[str] = []  # name of executable to inject into
 
     # configuration or clustering/research data that doesnt fit the other fields
