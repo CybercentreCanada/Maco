@@ -20,6 +20,11 @@ Maco components
 
 **Note: If you're interested in using only the model in your project, you can install `maco-model` which is a smaller package containing only the model definition**
 
+## Project Integrations
+Since this framework introduces an output standard that can be adoptable by other malware configuration frameworks since it's leveraging Pydantic, it's actively being used by:
+ - [ConfigExtractor Python package](https://github.com/CybercentreCanada/configextractor-py) which is geared towards running any framework within a single tool but output to a common format using MACO.
+ - [Assemblyline](https://cybercentrecanada.github.io/assemblyline4_docs/) which is a malware analysis platform that has the ability to export its results to a machine-friendly format using the MACO model for malware config. extractions.
+
 ## Model Example
 See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields
 You can use the model independently of the rest of the framework.
