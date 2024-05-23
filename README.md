@@ -1,32 +1,32 @@
 # Maco - Malware config extractor framework
 
-Maco is a framework for **ma**lware **co**nfig extractors.
+## Maco is a framework for ***ma***lware ***co***nfig extractors.
 
-It aim for solve two problems:
-* Define a standardize ontology (or model) for extractor output. This greatly help for databasing extracted values.
-* Provide a standard way of identifying which parsers to run and how to execute it.
+It aims to solve two problems:
+* Define a standardize ontology (or model) for extractor output. This greatly helps for databasing extracted values.
+* Provide a standard way of identifying which parsers to run and how to execute them.
 
-Maco components
-* model.py
-    * a data model for common output of an extractor
-* extractor.py
+## Maco components
+* `model.py`
+    * a data model for the common output of an extractor
+* `extractor.py`
     * base class for extractors to implement
-* collector.py
+* `collector.py`
     * utilities for loading and running extractors
-* cli.py
-    * a cli tool `maco` to assist with running your extractors locally
-* base_test.py
+* `cli.py`
+    * a CLI tool `maco` to assist with running your extractors locally
+* `base_test.py`
     * assist with writing unit tests for your extractors
 
-**Note: If you're interested in using only the model in your project, you can install `maco-model` which is a smaller package containing only the model definition**
+**Note: If you're interested in using only the model in your project, you can `pip install maco-model` which is a smaller package containing only the model definition**
 
 ## Project Integrations
-Since this framework introduces an output standard that can be adoptable by other malware configuration frameworks since it's leveraging Pydantic, it's actively being used by:
- - [ConfigExtractor Python package](https://github.com/CybercentreCanada/configextractor-py) which is geared towards running any framework within a single tool but output to a common format using MACO.
- - [Assemblyline](https://cybercentrecanada.github.io/assemblyline4_docs/) which is a malware analysis platform that has the ability to export its results to a machine-friendly format using the MACO model for malware config. extractions.
+Since this framework introduces an output standard that can be adoptable by other malware configuration frameworks beacuse it is leveraging Pydantic, it's actively being used by:
+ - [ConfigExtractor Python package](https://github.com/CybercentreCanada/configextractor-py), which is geared towards running any framework within a single tool but outputs to a common format using Maco.
+ - [Assemblyline](https://cybercentrecanada.github.io/assemblyline4_docs/), which is a malware analysis platform that has the ability to export its results to a machine-friendly format using the Maco model for malware configuration extractions.
 
 ## Model Example
-See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields
+See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields.
 You can use the model independently of the rest of the framework.
 This is still useful for compatibility between systems!
 
@@ -75,7 +75,7 @@ print(output.model_dump(exclude_defaults=True))
 }
 ```
 
-And you can create model instances from dictionaries
+And you can create model instances from dictionaries:
 
 ```python
 from maco import model
@@ -104,7 +104,7 @@ paths=[] registry=[]
 
 ## Extractor Example
 
-The following extractor will trigger on any file with more than 50 elf sections,
+The following extractor will trigger on any file with more than 50 ELF sections,
 and set some properties in the model.
 
 Your extractors will do a better job of finding useful information than this one!
@@ -138,25 +138,25 @@ class Elfy(extractor.Extractor):
 
 ## Writing Extractors
 
-There are several examples that use Maco in the 'demo_extractors' folder.
+There are several examples that use Maco in the '`demo_extractors`' folder.
 
-Some things to keep in mind
-* The yara rule names must be prefixed with the extractor class name.
-    * e.g. class 'MyScript' has yara rules named 'MyScriptDetect1' and 'MyScriptDetect2', not 'Detect1'
-* You can load other scripts contained within the same folder via a python relative import
+Some things to keep in mind:
+* The Yara rule names must be prefixed with the extractor class name.
+    * e.g. class 'MyScript' has Yara rules named 'MyScriptDetect1' and 'MyScriptDetect2', not 'Detect1'
+* You can load other scripts contained within the same folder via a Python relative import
     * see `complex.py` for details
-* You can standardise your usage of the 'other' dict
+* You can standardise your usage of the '`other`' dict
     * this is optional, see `limit_other.py` for details
     * consider instead making a PR with the properties you are frequently using
 
 # Requirements
 
 
-Python 3.8+
+Python 3.8+.
 
 Install this package with `pip install maco`.
 
-All required python packages are in the requirements.txt
+All required Python packages are in the `requirements.txt`.
 
 
 # CLI Usage
@@ -185,7 +185,7 @@ optional arguments:
 ```
 
 ## CLI output example
-The CLI is helpful for using your extractors in a standalone system, such as on in reverse engenering environment.
+The CLI is helpful for using your extractors in a standalone system, such as in an reverse engineering environment.
 
 ```bash
 > maco demo_extractors/ /usr/lib --include Complex
@@ -222,5 +222,6 @@ run Complex extractor from rules ['ComplexAlt']
 15884 analysed, 3 hits, 3 extracted
 ```
 
-The demo extractors are designed to trigger when run over the 'demo_extractors' folder.
+The demo extractors are designed to trigger when run over the '`demo_extractors`' folder.
+
 e.g. `maco demo_extractors demo_extractors`
