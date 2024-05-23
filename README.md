@@ -8,20 +8,20 @@ It aims to solve two problems:
 
 ## Maco components
 * `model.py`
-    * a data model for the common output of an extractor
+    * A data model for the common output of an extractor
 * `extractor.py`
-    * base class for extractors to implement
+    * Base class for extractors to implement
 * `collector.py`
-    * utilities for loading and running extractors
+    * Utilities for loading and running extractors
 * `cli.py`
-    * a CLI tool `maco` to assist with running your extractors locally
+    * A CLI tool `maco` to assist with running your extractors locally
 * `base_test.py`
-    * assist with writing unit tests for your extractors
+    * Assist with writing unit tests for your extractors
 
 **Note: If you're interested in using only the model in your project, you can `pip install maco-model` which is a smaller package containing only the model definition**
 
 ## Project Integrations
-Since this framework introduces an output standard that can be adoptable by other malware configuration frameworks beacuse it is leveraging Pydantic, it's actively being used by:
+This framework is actively being used by:
  - [ConfigExtractor Python package](https://github.com/CybercentreCanada/configextractor-py), which is geared towards running any framework within a single tool but outputs to a common format using Maco.
  - [Assemblyline](https://cybercentrecanada.github.io/assemblyline4_docs/), which is a malware analysis platform that has the ability to export its results to a machine-friendly format using the Maco model for malware configuration extractions.
 
@@ -142,12 +142,12 @@ There are several examples that use Maco in the '`demo_extractors`' folder.
 
 Some things to keep in mind:
 * The Yara rule names must be prefixed with the extractor class name.
-    * e.g. class 'MyScript' has Yara rules named 'MyScriptDetect1' and 'MyScriptDetect2', not 'Detect1'
+    * e.g. Class 'MyScript' has Yara rules named 'MyScriptDetect1' and 'MyScriptDetect2', not 'Detect1'
 * You can load other scripts contained within the same folder via a Python relative import
-    * see `complex.py` for details
+    * See `complex.py` for details
 * You can standardise your usage of the '`other`' dict
-    * this is optional, see `limit_other.py` for details
-    * consider instead making a PR with the properties you are frequently using
+    * This is optional, see `limit_other.py` for details
+    * Consider instead making a PR with the properties you are frequently using
 
 # Requirements
 
@@ -185,7 +185,7 @@ optional arguments:
 ```
 
 ## CLI output example
-The CLI is helpful for using your extractors in a standalone system, such as in an reverse engineering environment.
+The CLI is helpful for using your extractors in a standalone system, such as in a reverse engineering environment.
 
 ```bash
 > maco demo_extractors/ /usr/lib --include Complex
