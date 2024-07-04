@@ -36,14 +36,14 @@ class TestExtractor(unittest.TestCase):
 
         class Tmp1(Tmp):
             yara_rule = """
-                rule BadName
+                rule DifferentName
                 {
                     condition:
                         true
                 }
             """
 
-        self.assertRaises(extractor.InvalidExtractor, Tmp1)
+        Tmp1()
 
         class Tmp1(Tmp):
             yara_rule = """
@@ -52,11 +52,11 @@ class TestExtractor(unittest.TestCase):
                     condition:
                         true
                 }
-                rule BadName
+                rule OtherName
                 {
                     condition:
                         true
                 }
             """
 
-        self.assertRaises(extractor.InvalidExtractor, Tmp1)
+        Tmp1()

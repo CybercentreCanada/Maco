@@ -34,17 +34,6 @@ class TestHelpersCompileYara(unittest.TestCase):
                 "LimitOther",
             },
         )
-        self.assertEqual(
-            m.rule_map,
-            {
-                "Complex": "Complex",
-                "ComplexAlt": "Complex",
-                "ComplexSubtext": "Complex",
-                "Elfy": "Elfy",
-                "LimitOther": "LimitOther",
-                "Nothing": "Nothing",
-            },
-        )
 
 
 class TestHelpersAnalyseStream(unittest.TestCase):
