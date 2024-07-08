@@ -14,3 +14,4 @@ class TestLimitOther(base_test.BaseTest):
     def test_run(self):
         ret = self.extract(self.load_cart("data/example.txt.cart"))
         self.assertEqual(ret["family"], "specify_other")
+        self.assertEqual(ret["campaign_id"], ["12345"])
