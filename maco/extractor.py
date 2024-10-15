@@ -12,6 +12,14 @@ from . import model
 class InvalidExtractor(ValueError):
     pass
 
+DEFAULT_YARA_RULE = \
+"""
+rule {name}
+{{
+    condition:
+        true
+}}
+"""
 
 class Extractor:
     """Base class for an analysis extractor with common entrypoint and metadata.
@@ -35,13 +43,7 @@ class Extractor:
             raise InvalidExtractor("must set family, author, last_modified")
         # if author does not set a yara rule, match on everything
         if not self.yara_rule:
-            self.yara_rule = f"""
-                rule {name}
-                {{
-                    condition:
-                        true
-                }}
-                """
+            self.yara_rule = DEFAULT_YARA_RULE.format(name=name)
         # unindent the yara rule from triple quoted string
         # this is for friendly printing, yara handles the rule ok either way
         self.yara_rule = textwrap.dedent(self.yara_rule)
