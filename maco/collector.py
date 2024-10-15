@@ -120,7 +120,8 @@ class Collector:
 
         # compile yara rules gathered from extractors
         namespaced_rules = {
-            extractor_name: extractor_props["module"].yara_rule
+            extractor_name: extractor_props["module"].yara_rule or \
+                extractor.DEFAULT_YARA_RULE.format(name=extractor_name)
             for extractor_name, extractor_props in self.extractors.items()
         }
         self.rules = yara.compile(sources=namespaced_rules)
