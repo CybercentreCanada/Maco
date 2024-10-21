@@ -20,10 +20,15 @@ It aims to solve two problems:
 
 **Note: If you're interested in using only the model in your project, you can `pip install maco-model` which is a smaller package containing only the model definition**
 
-## Project Integrations
+## Project Integrations 🛠️
 This framework is actively being used by:
- - [ConfigExtractor Python package](https://github.com/CybercentreCanada/configextractor-py), which is geared towards running any framework within a single tool but outputs to a common format using Maco.
- - [Assemblyline](https://cybercentrecanada.github.io/assemblyline4_docs/), which is a malware analysis platform that has the ability to export its results to a machine-friendly format using the Maco model for malware configuration extractions.
+
+| Project | Description | License |
+| :--: | :-- | :--:|
+| <a href="https://cybercentrecanada.github.io/assemblyline4_docs/"><img src="https://images.weserv.nl/?url=cybercentrecanada.github.io/assemblyline4_docs/images/crane.png?v=4&h=100&w=100&fit=cover&maxage=7d"></a> | A malware analysis platform that uses the MACO model to export malware configuration extractions into a parseable, machine-friendly format | [![License](https://img.shields.io/github/license/CybercentreCanada/assemblyline)](https://github.com/CybercentreCanada/assemblyline/blob/main/LICENSE.md)  |
+| [configextractor-py](https://github.com/CybercentreCanada/configextractor-py) | A tool designed to run extractors from multiple frameworks and uses the MACO model for output harmonization | [![License](https://img.shields.io/github/license/CybercentreCanada/configextractor-py)](https://github.com/CybercentreCanada/configextractor-py/blob/main/LICENSE.md) |
+|<a href="https://github.com/jeFF0Falltrades/rat_king_parser"><img src="https://images.weserv.nl/?url=raw.githubusercontent.com/jeFF0Falltrades/rat_king_parser/master/.github/logo.png?v=4&h=100&w=100&fit=cover&maxage=7d"/> </a> | A robust, multiprocessing-capable, multi-family RAT config parser/extractor that is compatible with MACO | [![License](https://img.shields.io/github/license/jeFF0Falltrades/rat_king_parser)](https://github.com/jeFF0Falltrades/rat_king_parser/blob/master/LICENSE) |
+| <a href="https://github.com/apophis133/apophis-YARA-Rules"><img src="https://images.weserv.nl/?url=github.com/apophis133.png?v=4&h=100&w=100&fit=cover&maxage=7d"/> </a> | A parser/extractor repository that supports MACO for performing malware configuration extraction with YARA rule detection  | |
 
 ## Model Example
 See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields.
@@ -225,17 +230,3 @@ run Complex extractor from rules ['ComplexAlt']
 The demo extractors are designed to trigger when run over the '`demo_extractors`' folder.
 
 e.g. `maco demo_extractors demo_extractors`
-
-# Integrations 🛠️
-
-The following projects have implemented support for MACO:
-<table>
-    <tr>
-        <td style="height: 100px">
-             <a href="https://github.com/jeFF0Falltrades/rat_king_parser"><img src="https://raw.githubusercontent.com/jeFF0Falltrades/rat_king_parser/master/.github/logo.png"/> </a>
-        </td>
-        <td style="height: 100px">
-             <a href="https://github.com/apophis133/apophis-YARA-Rules"><img src="https://github.com/apophis133.png"/> </a>
-        </td>
-    </tr>
-</table>
