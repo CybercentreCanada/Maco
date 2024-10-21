@@ -225,3 +225,17 @@ run Complex extractor from rules ['ComplexAlt']
 The demo extractors are designed to trigger when run over the '`demo_extractors`' folder.
 
 e.g. `maco demo_extractors demo_extractors`
+
+# Integrations 🛠️
+
+The following projects have implemented support for MACO:
+<table>
+    <tr>
+        <td style="height: 100px">
+             <a href="https://github.com/jeFF0Falltrades/rat_king_parser"><img src="https://raw.githubusercontent.com/jeFF0Falltrades/rat_king_parser/master/.github/logo.png"/> </a>
+        </td>
+        <td style="height: 100px">
+             <a href="https://github.com/apophis133/apophis-YARA-Rules"><img src="https://github.com/apophis133.png"/> </a>
+        </td>
+    </tr>
+</table>
