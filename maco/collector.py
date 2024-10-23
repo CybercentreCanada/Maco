@@ -30,19 +30,6 @@ class ExtractorLoadError(Exception):
     pass
 
 
-class Base64Decoder(json.JSONDecoder):
-    def __init__(self, *args, **kwargs):
-        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
-
-    def object_hook(self, obj):
-        if "__class__" not in obj:
-            return obj
-        type = obj["__class__"]
-        if type == "bytes":
-            return b64decode(obj["data"])
-        return obj
-
-
 logger = logging.getLogger("maco.lib.helpers")
 
 
@@ -132,8 +119,8 @@ class Collector:
                 with NamedTemporaryFile() as sample_path:
                     sample_path.write(stream.read())
                     sample_path.flush()
-                    resp = utils.run_in_venv(sample_path.name, **extractor, root_directory=self.path)
-            else:
+                    return utils.run_in_venv(sample_path.name, **extractor, root_directory=self.path)
+
                 resp = extractor["module"]().run(stream, matches)
         except Exception:
             # caller can deal with the exception

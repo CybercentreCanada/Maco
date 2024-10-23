@@ -1,3 +1,4 @@
+# Common utilities shared between the MACO collector and configextractor-py
 import importlib
 import inspect
 import json
@@ -13,6 +14,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
+from base64 import b64decode
 from glob import glob
 from logging import Logger
 from sys import executable as python_exe
@@ -21,7 +23,19 @@ from types import ModuleType
 
 from maco.extractor import Extractor
 
-# Common utilities shared between the MACO collector and configextractor-py
+
+class Base64Decoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        if "__class__" not in obj:
+            return obj
+        type = obj["__class__"]
+        if type == "bytes":
+            return b64decode(obj["data"])
+        return obj
+
 
 VENV_SCRIPT = """
 import importlib
@@ -258,7 +272,9 @@ def find_extractors(
         shutil.rmtree(parsers_dir)
 
 
-def run_in_venv(sample_path, module, module_path, venv, root_directory, venv_script=VENV_SCRIPT) -> Dict[str, dict]:
+def run_in_venv(
+    sample_path, module, module_path, venv, root_directory, venv_script=VENV_SCRIPT, json_decoder=Base64Decoder
+) -> Dict[str, dict]:
     # Write temporary script in the same directory as extractor to resolve relative imports
     python_exe = os.path.join(venv, "bin", "python")
     dirname = os.path.dirname(module_path)
@@ -294,7 +310,7 @@ def run_in_venv(sample_path, module, module_path, venv, root_directory, venv_scr
             try:
                 # Load results and return them
                 output.seek(0)
-                return json.load(output)
+                return json.load(output, cls=json_decoder)
             except Exception:
                 # If there was an error raised during runtime, then propagate
                 delim = f'File "{module_path}"'
