@@ -248,10 +248,6 @@ def find_extractors(
         candidates = [module] + [member for _, member in inspect.getmembers(module) if inspect.isclass(member)]
         for member in candidates:
             try:
-                if member.__name__ == module.__name__:
-                    # Account for the possibility of multiple extractor classes within the same module
-                    continue
-
                 if extractor_module_callback(member, module, parser_venv):
                     # If the callback returns with a positive response, we can move onto the next module
                     break
@@ -272,7 +268,12 @@ def find_extractors(
 
 
 def run_in_venv(
-    sample_path, module, module_path, venv, root_directory, venv_script=VENV_SCRIPT, json_decoder=Base64Decoder
+    sample_path,
+    module,
+    module_path,
+    venv,
+    venv_script=VENV_SCRIPT,
+    json_decoder=Base64Decoder,
 ) -> Dict[str, dict]:
     # Write temporary script in the same directory as extractor to resolve relative imports
     python_exe = os.path.join(venv, "bin", "python")
@@ -293,8 +294,8 @@ def run_in_venv(
                 )
             )
             script.flush()
-            cwd = root_directory
-            custom_module = script.name.split(".py")[0].replace(f"{root_directory}/", "").replace("/", ".")
+            cwd = dirname
+            custom_module = script.name.split(".py")[0].replace(f"{dirname}/", "").replace("/", ".")
 
             if custom_module.startswith("src."):
                 # src layout found, which means the actual module content is within 'src' directory
