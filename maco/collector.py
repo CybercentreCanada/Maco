@@ -46,40 +46,6 @@ class Base64Decoder(json.JSONDecoder):
 logger = logging.getLogger("maco.lib.helpers")
 
 
-VENV_SCRIPT = """
-import importlib
-import json
-import os
-import sys
-import yara
-
-from base64 import b64encode
-parent_package_path = "{parent_package_path}"
-sys.path.insert(1, parent_package_path)
-mod = importlib.import_module("{module_name}")
-
-class Base64Encoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, bytes):
-            return dict(__class__="bytes", data=b64encode(o).decode())
-        return json.JSONEncoder.default(self, o)
-matches = []
-if mod.{module_class}.yara_rule:
-    matches = yara.compile(source=mod.{module_class}.yara_rule).match("{sample_path}")
-result = mod.{module_class}().run(open("{sample_path}", 'rb'), matches=matches)
-
-with open("{output_path}", 'w') as fp:
-    if not result:
-        json.dump(dict(), fp)
-    else:
-        try:
-            json.dump(result.model_dump(exclude_defaults=True, exclude_none=True), fp, cls=Base64Encoder)
-        except AttributeError:
-            # venv likely has an older version of Pydantic < 2 installed
-            json.dump(result.dict(exclude_defaults=True, exclude_none=True), fp, cls=Base64Encoder)
-"""
-
-
 def _verify_response(resp: BaseModel) -> Dict:
     """Enforce types and verify properties, and remove defaults."""
     # check the response is valid for its own model
