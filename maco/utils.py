@@ -86,7 +86,6 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
     rpaths = []
     for root, _, files in os.walk(root_directory):
-        req_file = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
         dependencies = []
 
         for req_file in list({"requirements.txt", "pyproject.toml"}.intersection(set(files))):
@@ -118,29 +117,29 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                             for dependencies_list in optional_dependencies.values():
                                 dependencies.extend(dependencies_list)
 
-            if dependencies:
-                venv_path = os.path.join(root, "venv")
-                # Create a venv environment if it doesn't already exist
-                if not os.path.exists(venv_path):
-                    logger.info(f"Creating venv at: {venv_path}")
-                    subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+        if dependencies:
+            venv_path = os.path.join(root, "venv")
+            # Create a venv environment if it doesn't already exist
+            if not os.path.exists(venv_path):
+                logger.info(f"Creating venv at: {venv_path}")
+                subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
 
-                # Install/Update packages within the venv relative the dependencies extracted
-                logger.debug(f"Packages to be installed: {dependencies}")
-                p = subprocess.run(
-                    ["venv/bin/pip", "install", "-U"] + dependencies + ["--disable-pip-version-check"],
-                    cwd=root,
-                    capture_output=True,
-                )
+            # Install/Update packages within the venv relative the dependencies extracted
+            logger.debug(f"Packages to be installed: {dependencies}")
+            p = subprocess.run(
+                ["venv/bin/pip", "install", "-U"] + dependencies + ["--disable-pip-version-check"],
+                cwd=root,
+                capture_output=True,
+            )
 
-                if p.stderr:
-                    if b"is being installed using the legacy" in p.stderr:
-                        # Ignore these types of errors
-                        continue
-                    logger.error(f"Error installing {rpaths} into venv:\n{p.stderr.decode()}")
-                logger.debug(f"Installed {rpaths} into venv:\n{p.stdout}")
-            else:
-                logger.warning("No dependencies extracted from project files..")
+            if p.stderr:
+                if b"is being installed using the legacy" in p.stderr:
+                    # Ignore these types of errors
+                    continue
+                logger.error(f"Error installing {rpaths} into venv:\n{p.stderr.decode()}")
+            logger.debug(f"Installed {rpaths} into venv:\n{p.stdout}")
+        else:
+            logger.warning("No dependencies extracted from project files..")
 
         if root == root_directory and not recurse:
             # Limit venv creation to the root directory
