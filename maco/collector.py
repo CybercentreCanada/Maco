@@ -55,8 +55,6 @@ class Collector:
     ):
         """Discover and load extractors from file system."""
         self.path = path_extractors
-        self.include = include
-        self.exclude = exclude
         self.extractors = {}
         namespaced_rules = {}
 
@@ -65,15 +63,20 @@ class Collector:
             utils.create_venv(path_extractors, logger=logger)
 
         def extractor_module_callback(member, module, venv) -> bool:
+            name = member.__name__
+            if exclude and name in exclude:
+                # Module is part of the exclusion list, skip
+                logger.debug(f"exclude excluded '{name}'")
+                return
+
+            if include and name not in include:
+                # Module wasn't part of the inclusion list, skip
+                logger.debug(f"include excluded '{name}'")
+                return
+
             if utils.maco_extractor_validation(member):
                 # check if we want this extractor
-                name = member.__name__
-                if self.exclude and name in self.exclude:
-                    logger.debug(f"exclude excluded '{name}'")
-                    return
-                if self.include and name not in self.include:
-                    logger.debug(f"include excluded '{name}'")
-                    return
+
                 # initialise and register
                 logger.debug(f"register '{name}'")
                 self.extractors[name] = dict(module=member, venv=venv, module_path=module.__file__)
