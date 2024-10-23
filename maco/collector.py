@@ -123,7 +123,7 @@ class Collector:
                 with NamedTemporaryFile() as sample_path:
                     sample_path.write(stream.read())
                     sample_path.flush()
-                    return utils.run_in_venv(sample_path.name, **extractor, root_directory=self.path)
+                    return utils.run_in_venv(sample_path.name, **extractor)
             else:
                 # Run extractor within on host environment
                 resp = extractor["module"]().run(stream, matches)

@@ -272,7 +272,6 @@ def run_in_venv(
     module,
     module_path,
     venv,
-    root_directory,
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
 ) -> Dict[str, dict]:
@@ -295,8 +294,8 @@ def run_in_venv(
                 )
             )
             script.flush()
-            cwd = root_directory
-            custom_module = script.name.split(".py")[0].replace(f"{root_directory}/", "").replace("/", ".")
+            cwd = dirname
+            custom_module = script.name.split(".py")[0].replace(f"{dirname}/", "").replace("/", ".")
 
             if custom_module.startswith("src."):
                 # src layout found, which means the actual module content is within 'src' directory
