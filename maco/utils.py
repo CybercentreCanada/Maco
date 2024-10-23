@@ -84,8 +84,8 @@ def maco_extract_rules(module: Extractor) -> bool:
 
 def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
-    rpaths = []
     for root, _, files in os.walk(root_directory):
+        rpaths = []
         dependencies = []
 
         for req_file in list({"requirements.txt", "pyproject.toml"}.intersection(set(files))):
@@ -138,8 +138,8 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                     continue
                 logger.error(f"Error installing {rpaths} into venv:\n{p.stderr.decode()}")
             logger.debug(f"Installed {rpaths} into venv:\n{p.stdout}")
-        else:
-            logger.warning("No dependencies extracted from project files..")
+        elif rpaths:
+            logger.warning(f"No dependencies extracted from project files: {rpaths}..")
 
         if root == root_directory and not recurse:
             # Limit venv creation to the root directory
