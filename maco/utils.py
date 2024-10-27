@@ -9,6 +9,11 @@ import subprocess
 import sys
 import tempfile
 
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+
 from base64 import b64decode
 from glob import glob
 from logging import Logger
@@ -102,7 +107,18 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                 install_command.extend(["-r", "requirements.txt"])
             elif "pyproject.toml" in req_files:
                 # Assume we're dealing with a project directory
-                install_command.extend(["-e", "."])
+                pyproject_command = ["-e", "."]
+
+                # Check to see if there are optional dependencies required
+                with open(os.path.join(root, "pyproject.toml"), "rb") as f:
+                    parsed_toml_project = tomllib.load(f).get("project", {})
+                    for dep_name, dependencies in parsed_toml_project.get("optional-dependencies", {}).items():
+                        # Look for the dependency that hints at use of MACO for the extractors
+                        if "maco" in " ".join(dependencies):
+                            pyproject_command = ["-e", f".[{dep_name}]"]
+                            break
+
+                install_command.extend(pyproject_command)
 
             # Install/Update packages within the venv relative the dependencies extracted
             logger.debug(f"Install command: {' '.join(install_command)}")
