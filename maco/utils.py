@@ -9,11 +9,6 @@ import subprocess
 import sys
 import tempfile
 
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
-
 from base64 import b64decode
 from glob import glob
 from logging import Logger
@@ -85,61 +80,43 @@ def maco_extract_rules(module: Extractor) -> bool:
 def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
     for root, _, files in os.walk(root_directory):
-        rpaths = []
-        dependencies = []
-
-        for req_file in list({"requirements.txt", "pyproject.toml"}.intersection(set(files))):
-            rpath = os.path.join(root, req_file)
-            rpaths.append(rpath)
-            with open(rpath, "r") as f:
-                if req_file == "requirements.txt":
-                    # Parse requirements.txt file to retrieve dependencies
-                    dependencies.extend([d for d in f.read().splitlines() if d and not d.startswith("#")])
-                elif req_file == "pyproject.toml":
-                    # Parse TOML file to retrieve the dependencies
-                    # Ref: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#dependencies-and-requirements
-
-                    parsed_toml_project = tomllib.loads(f.read()).get("project", {})
-
-                    if "dependencies" in parsed_toml_project:
-                        # Retrieve required dependencies
-                        dependencies.extend(parsed_toml_project["dependencies"])
-
-                    if "optional-dependencies" in parsed_toml_project:
-                        # Retrieve optional dependencies
-                        optional_dependencies = parsed_toml_project["optional-dependencies"]
-                        if isinstance(optional_dependencies, list):
-                            # Flat list of optional dependencies
-                            dependencies.extend(optional_dependencies)
-
-                        elif isinstance(optional_dependencies, dict):
-                            # Map of dependencies, install them all for good measure
-                            for dependencies_list in optional_dependencies.values():
-                                dependencies.extend(dependencies_list)
-
-        if dependencies:
+        req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
+        if req_files:
+            install_command = [
+                "venv/bin/pip",
+                "install",
+                "-U",
+                "--disable-pip-version-check",
+            ]
             venv_path = os.path.join(root, "venv")
             # Create a venv environment if it doesn't already exist
             if not os.path.exists(venv_path):
                 logger.info(f"Creating venv at: {venv_path}")
                 subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+            else:
+                logger.info(f"Updating venv at: {venv_path}")
+
+            # Update the pip install command depending on where the dependencies are coming from
+            if "requirements.txt" in req_files:
+                # Perform a pip install using the requirements flag
+                install_command.extend(["-r", "requirements.txt"])
+            elif "pyproject.toml" in req_files:
+                # Assume we're dealing with a project directory
+                install_command.extend(["-e", "."])
 
             # Install/Update packages within the venv relative the dependencies extracted
-            logger.debug(f"Packages to be installed: {dependencies}")
+            logger.debug(f"Install command: {' '.join(install_command)}")
             p = subprocess.run(
-                ["venv/bin/pip", "install", "-U"] + dependencies + ["--disable-pip-version-check"],
+                install_command,
                 cwd=root,
                 capture_output=True,
             )
-
             if p.stderr:
                 if b"is being installed using the legacy" in p.stderr:
                     # Ignore these types of errors
                     continue
-                logger.error(f"Error installing {rpaths} into venv:\n{p.stderr.decode()}")
-            logger.debug(f"Installed {rpaths} into venv:\n{p.stdout}")
-        elif rpaths:
-            logger.warning(f"No dependencies extracted from project files: {rpaths}..")
+                logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
+            logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
 
         if root == root_directory and not recurse:
             # Limit venv creation to the root directory
@@ -173,7 +150,9 @@ def find_extractors(
         sys.path.insert(1, src_path)
 
         # The module to be loaded should be the directory within src
-        foldername = [d for d in os.listdir(src_path) if os.path.isdir(os.path.join(src_path, d))][0]
+        foldername = [
+            d for d in os.listdir(src_path) if os.path.isdir(os.path.join(src_path, d)) and not d.endswith(".egg-info")
+        ][0]
 
     if root_venv:
         # Insert the venv's site-packages into the PATH temporarily to load the module
@@ -237,7 +216,7 @@ def find_extractors(
 
         try:
             module = importlib.import_module(module_name)
-        except Exception as e:
+        except BaseException as e:
             # Log if there was an error importing module
             logger.error(f"{module_name}: {e}")
             continue
@@ -248,6 +227,8 @@ def find_extractors(
         candidates = [module] + [member for _, member in inspect.getmembers(module) if inspect.isclass(member)]
         for member in candidates:
             try:
+                if "test" in member.__name__.lower():
+                    continue
                 if extractor_module_callback(member, module, parser_venv):
                     # If the callback returns with a positive response, we can move onto the next module
                     break
@@ -283,7 +264,7 @@ def run_in_venv(
             module_name = module.__module__
             module_class = module.__name__
             parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
-            root_directory = module_path[:-3].rsplit(module_name.split('.', 1)[1].replace('.', '/'))[0]
+            root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
 
             script.write(
                 venv_script.format(
