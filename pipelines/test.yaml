@@ -36,5 +36,5 @@ jobs:
       - script: |
           [ ! -d "$(pwd)/tests" ] && echo "No tests found" && exit
           export REPO_NAME=${BUILD_REPOSITORY_NAME##*/}
-          python -m pytest -p no:cacheprovider --durations=10 -rsx -vv
+          python -m pytest -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
         displayName: Test
