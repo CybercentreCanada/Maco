@@ -1,7 +1,10 @@
 import pytest
+import sys
 
+from copy import deepcopy
 from maco.collector import Collector
 
+CLEAN_PATH = deepcopy(sys.path)
 
 @pytest.mark.parametrize(
     "repository_url, extractor_path, extractors, python_minor",
@@ -36,6 +39,7 @@ def test_public_projects(repository_url: str, extractor_path: str, extractors: l
 
     if sys.version_info >= (3, python_minor):
         with TemporaryDirectory() as working_dir:
+            sys.path = CLEAN_PATH
             project_name = repository_url.rsplit("/", 1)[1]
             Repo.clone_from(repository_url, os.path.join(working_dir, project_name), depth=1)
 
@@ -136,6 +140,7 @@ def test_CAPEv2():
     community_repository = "https://github.com/CAPESandbox/community"
     if sys.version_info >= (3, 10):
         with TemporaryDirectory() as working_dir:
+            sys.path = CLEAN_PATH
             main_folder = os.path.join(working_dir, "CAPEv2")
             community_folder = os.path.join(working_dir, "community")
 
