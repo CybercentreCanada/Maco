@@ -98,6 +98,8 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
             if not os.path.exists(venv_path):
                 logger.info(f"Creating venv at: {venv_path}")
                 subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+                # Always install MACO within the venv environment
+                subprocess.run(install_command + ['maco'], capture_output=True)
             else:
                 logger.info(f"Updating venv at: {venv_path}")
 
