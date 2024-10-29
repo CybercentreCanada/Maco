@@ -98,11 +98,11 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
             if not os.path.exists(venv_path):
                 logger.info(f"Creating venv at: {venv_path}")
                 subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
-                # Always install MACO within the venv environment
-                subprocess.run(install_command + ['maco'], capture_output=True)
             else:
                 logger.info(f"Updating venv at: {venv_path}")
 
+            # Always install/update MACO within the venv environment
+            subprocess.run(install_command + ['maco'], cwd=root, capture_output=True)
             # Update the pip install command depending on where the dependencies are coming from
             if "requirements.txt" in req_files:
                 # Perform a pip install using the requirements flag
