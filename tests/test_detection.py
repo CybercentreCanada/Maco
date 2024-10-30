@@ -1,10 +1,9 @@
 import pytest
 import sys
 
-from copy import deepcopy
 from maco.collector import Collector
 
-CLEAN_PATH = deepcopy(sys.path)
+INIT_MODULES = list(sys.modules.keys())
 
 CAPE_EXTRACTORS = [
     "AgentTesla",
@@ -121,7 +120,7 @@ def test_public_projects(repository_url: str, extractor_path: str, extractors: l
 
     if sys.version_info >= (3, python_minor):
         with TemporaryDirectory() as working_dir:
-            sys.path = CLEAN_PATH
+            sys.modules = {module: sys.modules[module] for module in INIT_MODULES}
             project_name = repository_url.rsplit("/", 1)[1]
             Repo.clone_from(repository_url, os.path.join(working_dir, project_name), depth=1)
 
