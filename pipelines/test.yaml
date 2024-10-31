@@ -6,6 +6,17 @@ pr: ["*"]
 pool:
   vmImage: "ubuntu-20.04"
 
+resources:
+  containers:
+  - container: "3.8"
+    image: python:3.8
+  - container: "3.9"
+    image: python:3.9
+  - container: "3.10"
+    image: python:3.10
+  - container: "3.11"
+    image: python:3.11
+
 jobs:
   - job: run_test
     strategy:
@@ -21,11 +32,9 @@ jobs:
 
     timeoutInMinutes: 10
 
+    container: $[ variables['python.version'] ]
+
     steps:
-      - task: UsePythonVersion@0
-        displayName: Set python version
-        inputs:
-          versionSpec: "$(python.version)"
       - script: |
           # Install poetry and add executable to PATH
           curl -sSL https://install.python-poetry.org | python3 -
