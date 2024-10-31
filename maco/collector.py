@@ -1,22 +1,8 @@
 """Convenience functions for discovering your extractors."""
 
-import importlib
-import inspect
-import json
 import logging
 import os
-import pkgutil
-import subprocess
-import sys
 
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
-
-from base64 import b64decode
-from glob import glob
-from sys import executable as python_exe
 from tempfile import NamedTemporaryFile
 from typing import Any, BinaryIO, Dict, List
 

@@ -23,6 +23,8 @@ from types import ModuleType
 
 from maco.extractor import Extractor
 
+VENV_DIRECTORY_NAME = ".venv"
+
 
 class Base64Decoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
@@ -85,24 +87,38 @@ def maco_extract_rules(module: Extractor) -> bool:
 def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
     for root, _, files in os.walk(root_directory):
-        req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
+        req_files = list({"requirements.txt", "pyproject.toml", "poetry.lock"}.intersection(set(files)))
         if req_files:
             install_command = [
-                "venv/bin/pip",
+                f"{VENV_DIRECTORY_NAME}/bin/pip",
                 "install",
                 "-U",
-                "--disable-pip-version-check",
             ]
-            venv_path = os.path.join(root, "venv")
+            venv_path = os.path.join(root, VENV_DIRECTORY_NAME)
             # Create a venv environment if it doesn't already exist
             if not os.path.exists(venv_path):
                 logger.info(f"Creating venv at: {venv_path}")
                 subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+                # Update pip
+                subprocess.run(
+                    [f"{VENV_DIRECTORY_NAME}/bin/pip", "install", "--upgrade", "pip"],
+                    capture_output=True,
+                    cwd=root,
+                )
             else:
                 logger.info(f"Updating venv at: {venv_path}")
 
+            if "poetry.lock" in req_files:
+                # Install dependencies using Poetry
+                try:
+                    subprocess.run(["poetry", "--version"], capture_output=True, cwd=root)
+                    install_command = ["poetry", "install", "--no-root"]
+                except FileNotFoundError:
+                    logger.warning("Unable to install dependencies using Poetry because it is not installed.")
+                    continue
+
             # Update the pip install command depending on where the dependencies are coming from
-            if "requirements.txt" in req_files:
+            elif "requirements.txt" in req_files:
                 # Perform a pip install using the requirements flag
                 install_command.extend(["-r", "requirements.txt"])
             elif "pyproject.toml" in req_files:
@@ -127,12 +143,15 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                 cwd=root,
                 capture_output=True,
             )
-            if p.stderr:
+            if p.returncode != 0:
                 if b"is being installed using the legacy" in p.stderr:
                     # Ignore these types of errors
                     continue
                 logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
-            logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
+                continue
+            else:
+                logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
+                break
 
         if root == root_directory and not recurse:
             # Limit venv creation to the root directory
@@ -151,8 +170,8 @@ def find_extractors(
     # Specific feature for Assemblyline or environments wanting to run parsers from different sources
     # The goal is to try and introduce package isolation/specification similar to a virtual environment when running parsers
     root_venv = None
-    if "venv" in os.listdir(parsers_dir):
-        root_venv = os.path.join(parsers_dir, "venv")
+    if VENV_DIRECTORY_NAME in os.listdir(parsers_dir):
+        root_venv = os.path.join(parsers_dir, VENV_DIRECTORY_NAME)
 
     # Find extractors (taken from MaCo's Collector class)
     path_parent, foldername = os.path.split(parsers_dir)
@@ -197,17 +216,17 @@ def find_extractors(
 
         def find_venv(path: str) -> str:
             parent_dir = os.path.dirname(path)
-            if "venv" in os.listdir(path):
+            if VENV_DIRECTORY_NAME in os.listdir(path):
                 # venv is in the same directory as the parser
-                return os.path.join(path, "venv")
+                return os.path.join(path, VENV_DIRECTORY_NAME)
             elif parent_dir == parsers_dir or path == parsers_dir:
                 # We made it all the way back to the parser directory
                 # Use root venv, if any
                 return root_venv
-            elif "venv" in os.listdir(parent_dir):
+            elif VENV_DIRECTORY_NAME in os.listdir(parent_dir):
                 # We found a venv before going back to the root of the parser directory
                 # Assume that because it's the closest, it's the most relevant
-                return os.path.join(parent_dir, "venv")
+                return os.path.join(parent_dir, VENV_DIRECTORY_NAME)
             else:
                 # Keep searching in the parent directory for a venv
                 return find_venv(parent_dir)
@@ -227,8 +246,9 @@ def find_extractors(
         parser_site_packages = None
         if parser_venv:
             for dir in glob(os.path.join(parser_venv, "lib/python*/site-packages")):
-                sys.path.insert(1, dir)
-                break
+                if dir not in sys.path:
+                    sys.path.insert(1, dir)
+                    break
 
         try:
             module = importlib.import_module(module_name)
