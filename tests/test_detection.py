@@ -120,11 +120,15 @@ def test_public_projects(repository_url: str, extractor_path: str, extractors: l
 
     if sys.version_info >= (3, python_minor):
         with TemporaryDirectory() as working_dir:
-            sys.modules = {module: sys.modules[module] for module in INIT_MODULES}
             project_name = repository_url.rsplit("/", 1)[1]
             Repo.clone_from(repository_url, os.path.join(working_dir, project_name), depth=1)
 
             collector = Collector(os.path.join(working_dir, extractor_path), create_venv=True)
             assert set(extractors) == set(collector.extractors.keys())
+
+            # Cleanup cached modules to not interfere with later tests
+            for module in list(sys.modules.keys()):
+                if module not in INIT_MODULES:
+                    del sys.modules[module]
     else:
         pytest.skip("Unsupported Python version")
