@@ -6,17 +6,6 @@ pr: ["*"]
 pool:
   vmImage: "ubuntu-20.04"
 
-resources:
-  containers:
-  - container: "3.8"
-    image: python:3.8
-  - container: "3.9"
-    image: python:3.9
-  - container: "3.10"
-    image: python:3.10
-  - container: "3.11"
-    image: python:3.11
-
 jobs:
   - job: run_test
     strategy:
@@ -32,25 +21,24 @@ jobs:
 
     timeoutInMinutes: 10
 
-    container: $[ variables['python.version'] ]
-
     steps:
+      - task: UsePythonVersion@0
+        displayName: Set python version
+        inputs:
+          versionSpec: "$(python.version)"
       - script: |
-          set -ex  # Echo commands before they are run
           # Install poetry and add executable to PATH
           curl -sSL https://install.python-poetry.org | python3 -
+          export PATH="/home/vsts_azpcontainer/.local/bin:$PATH"
 
           [ ! -d "$(pwd)/tests" ] && echo "No tests found" && exit
-          [ -f $(pwd)/requirements.txt ] && env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/requirements.txt
-          [ -f $(pwd)/tests/requirements.txt ] && env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/tests/requirements.txt
+          [ -f $(pwd)/requirements.txt ] && sudo env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/requirements.txt
+          [ -f $(pwd)/tests/requirements.txt ] && sudo env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/tests/requirements.txt
+          sudo rm -rf /tmp/* /var/lib/apt/lists/* ~/.cache/pip
 
         displayName: Setup environment
       - script: |
-          set -ex  # Echo commands before they are run
           [ ! -d "$(pwd)/tests" ] && echo "No tests found" && exit
           export REPO_NAME=${BUILD_REPOSITORY_NAME##*/}
-          export PATH="/home/vsts_azpcontainer/.local/bin:$PATH"
-          poetry --version
-          python -m pytest -k "not test_public_projects[kevoreilly/CAPEv2]" -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
-          python -m pytest -k "test_public_projects[kevoreilly/CAPEv2]" -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
+          python -m pytest -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
         displayName: Test
