@@ -1,6 +1,6 @@
 # Maco - Malware config extractor framework
 
-## Maco is a framework for **_ma_**lware **_co_**nfig extractors.
+## Maco is a framework for ***ma***lware ***co***nfig extractors.
 
 It aims to solve two problems:
 
@@ -36,7 +36,7 @@ This framework is actively being used by:
 
 ## Model Example
 
-See [the model defintion](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields.
+See [the model definition](https://github.com/CybercentreCanada/Maco/blob/0f447a66de5e5ce8770ef3fe2325aec002842e63/maco/model.py#L127) for all the supported fields.
 You can use the model independently of the rest of the framework.
 This is still useful for compatibility between systems!
 
