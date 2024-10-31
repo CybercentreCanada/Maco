@@ -51,5 +51,6 @@ jobs:
           export REPO_NAME=${BUILD_REPOSITORY_NAME##*/}
           export PATH="/home/vsts_azpcontainer/.local/bin:$PATH"
           poetry --version
-          python -m pytest -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
+          python -k "not test_public_projects[kevoreilly/CAPEv2]"  -m pytest -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
+          python -k "test_public_projects[kevoreilly/CAPEv2]" -m pytest -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
         displayName: Test
