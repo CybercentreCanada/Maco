@@ -114,9 +114,7 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                     subprocess.run(["poetry", "--version"], capture_output=True, cwd=root)
                     install_command = ["poetry", "install", "--no-root"]
                 except FileNotFoundError:
-                    logger.warning(
-                        "Unable to generate requirements.txt from poetry.lock because Poetry is not installed."
-                    )
+                    logger.warning("Unable to install dependencies using Poetry because it is not installed.")
                     continue
 
             # Update the pip install command depending on where the dependencies are coming from
