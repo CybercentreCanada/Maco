@@ -34,6 +34,10 @@ jobs:
 
   - script: |
       set -x
+      # Install poetry and add executable to PATH
+      curl -sSL https://install.python-poetry.org | python3 -
+      export PATH="/home/vsts_azpcontainer/.local/bin:$PATH"
+      
       python -m pip install -U tox
       python -m tox -e py
 
