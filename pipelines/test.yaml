@@ -18,7 +18,8 @@ jobs:
           python.version: "3.10"
         Python3_11:
           python.version: "3.11"
-
+        Python3_12:
+          python.version: "3.12"
     timeoutInMinutes: 10
 
     steps:

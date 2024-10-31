@@ -1,3 +1,4 @@
+import os
 import pytest
 import sys
 
@@ -109,7 +110,6 @@ CAPE_EXTRACTORS = [
 def test_public_projects(repository_url: str, extractors: list, python_minor: int):
     # Ensure that any changes we make doesn't break usage of public projects
     # which can affect downstream systems using like library (ie. Assemblyline)
-    import os
     import sys
 
     from git import Repo
@@ -130,3 +130,12 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
                     del sys.modules[module]
     else:
         pytest.skip("Unsupported Python version")
+
+
+def test_module_confusion():
+    # Directories that have the same name as the Python module, shouldn't cause confusion on loading the right module
+    collector = Collector(os.path.join(__file__, "../extractors/bob"))
+    assert collector.extractors["Bob"]
+
+    collector = Collector(os.path.join(__file__, "../extractors"))
+    assert collector.extractors["Bob"]
