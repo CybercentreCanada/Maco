@@ -85,24 +85,40 @@ def maco_extract_rules(module: Extractor) -> bool:
 def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
     for root, _, files in os.walk(root_directory):
-        req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
+        req_files = list({"requirements.txt", "pyproject.toml", "poetry.lock"}.intersection(set(files)))
         if req_files:
             install_command = [
                 "venv/bin/pip",
                 "install",
                 "-U",
-                "--disable-pip-version-check",
             ]
             venv_path = os.path.join(root, "venv")
             # Create a venv environment if it doesn't already exist
             if not os.path.exists(venv_path):
                 logger.info(f"Creating venv at: {venv_path}")
                 subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+                # Update pip
+                subprocess.run(
+                    ["venv/bin/pip", "install", "--upgrade", "pip"],
+                    capture_output=True,
+                    cwd=root,
+                )
             else:
                 logger.info(f"Updating venv at: {venv_path}")
 
-            # Always install/update MACO within the venv environment
-            subprocess.run(install_command + ['maco'], cwd=root, capture_output=True)
+            if "poetry.lock" in req_files:
+                # Generate a requirements.txt file using Poetry
+                try:
+                    subprocess.run(
+                        ["poetry", "export", "-f", "requirements.txt", ">", "requirements.txt"],
+                        capture_output=True,
+                        cwd=root,
+                    )
+                except FileNotFoundError:
+                    logger.warning(
+                        "Unable to generate requirements.txt from poetry.lock because Poetry is not installed."
+                    )
+
             # Update the pip install command depending on where the dependencies are coming from
             if "requirements.txt" in req_files:
                 # Perform a pip install using the requirements flag
@@ -129,12 +145,15 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                 cwd=root,
                 capture_output=True,
             )
-            if p.stderr:
+            if p.returncode != 0:
                 if b"is being installed using the legacy" in p.stderr:
                     # Ignore these types of errors
                     continue
                 logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
-            logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
+                continue
+            else:
+                logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
+                break
 
         if root == root_directory and not recurse:
             # Limit venv creation to the root directory
@@ -229,8 +248,9 @@ def find_extractors(
         parser_site_packages = None
         if parser_venv:
             for dir in glob(os.path.join(parser_venv, "lib/python*/site-packages")):
-                sys.path.insert(1, dir)
-                break
+                if dir not in sys.path:
+                    sys.path.insert(1, dir)
+                    break
 
         try:
             module = importlib.import_module(module_name)

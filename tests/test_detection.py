@@ -82,17 +82,15 @@ CAPE_EXTRACTORS = [
 
 
 @pytest.mark.parametrize(
-    "repository_url, extractor_path, extractors, python_minor",
+    "repository_url, extractors, python_minor",
     [
         (
             "https://github.com/jeFF0Falltrades/rat_king_parser",
-            "rat_king_parser",
             ["RKPMACO"],
             10,
         ),
         (
             "https://github.com/apophis133/apophis-YARA-Rules",
-            "apophis-YARA-Rules",
             [
                 "Pikabot",
                 "TrueBot",
@@ -102,14 +100,13 @@ CAPE_EXTRACTORS = [
         ),
         (
             "https://github.com/kevoreilly/CAPEv2",
-            "CAPEv2",
             CAPE_EXTRACTORS,
             10,
         ),
     ],
     ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "kevoreilly/CAPEv2"),
 )
-def test_public_projects(repository_url: str, extractor_path: str, extractors: list, python_minor: int):
+def test_public_projects(repository_url: str, extractors: list, python_minor: int):
     # Ensure that any changes we make doesn't break usage of public projects
     # which can affect downstream systems using like library (ie. Assemblyline)
     import os
@@ -121,9 +118,10 @@ def test_public_projects(repository_url: str, extractor_path: str, extractors: l
     if sys.version_info >= (3, python_minor):
         with TemporaryDirectory() as working_dir:
             project_name = repository_url.rsplit("/", 1)[1]
-            Repo.clone_from(repository_url, os.path.join(working_dir, project_name), depth=1)
+            extractor_dir = os.path.join(working_dir, project_name)
+            Repo.clone_from(repository_url, extractor_dir, depth=1)
 
-            collector = Collector(os.path.join(working_dir, extractor_path), create_venv=True)
+            collector = Collector(extractor_dir, create_venv=True)
             assert set(extractors) == set(collector.extractors.keys())
 
             # Cleanup cached modules to not interfere with later tests
