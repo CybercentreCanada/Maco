@@ -177,7 +177,11 @@ def find_extractors(
     path_parent, foldername = os.path.split(parsers_dir)
     original_dir = parsers_dir
     sys.path.insert(1, path_parent)
-    sys.path.insert(1, parsers_dir)
+
+    # To avoid module confusion, don't add the directory that has the same name as a Python module within to the PATH
+    if f"{foldername}.py" not in os.listdir(parsers_dir):
+        sys.path.insert(1, parsers_dir)
+
     if "src" in os.listdir(parsers_dir):
         # The actual module might be located in the src subdirectory
         # Ref: https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/
