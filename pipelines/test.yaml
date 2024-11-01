@@ -28,10 +28,6 @@ jobs:
         inputs:
           versionSpec: "$(python.version)"
       - script: |
-          # Install poetry and add executable to PATH
-          curl -sSL https://install.python-poetry.org | python3 -
-          export PATH="/home/vsts_azpcontainer/.local/bin:$PATH"
-
           [ ! -d "$(pwd)/tests" ] && echo "No tests found" && exit
           [ -f $(pwd)/requirements.txt ] && sudo env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/requirements.txt
           [ -f $(pwd)/tests/requirements.txt ] && sudo env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/tests/requirements.txt
