@@ -99,13 +99,15 @@ CAPE_EXTRACTORS = [
             ],
             8,
         ),
-        (
-            "https://github.com/kevoreilly/CAPEv2",
-            CAPE_EXTRACTORS,
-            10,
-        ),
+        # Pending: https://github.com/CAPESandbox/CAPE-parsers
+        # (
+        #     "https://github.com/kevoreilly/CAPEv2",
+        #     CAPE_EXTRACTORS,
+        #     10,
+        # ),
     ],
-    ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "kevoreilly/CAPEv2"),
+    ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules"),
+    # ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "kevoreilly/CAPEv2"),
 )
 def test_public_projects(repository_url: str, extractors: list, python_minor: int):
     # Ensure that any changes we make doesn't break usage of public projects

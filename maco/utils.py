@@ -87,7 +87,7 @@ def maco_extract_rules(module: Extractor) -> bool:
 def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
     for root, _, files in os.walk(root_directory):
-        req_files = list({"requirements.txt", "pyproject.toml", "poetry.lock"}.intersection(set(files)))
+        req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
         if req_files:
             install_command = [
                 f"{VENV_DIRECTORY_NAME}/bin/pip",
@@ -108,17 +108,8 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
             else:
                 logger.info(f"Updating venv at: {venv_path}")
 
-            if "poetry.lock" in req_files:
-                # Install dependencies using Poetry
-                try:
-                    subprocess.run(["poetry", "--version"], capture_output=True, cwd=root)
-                    install_command = ["poetry", "install", "--no-root"]
-                except FileNotFoundError:
-                    logger.warning("Unable to install dependencies using Poetry because it is not installed.")
-                    continue
-
             # Update the pip install command depending on where the dependencies are coming from
-            elif "requirements.txt" in req_files:
+            if "requirements.txt" in req_files:
                 # Perform a pip install using the requirements flag
                 install_command.extend(["-r", "requirements.txt"])
             elif "pyproject.toml" in req_files:
