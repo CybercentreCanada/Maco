@@ -139,10 +139,8 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                     # Ignore these types of errors
                     continue
                 logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
-                continue
             else:
                 logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
-                break
 
         if root == root_directory and not recurse:
             # Limit venv creation to the root directory
