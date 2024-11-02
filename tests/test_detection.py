@@ -35,7 +35,6 @@ CAPE_EXTRACTORS = [
     "Formbook",
     "Greame",
     "GuLoader",
-    "Hancitor",
     "HttpBrowser",
     "IcedID",
     "IcedIDLoader",
@@ -83,13 +82,9 @@ CAPE_EXTRACTORS = [
 
 
 @pytest.mark.parametrize(
-    "repository_url, extractors, python_minor",
+    "repository_url, extractors, python_minor, branch",
     [
-        (
-            "https://github.com/jeFF0Falltrades/rat_king_parser",
-            ["RKPMACO"],
-            10,
-        ),
+        ("https://github.com/jeFF0Falltrades/rat_king_parser", ["RKPMACO"], 10, None),
         (
             "https://github.com/apophis133/apophis-YARA-Rules",
             [
@@ -98,18 +93,14 @@ CAPE_EXTRACTORS = [
                 "MetaStealer",
             ],
             8,
+            None,
         ),
-        # Pending: https://github.com/CAPESandbox/CAPE-parsers
-        # (
-        #     "https://github.com/kevoreilly/CAPEv2",
-        #     CAPE_EXTRACTORS,
-        #     10,
-        # ),
+        # Pending: https://github.com/CAPESandbox/community/pull/470
+        ("https://github.com/cccs-rs/community", CAPE_EXTRACTORS, 10, "MACO"),
     ],
-    ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules"),
-    # ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "kevoreilly/CAPEv2"),
+    ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "CAPESandbox/community"),
 )
-def test_public_projects(repository_url: str, extractors: list, python_minor: int):
+def test_public_projects(repository_url: str, extractors: list, python_minor: int, branch: str):
     # Ensure that any changes we make doesn't break usage of public projects
     # which can affect downstream systems using like library (ie. Assemblyline)
     import sys
@@ -121,7 +112,7 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
         with TemporaryDirectory() as working_dir:
             project_name = repository_url.rsplit("/", 1)[1]
             extractor_dir = os.path.join(working_dir, project_name)
-            Repo.clone_from(repository_url, extractor_dir, depth=1)
+            Repo.clone_from(repository_url, extractor_dir, depth=1, branch=branch)
 
             collector = Collector(extractor_dir, create_venv=True)
             assert set(extractors) == set(collector.extractors.keys())
