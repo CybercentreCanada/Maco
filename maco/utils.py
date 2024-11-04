@@ -18,7 +18,7 @@ from base64 import b64decode
 from glob import glob
 from logging import Logger
 from sys import executable as python_exe
-from typing import Any, Callable, Tuple, Dict
+from typing import Callable, Dict
 from types import ModuleType
 
 from maco.extractor import Extractor
