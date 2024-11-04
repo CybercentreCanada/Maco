@@ -167,6 +167,21 @@ def find_extractors(
     original_dir = parsers_dir
     sys.path.insert(1, path_parent)
 
+    def load_module(module_name: str, venv_path: str = None) -> ModuleType:
+        if venv_path:
+            # Insert the venv's site-packages into the PATH temporarily to load the module
+            for dir in glob(os.path.join(venv_path, "lib/python*/site-packages")):
+                sys.path.insert(2, dir)
+                break
+        try:
+            return importlib.import_module(module_name)
+        except BaseException as e:
+            logger.warning(f"Error loading module '{module_name}': {e}")
+        finally:
+            if venv_path:
+                # Cleanup PATH once the module has been loaded (or not)
+                sys.path.pop(2)
+
     # To avoid module confusion, don't add the directory that has the same name as a Python module within to the PATH
     if f"{foldername}.py" not in os.listdir(parsers_dir):
         sys.path.insert(1, parsers_dir)
@@ -182,15 +197,8 @@ def find_extractors(
             d for d in os.listdir(src_path) if os.path.isdir(os.path.join(src_path, d)) and not d.endswith(".egg-info")
         ][0]
 
-    if root_venv:
-        # Insert the venv's site-packages into the PATH temporarily to load the module
-        for dir in glob(os.path.join(root_venv, "lib/python*/site-packages")):
-            sys.path.insert(2, dir)
-            break
-        mod = importlib.import_module(foldername)
-        sys.path.pop(2)
-    else:
-        mod = importlib.import_module(foldername)
+    # Load in specified directory as a module for package walking
+    mod = load_module(foldername, root_venv)
 
     if mod.__file__ and not mod.__file__.startswith(parsers_dir):
         # Library confused folder name with installed package
@@ -204,25 +212,25 @@ def find_extractors(
         sys.path.insert(1, parsers_dir)
         mod = importlib.import_module(foldername)
 
+    def find_venv(path: str) -> str:
+        parent_dir = os.path.dirname(path)
+        if VENV_DIRECTORY_NAME in os.listdir(path):
+            # venv is in the same directory as the parser
+            return os.path.join(path, VENV_DIRECTORY_NAME)
+        elif parent_dir == parsers_dir or path == parsers_dir:
+            # We made it all the way back to the parser directory
+            # Use root venv, if any
+            return root_venv
+        elif VENV_DIRECTORY_NAME in os.listdir(parent_dir):
+            # We found a venv before going back to the root of the parser directory
+            # Assume that because it's the closest, it's the most relevant
+            return os.path.join(parent_dir, VENV_DIRECTORY_NAME)
+        else:
+            # Keep searching in the parent directory for a venv
+            return find_venv(parent_dir)
+
     # walk packages in the extractors directory to find all extactors
     for module_path, module_name, ispkg in pkgutil.walk_packages(mod.__path__, mod.__name__ + "."):
-
-        def find_venv(path: str) -> str:
-            parent_dir = os.path.dirname(path)
-            if VENV_DIRECTORY_NAME in os.listdir(path):
-                # venv is in the same directory as the parser
-                return os.path.join(path, VENV_DIRECTORY_NAME)
-            elif parent_dir == parsers_dir or path == parsers_dir:
-                # We made it all the way back to the parser directory
-                # Use root venv, if any
-                return root_venv
-            elif VENV_DIRECTORY_NAME in os.listdir(parent_dir):
-                # We found a venv before going back to the root of the parser directory
-                # Assume that because it's the closest, it's the most relevant
-                return os.path.join(parent_dir, VENV_DIRECTORY_NAME)
-            else:
-                # Keep searching in the parent directory for a venv
-                return find_venv(parent_dir)
 
         if ispkg:
             # skip __init__.py
@@ -236,22 +244,10 @@ def find_extractors(
 
         # Local site packages, if any, need to be loaded before attempting to import the module
         parser_venv = find_venv(module_path.path)
-        parser_site_packages = None
-        if parser_venv:
-            for dir in glob(os.path.join(parser_venv, "lib/python*/site-packages")):
-                if dir not in sys.path:
-                    sys.path.insert(1, dir)
-                    break
-
-        try:
-            module = importlib.import_module(module_name)
-        except BaseException as e:
-            # Log if there was an error importing module
-            logger.error(f"{module_name}: {e}")
+        module = load_module(module_name, parser_venv)
+        if not module:
             continue
-        finally:
-            if parser_site_packages in sys.path:
-                sys.path.remove(parser_site_packages)
+
         # Determine if module contains parsers of a supported framework
         candidates = [module] + [member for _, member in inspect.getmembers(module) if inspect.isclass(member)]
         for member in candidates:
