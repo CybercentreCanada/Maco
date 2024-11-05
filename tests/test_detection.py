@@ -105,6 +105,9 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
     # which can affect downstream systems using like library (ie. Assemblyline)
     import sys
 
+    # Remove the tests directory from PATH to ensure the local 'git' directory doesn't conflict
+    sys.path.pop(0)
+
     from git import Repo
     from tempfile import TemporaryDirectory
 
@@ -131,4 +134,15 @@ def test_module_confusion():
     assert collector.extractors["Bob"]
 
     collector = Collector(os.path.join(__file__, "../extractors"))
+    assert collector.extractors["Bob"]
+
+    # Existing packages shouldn't interfere with loading extractors from directories with similar names
+
+    # Import the actual git package and not the local directory for this test
+    sys.path.pop(0)
+    import git
+
+    assert hasattr(git, "GIT_OK")
+
+    collector = Collector(os.path.join(__file__, "../git"))
     assert collector.extractors["Bob"]

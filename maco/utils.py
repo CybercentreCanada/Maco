@@ -4,7 +4,6 @@ import inspect
 import json
 import os
 import pkgutil
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,6 +14,7 @@ else:
     import tomli as tomllib
 
 from base64 import b64decode
+from copy import deepcopy
 from glob import glob
 from logging import Logger
 from sys import executable as python_exe
@@ -24,6 +24,9 @@ from types import ModuleType
 from maco.extractor import Extractor
 
 VENV_DIRECTORY_NAME = ".venv"
+
+# Intended to help deconflict between system installed packages and extractor directories
+INSTALLED_MODULES = [d for d in os.listdir(sys.path[-1]) if not (d.endswith(".py") or d.endswith(".dist-info"))]
 
 
 class Base64Decoder(json.JSONDecoder):
@@ -152,6 +155,9 @@ def find_extractors(
     logger: Logger,
     extractor_module_callback: Callable[[ModuleType, ModuleType, str], bool],
 ):
+    original_PATH = deepcopy(sys.path)
+    original_modules = set(sys.modules.keys())
+
     parsers_dir = os.path.abspath(parsers_dir)
     logger.debug("Adding directories within parser directory in case of local dependencies")
     logger.debug(f"Adding {os.path.join(parsers_dir, os.pardir)} to PATH")
@@ -164,7 +170,6 @@ def find_extractors(
 
     # Find extractors (taken from MaCo's Collector class)
     path_parent, foldername = os.path.split(parsers_dir)
-    original_dir = parsers_dir
     sys.path.insert(1, path_parent)
 
     def load_module(module_name: str, venv_path: str = None) -> ModuleType:
@@ -197,20 +202,23 @@ def find_extractors(
             d for d in os.listdir(src_path) if os.path.isdir(os.path.join(src_path, d)) and not d.endswith(".egg-info")
         ][0]
 
+    symlink = None
+    existing_modules = set(INSTALLED_MODULES).union(original_modules)
+    while foldername in existing_modules:
+        # Prepend foldername with '_' until it doesn't conflict with an already installed package
+        foldername = f"_{foldername}"
+
+        if foldername not in existing_modules:
+            # Create a symbolic link back to the original directory
+            symlink = os.path.join(path_parent, foldername)
+            if not os.path.exists(symlink):
+                os.symlink(parsers_dir, symlink)
+
+            # Assign the symlink as the target directory parsing to avoid recursion-based errors
+            parsers_dir = symlink
+
     # Load in specified directory as a module for package walking
     mod = load_module(foldername, root_venv)
-
-    if mod.__file__ and not mod.__file__.startswith(parsers_dir):
-        # Library confused folder name with installed package
-        sys.path.remove(path_parent)
-        sys.path.remove(parsers_dir)
-        parsers_dir = tempfile.TemporaryDirectory().name
-        shutil.copytree(original_dir, parsers_dir, dirs_exist_ok=True)
-
-        path_parent, foldername = os.path.split(parsers_dir)
-        sys.path.insert(1, path_parent)
-        sys.path.insert(1, parsers_dir)
-        mod = importlib.import_module(foldername)
 
     def find_venv(path: str) -> str:
         parent_dir = os.path.dirname(path)
@@ -263,14 +271,12 @@ def find_extractors(
             except Exception as e:
                 logger.error(f"{member}: {e}")
 
-    if original_dir != parsers_dir:
-        # Correct the paths to the parsers to match metadata changes
-        sys.path.remove(path_parent)
-        sys.path.remove(parsers_dir)
-        path_parent, _ = os.path.split(original_dir)
-        sys.path.insert(1, path_parent)
-        sys.path.insert(1, original_dir)
-        shutil.rmtree(parsers_dir)
+    # Restore PATH to it's original settings and remove any cached modules that was added during this run
+    sys.path = original_PATH
+    [sys.modules.pop(k) for k in set(sys.modules.keys()) - original_modules]
+    if symlink:
+        # Cleanup the symlink that was created, it's not needed anymore
+        os.remove(symlink)
 
 
 def run_in_venv(
