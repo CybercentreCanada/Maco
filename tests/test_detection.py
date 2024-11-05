@@ -107,6 +107,7 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
 
     # Remove the tests directory from PATH to ensure the local 'git' directory doesn't conflict
     sys.path.pop(0)
+    sys.modules.pop("git", None)
 
     from git import Repo
     from tempfile import TemporaryDirectory
@@ -140,6 +141,7 @@ def test_module_confusion():
 
     # Import the actual git package and not the local directory for this test
     sys.path.pop(0)
+    sys.modules.pop("git", None)
     import git
 
     assert hasattr(git, "GIT_OK")
