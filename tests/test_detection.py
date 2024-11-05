@@ -147,4 +147,6 @@ def test_module_confusion():
     assert hasattr(git, "GIT_OK")
 
     collector = Collector(os.path.join(__file__, "../git"))
-    assert collector.extractors["Bob"]
+
+    # Ensure the extractor was collected and the path to the module exists (shouldn't be referenced to symlink anymore)
+    assert collector.extractors["Bob"] and os.path.exists(collector.extractors["Bob"]["module_path"])
