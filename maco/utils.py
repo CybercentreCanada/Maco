@@ -262,6 +262,12 @@ def find_extractors(
             try:
                 if "test" in member.__name__.lower():
                     continue
+
+                # Resolve the real paths before invoking the callback
+                module.__file__ = os.path.realpath(module.__file__)
+                if parser_venv:
+                    parser_venv = os.path.realpath(parser_venv)
+
                 if extractor_module_callback(member, module, parser_venv):
                     # If the callback returns with a positive response, we can move onto the next module
                     break

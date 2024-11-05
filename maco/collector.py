@@ -65,12 +65,7 @@ class Collector:
 
                 # initialise and register
                 logger.debug(f"register '{name}'")
-
-                # Resolve all symbolic references
-                module_path = os.path.realpath(module.__file__)
-                if venv:
-                    venv = os.path.realpath(venv)
-                self.extractors[name] = dict(module=member, venv=venv, module_path=module_path)
+                self.extractors[name] = dict(module=member, venv=venv, module_path=module.__file__)
                 namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
                 return True
 
