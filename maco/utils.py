@@ -17,13 +17,16 @@ from base64 import b64decode
 from copy import deepcopy
 from glob import glob
 from logging import Logger
-from sys import executable as python_exe
 from typing import Callable, Dict
 from types import ModuleType
+from uv import find_uv_bin
 
 from maco.extractor import Extractor
 
+UV_BIN = find_uv_bin()
 VENV_DIRECTORY_NAME = ".venv"
+PIP_CMD = f"{UV_BIN} pip"
+VENV_CREATE_CMD = f"{UV_BIN} venv"
 
 # Intended to help deconflict between system installed packages and extractor directories
 INSTALLED_MODULES = [d for d in os.listdir(sys.path[-1]) if not (d.endswith(".py") or d.endswith(".dist-info"))]
@@ -89,24 +92,23 @@ def maco_extract_rules(module: Extractor) -> bool:
 
 def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
     # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
+    user_env = deepcopy(os.environ)
     for root, _, files in os.walk(root_directory):
         req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
         if req_files:
-            install_command = [
-                f"{VENV_DIRECTORY_NAME}/bin/pip",
-                "install",
-                "-U",
-            ]
+            install_command = PIP_CMD.split(" ") + ["install", "-U"]
             venv_path = os.path.join(root, VENV_DIRECTORY_NAME)
+            user_env.update({"VIRTUAL_ENV": venv_path})
             # Create a venv environment if it doesn't already exist
             if not os.path.exists(venv_path):
                 logger.info(f"Creating venv at: {venv_path}")
-                subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
+                subprocess.run(VENV_CREATE_CMD.split(" ") + [venv_path], capture_output=True, env=user_env)
                 # Update pip
                 subprocess.run(
-                    [f"{VENV_DIRECTORY_NAME}/bin/pip", "install", "--upgrade", "pip"],
+                    PIP_CMD.split(" ") + ["install", "--upgrade", "pip"],
                     capture_output=True,
                     cwd=root,
+                    env=user_env,
                 )
             else:
                 logger.info(f"Updating venv at: {venv_path}")
@@ -136,6 +138,7 @@ def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
                 install_command,
                 cwd=root,
                 capture_output=True,
+                env=user_env,
             )
             if p.returncode != 0:
                 if b"is being installed using the legacy" in p.stderr:
