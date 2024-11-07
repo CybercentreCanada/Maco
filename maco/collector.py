@@ -1,10 +1,12 @@
 """Convenience functions for discovering your extractors."""
 
+import inspect
 import logging
 import os
 
 from tempfile import NamedTemporaryFile
 from typing import Any, BinaryIO, Dict, List
+from types import ModuleType
 
 import yara
 from pydantic import BaseModel
@@ -40,37 +42,38 @@ class Collector:
         self, path_extractors: str, include: List[str] = None, exclude: List[str] = None, create_venv: bool = False
     ):
         """Discover and load extractors from file system."""
+        path_extractors = os.path.realpath(path_extractors)
         self.path = path_extractors
         self.extractors = {}
         namespaced_rules = {}
 
-        if create_venv and os.path.isdir(path_extractors):
-            # Recursively create/update virtual environments
-            utils.create_venv(path_extractors, logger=logger)
+        def extractor_module_callback(module: ModuleType, venv: str):
+            members = inspect.getmembers(module, predicate=utils.maco_extractor_validation)
+            for member in members:
+                name, member = member
+                if exclude and name in exclude:
+                    # Module is part of the exclusion list, skip
+                    logger.debug(f"exclude excluded '{name}'")
+                    return
 
-        def extractor_module_callback(member, module, venv) -> bool:
-            name = member.__name__
-            if exclude and name in exclude:
-                # Module is part of the exclusion list, skip
-                logger.debug(f"exclude excluded '{name}'")
-                return
-
-            if include and name not in include:
-                # Module wasn't part of the inclusion list, skip
-                logger.debug(f"include excluded '{name}'")
-                return
-
-            if utils.maco_extractor_validation(member):
-                # check if we want this extractor
+                if include and name not in include:
+                    # Module wasn't part of the inclusion list, skip
+                    logger.debug(f"include excluded '{name}'")
+                    return
 
                 # initialise and register
                 logger.debug(f"register '{name}'")
                 self.extractors[name] = dict(module=member, venv=venv, module_path=module.__file__)
                 namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
-                return True
 
         # Find the extractors within the given directory
-        utils.find_extractors(path_extractors, logger=logger, extractor_module_callback=extractor_module_callback)
+        utils.import_extractors(
+            path_extractors,
+            yara.compile(source=utils.MACO_YARA_RULE),
+            extractor_module_callback,
+            logger,
+            create_venv and os.path.isdir(path_extractors),
+        )
 
         if not self.extractors:
             raise ExtractorLoadError("no extractors were loaded")
