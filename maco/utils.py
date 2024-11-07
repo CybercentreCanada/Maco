@@ -111,6 +111,7 @@ def import_extractors(
     extractor_module_callback: Callable[[ModuleType, str], bool],
     logger: Logger,
     create_venv: bool = False,
+    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}",
 ):
     extractor_dirs = set([root_directory])
     extractor_files = []
@@ -170,7 +171,7 @@ def import_extractors(
                         "install",
                         "-U",
                         "--python-version",
-                        f"{sys.version_info.major}.{sys.version_info.minor}",
+                        python_version,
                     ]
 
                     # Update the pip install command depending on where the dependencies are coming from
