@@ -149,11 +149,11 @@ def import_extractors(
     logger.debug(f"Extractor files found based on scanner: {extractor_files}")
 
     venvs = []
+    root_parent = os.path.dirname(root_directory)
     if create_venv:
         env = deepcopy(os.environ)
         # Track directories that we've already visited
         visited_dirs = []
-        root_parent = os.path.dirname(root_directory)
         for dir in extractor_dirs:
             # Recurse backwards through the directory structure to look for package requirements
             while dir != root_parent and dir not in visited_dirs:
@@ -215,6 +215,7 @@ def import_extractors(
     # Associate the virtual environments to the supposed extractors, load them, and pass them to the given callback
     # Add root directory into path for any local package imports
     sys.path.insert(1, root_directory)
+    sys.path.insert(1, root_parent)
     default_loaded_modules = set(sys.modules.keys())
     for extractor in extractor_files:
         venv = None
@@ -263,8 +264,9 @@ def import_extractors(
             # Remove any symlinks created on the filesystem
             if symlink:
                 os.remove(symlink)
-    # Remove root directory from PATH
-    sys.path.pop(1)
+    # Remove root and parent directory from PATH
+    sys.path.remove(root_directory)
+    sys.path.remove(root_parent)
 
 
 def run_in_venv(
