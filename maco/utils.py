@@ -133,6 +133,7 @@ def import_extractors(
     extractor_files = []
 
     # Search for extractors using YARA rules
+    logger.info("Searching for prospective extractors based on YARA rules..")
     for root, _, files in os.walk(root_directory):
         if "site-packages" in root:
             # Ignore looking for extractors within packages
@@ -168,6 +169,7 @@ def import_extractors(
     venvs = []
     root_parent = os.path.dirname(root_directory)
     if create_venv:
+        logger.info("Creating virtual environment(s)..")
         env = deepcopy(os.environ)
         # Track directories that we've already visited
         visited_dirs = []
@@ -228,6 +230,7 @@ def import_extractors(
                 dir = os.path.dirname(dir)
     else:
         # Look for pre-existing virtual environments, if any
+        logger.info("Checking for pre-existing virtual environment(s)..")
         venvs = [
             os.path.join(root, VENV_DIRECTORY_NAME)
             for root, dirs, _ in os.walk(root_directory)
@@ -289,6 +292,7 @@ def import_extractors(
                 module_path = os.path.realpath(os.path.join(module_path.path, module_name.rsplit(".", 1)[1]) + ".py")
                 if module_path in extractor_files:
                     # Cross this extractor off the list of extractors to find
+                    logger.debug(f"Inspecting '{module_name}' for extractors..")
                     extractor_files.remove(module_path)
                     try:
                         # This is an extractor we've been looking for, load the module and invoke callback
@@ -338,6 +342,7 @@ def import_extractors(
                     break
 
     # With the environment prepared, we can now hunt for the extractors and register them
+    logger.info("Registering extractors..")
     _register_extractors(root_directory)
 
 
