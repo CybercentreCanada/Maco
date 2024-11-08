@@ -163,7 +163,7 @@ def import_extractors(
         # No extractor files found
         return
 
-    logger.debug(f"Extractor files found based on scanner ({len(extractor_files)}): {extractor_files}")
+    logger.info(f"Extractor files found based on scanner ({len(extractor_files)}): {extractor_files}")
 
     venvs = []
     root_parent = os.path.dirname(root_directory)
@@ -180,16 +180,13 @@ def import_extractors(
                     env.update({"VIRTUAL_ENV": venv_path})
                     # Create a virtual environment for the directory
                     if not os.path.exists(venv_path):
-                        subprocess.run(VENV_CREATE_CMD.split(" ") + [venv_path], capture_output=True, env=env)
+                        cmd = VENV_CREATE_CMD
+                        if PACKAGE_MANAGER == "uv":
+                            cmd += f" --python {python_version}"
+                        subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                     # Install/Update the packages in the environment
                     install_command = PIP_CMD.split(" ") + ["install", "-U"]
-
-                    if PACKAGE_MANAGER == "uv":
-                        install_command += [
-                            "--python-version",
-                            python_version,
-                        ]
 
                     # Update the pip install command depending on where the dependencies are coming from
                     if "requirements.txt" in req_files:
@@ -229,6 +226,9 @@ def import_extractors(
                 # Add directories to our visited list and check the parent of this directory on the next loop
                 visited_dirs.append(dir)
                 dir = os.path.dirname(dir)
+    else:
+        # Look for pre-existing virtual environments, if any
+        venvs = [os.path.join(root, VENV_DIRECTORY_NAME) for root, dirs, _ in os.walk(root_directory) if VENV_DIRECTORY_NAME in dirs]
 
     # Associate the virtual environments to the supposed extractors, load them, and pass them to the given callback
     # Add root directory into path for any local package imports
