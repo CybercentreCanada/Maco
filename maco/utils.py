@@ -228,11 +228,16 @@ def import_extractors(
                 dir = os.path.dirname(dir)
     else:
         # Look for pre-existing virtual environments, if any
-        venvs = [os.path.join(root, VENV_DIRECTORY_NAME) for root, dirs, _ in os.walk(root_directory) if VENV_DIRECTORY_NAME in dirs]
+        venvs = [
+            os.path.join(root, VENV_DIRECTORY_NAME)
+            for root, dirs, _ in os.walk(root_directory)
+            if VENV_DIRECTORY_NAME in dirs
+        ]
 
     # Associate the virtual environments to the supposed extractors, load them, and pass them to the given callback
     # Add root directory into path for any local package imports
     default_loaded_modules = set(sys.modules.keys())
+
     def _find_and_insert_venv(path: str):
         venv = None
         for venv in sorted(venvs, reverse=True):
@@ -295,9 +300,6 @@ def import_extractors(
                         # Cleanup virtual environment that was loaded into PATH
                         if venv and site_packages in sys.path:
                             sys.path.remove(site_packages)
-
-                        # Remove any modules that were loaded to deconflict with later modules loads
-                        [sys.modules.pop(k) for k in set(sys.modules.keys()) - default_loaded_modules]
 
         finally:
             # Cleanup changes made to PATH
