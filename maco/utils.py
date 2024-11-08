@@ -164,7 +164,8 @@ def import_extractors(
         # No extractor files found
         return
 
-    logger.info(f"Extractor files found based on scanner ({len(extractor_files)}): {extractor_files}")
+    logger.info(f"Extractor files found based on scanner ({len(extractor_files)}).")
+    logger.debug(extractor_files)
 
     venvs = []
     root_parent = os.path.dirname(root_directory)
