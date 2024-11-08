@@ -103,8 +103,9 @@ rule MACO {
         $from = "from maco"
         $import = "import maco"
         $extractor = "Extractor"
+        $class = /class \w+\(([a-zA-Z.]+)?Extractor\)\:/
     condition:
-        ($from or $import) and $extractor
+        ($from or $import) and $extractor and $class
 }
 """
 
@@ -126,7 +127,7 @@ def import_extractors(
     extractor_module_callback: Callable[[ModuleType, str], bool],
     logger: Logger,
     create_venv: bool = False,
-    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}",
+    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
 ):
     extractor_dirs = set([root_directory])
     extractor_files = []
@@ -162,7 +163,7 @@ def import_extractors(
         # No extractor files found
         return
 
-    logger.debug(f"Extractor files found based on scanner: {extractor_files}")
+    logger.debug(f"Extractor files found based on scanner ({len(extractor_files)}): {extractor_files}")
 
     venvs = []
     root_parent = os.path.dirname(root_directory)
@@ -209,7 +210,7 @@ def import_extractors(
 
                         install_command.extend(pyproject_command)
 
-                    logger.debug(f"Install command: {' '.join(install_command)}")
+                    logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
                     p = subprocess.run(
                         install_command,
                         cwd=dir,
@@ -232,7 +233,6 @@ def import_extractors(
     # Associate the virtual environments to the supposed extractors, load them, and pass them to the given callback
     # Add root directory into path for any local package imports
     default_loaded_modules = set(sys.modules.keys())
-
     def _find_and_insert_venv(path: str):
         venv = None
         for venv in sorted(venvs, reverse=True):
