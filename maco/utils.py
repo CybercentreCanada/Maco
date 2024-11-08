@@ -155,10 +155,11 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
     return extractor_dirs, extractor_files
 
 
-def create_virtual_environments(directories: List[str], stop_directory: str, python_version: str, logger: Logger):
+def create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
     venvs = []
     logger.info("Creating virtual environment(s)..")
     env = deepcopy(os.environ)
+    stop_directory = os.path.dirname(sorted(directories)[0])
     # Track directories that we've already visited
     visited_dirs = []
     for dir in directories:
@@ -345,9 +346,8 @@ def import_extractors(
     logger.debug(extractor_files)
 
     venvs = []
-    root_parent = os.path.dirname(root_directory)
     if create_venv:
-        venvs = create_virtual_environments(extractor_dirs, root_parent, python_version, logger)
+        venvs = create_virtual_environments(extractor_dirs, python_version, logger)
     else:
         # Look for pre-existing virtual environments, if any
         logger.info("Checking for pre-existing virtual environment(s)..")
