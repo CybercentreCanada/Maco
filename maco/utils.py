@@ -233,6 +233,26 @@ def import_extractors(
     # Add root directory into path for any local package imports
     default_loaded_modules = set(sys.modules.keys())
 
+    def _find_and_insert_venv(path: str):
+        venv = None
+        for venv in sorted(venvs, reverse=True):
+            venv_parent = os.path.dirname(venv)
+            if path.startswith(venv_parent):
+                # Found the virtual environment that's the closest to extractor
+                break
+
+        if not venv:
+            return None, None
+
+        if venv:
+            # Insert the venv's site-packages into the PATH temporarily to load the module
+            for dir in glob(os.path.join(venv, "lib/python*/site-packages")):
+                if dir not in sys.path:
+                    sys.path.insert(2, dir)
+                break
+
+        return venv, dir
+
     def _register_extractors(current_directory: str):
         package_name = os.path.basename(current_directory)
         parent_directory = os.path.dirname(current_directory)
@@ -250,6 +270,9 @@ def import_extractors(
             # Modify the PATH so we can recognize this new package on import
             sys.path.insert(1, current_directory)
             sys.path.insert(1, parent_directory)
+
+            # Insert any virtual environment necessary to load directory as package
+            package_venv, package_site_packages = _find_and_insert_venv(current_directory)
             package = importlib.import_module(package_name)
 
             # Walk through our new package and find the extractors that YARA identified
@@ -264,24 +287,14 @@ def import_extractors(
                     extractor_files.remove(module_path)
                     try:
                         # This is an extractor we've been looking for, load the module and invoke callback
-                        venv = None
-                        for venv in sorted(venvs, reverse=True):
-                            if module_path.startswith(venv):
-                                # Found the virtual environment that's the closest to extractor
-                                break
-
-                        if venv:
-                            # Insert the venv's site-packages into the PATH temporarily to load the module
-                            for dir in glob(os.path.join(venv, "lib/python*/site-packages")):
-                                sys.path.insert(2, dir)
-                                break
-
+                        venv, site_packages = _find_and_insert_venv(module_path)
                         module = importlib.import_module(module_name)
+                        module.__file__ = os.path.realpath(module.__file__)
                         extractor_module_callback(module, venv)
                     finally:
                         # Cleanup virtual environment that was loaded into PATH
-                        if venv:
-                            sys.path.remove(dir)
+                        if venv and site_packages in sys.path:
+                            sys.path.remove(site_packages)
 
                         # Remove any modules that were loaded to deconflict with later modules loads
                         [sys.modules.pop(k) for k in set(sys.modules.keys()) - default_loaded_modules]
@@ -290,6 +303,9 @@ def import_extractors(
             # Cleanup changes made to PATH
             sys.path.remove(parent_directory)
             sys.path.remove(current_directory)
+
+            if package_venv and package_site_packages in sys.path:
+                sys.path.remove(package_site_packages)
 
             # Remove any modules that were loaded to deconflict with later modules loads
             [sys.modules.pop(k) for k in set(sys.modules.keys()) - default_loaded_modules]
