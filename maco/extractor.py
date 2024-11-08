@@ -4,7 +4,7 @@ import logging
 import textwrap
 from typing import BinaryIO, List, Optional, Union
 
-import yara
+from maco import yara
 
 from . import model
 
@@ -12,14 +12,15 @@ from . import model
 class InvalidExtractor(ValueError):
     pass
 
-DEFAULT_YARA_RULE = \
-"""
+
+DEFAULT_YARA_RULE = """
 rule {name}
 {{
     condition:
         true
 }}
 """
+
 
 class Extractor:
     """Base class for an analysis extractor with common entrypoint and metadata.

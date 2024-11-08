@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 import tempfile
-import yara
+from maco import yara
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -292,6 +292,8 @@ def register_extractors(
                     if venv and site_packages in sys.path:
                         sys.path.remove(site_packages)
 
+            if not extractor_files:
+                return
     finally:
         # Cleanup changes made to PATH
         sys.path.remove(parent_directory)

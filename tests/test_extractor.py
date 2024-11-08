@@ -1,7 +1,5 @@
 import unittest
 
-import yara
-
 from maco import extractor
 
 

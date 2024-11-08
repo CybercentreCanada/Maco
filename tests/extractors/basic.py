@@ -1,9 +1,7 @@
 from io import BytesIO
 from typing import List, Optional
 
-import yara
-
-from maco import extractor, model
+from maco import extractor, model, yara
 
 
 class Basic(extractor.Extractor):

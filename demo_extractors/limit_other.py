@@ -1,9 +1,7 @@
 from io import BytesIO
 from typing import Dict, List, Optional
 
-import yara
-
-from maco import extractor, model
+from maco import extractor, model, yara
 
 from . import shared
 

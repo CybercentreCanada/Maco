@@ -8,9 +8,10 @@ dynamic = ["version"]
 dependencies = [
     "cart",
     "pydantic>=2.0.0",
-    "yara-python",
     'tomli >= 1.1.0 ; python_version < "3.11"',
     "uv",
+    "yara-python",
+    "yara-x==0.10.0",
 ]
 requires-python = ">=3.8"
 authors = [{ name = "sl-govau" }]
@@ -44,4 +45,4 @@ Issues = "https://github.com/CybercentreCanada/Maco/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-exclude = ["test", "tests", "extractors"]
+exclude = ["test", "tests", "extractors", "model_setup"]

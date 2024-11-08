@@ -8,7 +8,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any, BinaryIO, Dict, List
 from types import ModuleType
 
-import yara
+from maco import yara
 from pydantic import BaseModel
 
 from maco import extractor, model, utils
