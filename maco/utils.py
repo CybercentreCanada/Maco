@@ -45,10 +45,6 @@ except ImportError:
     VENV_CREATE_CMD = f"{executable} -m venv"
     PACKAGE_MANAGER = "pip"
 
-# Intended to help deconflict between system installed packages and extractor directories
-INSTALLED_MODULES = [d for d in os.listdir(sys.path[-1]) if not (d.endswith(".py") or d.endswith(".dist-info"))]
-
-
 class Base64Decoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
