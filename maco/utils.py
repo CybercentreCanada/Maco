@@ -45,6 +45,7 @@ except ImportError:
     VENV_CREATE_CMD = f"{executable} -m venv"
     PACKAGE_MANAGER = "pip"
 
+
 class Base64Decoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
@@ -109,7 +110,7 @@ rule MACO {
 def maco_extractor_validation(module: ModuleType) -> bool:
     if inspect.isclass(module):
         # 'author' has to be implemented otherwise will raise an exception according to MACO
-        return bool(issubclass(module, Extractor) and module.author)
+        return hasattr(module, "author") and module.author
     return False
 
 
@@ -147,7 +148,7 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
             if scanner.match(filepath):
                 # Add directory to list of hits for venv creation
                 extractor_dirs.add(root)
-                extractor_files.append(filepath)
+                extractor_files.append(os.path.realpath(filepath))
     return extractor_dirs, extractor_files
 
 
@@ -282,6 +283,11 @@ def register_extractors(
                     venv, site_packages = find_and_insert_venv(module_path, venvs)
                     module = importlib.import_module(module_name)
                     module.__file__ = os.path.realpath(module.__file__)
+
+                    # Patch the original directory information into the module
+                    original_package_name = os.path.basename(current_directory)
+                    module.__name__ = module.__name__.replace(package_name, original_package_name)
+                    module.__package__ = module.__package__.replace(package_name, original_package_name)
                     extractor_module_callback(module, venv)
                 finally:
                     # Cleanup virtual environment that was loaded into PATH
