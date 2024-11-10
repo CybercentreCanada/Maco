@@ -124,57 +124,62 @@ def maco_extract_rules(module: Extractor) -> bool:
 def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger) -> Tuple[List[str], List[str]]:
     extractor_dirs = set([root_directory])
     extractor_files = []
-    package = None
 
-    # Search for extractors using YARA rules
-    logger.info("Searching for prospective extractors based on YARA rules..")
-    for root, _, files in os.walk(root_directory):
-        if "site-packages" in root:
-            # Ignore looking for extractors within packages
-            continue
-        if "__init__.py" in files and not package:
+    def scan_and_repair(directory, package=None):
+        nodes =  os.listdir(directory)
+
+        if "__init__.py" in nodes and not package and "-" not in os.path.basename(directory):
             # Perhaps we've found the outermost package?
-            package = os.path.basename(root)
+            package = os.path.basename(directory)
 
-        for file in files:
-            if not file.endswith(".py"):
+        for node in nodes:
+            path = os.path.join(directory, node)
+            if node == VENV_DIRECTORY_NAME:
+                # Ignore looking for extractors within packages
+                continue
+            elif not node.endswith(".py") and os.path.isfile(path):
                 # Ignore scanning non-Python files
                 continue
-            elif file in ["setup.py", "__init__.py"]:
+            elif node in ["setup.py"]:
                 # Ignore setup files and markers for package directories
                 continue
-            elif "test" in file:
+            elif "test" in node:
                 # Ignore test files
                 continue
-            elif "deprecated" in file:
+            elif "deprecated" in node:
                 # Ignore deprecated files
                 continue
 
-            # Scan Python file for potential extractors
-            filepath = os.path.join(root, file)
+            if os.path.isfile(os.path.join(directory, node)):
+                # Scan Python file for potential extractors
+                if package:
+                    # Inspect the contents and look for any relative import issues
+                    with open(path, "r") as f:
+                        data = f.read()
 
-            if package:
-                # Inspect the contents and look for any relative import issues
-                with open(filepath, "r") as f:
-                    data = f.read()
+                    with open(path, "w") as f:
+                        # Replace any relative importing with absolute
+                        curr_dir = os.path.dirname(path)
+                        split = curr_dir.split("/")[::-1]
+                        for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
+                            for match in pattern.findall(data):
+                                depth = match.count(".")
+                                data = data.replace(
+                                    f"from {match}",
+                                    f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
+                                )
+                        f.write(data)
 
-                with open(filepath, "w") as f:
-                    # Replace any relative importing with absolute
-                    curr_dir = os.path.dirname(filepath)
-                    split = curr_dir.split("/")[::-1]
-                    for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
-                        for match in pattern.findall(data):
-                            depth = match.count(".")
-                            data = data.replace(
-                                f"from {match}",
-                                f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
-                            )
-                    f.write(data)
+                if scanner.match(path):
+                    # Add directory to list of hits for venv creation
+                    extractor_dirs.add(directory)
+                    extractor_files.append(os.path.realpath(path))
+            else:
+                scan_and_repair(path, package)
 
-            if scanner.match(filepath):
-                # Add directory to list of hits for venv creation
-                extractor_dirs.add(root)
-                extractor_files.append(os.path.realpath(filepath))
+    # Search for extractors using YARA rules
+    logger.info("Searching for prospective extractors based on YARA rules..")
+    scan_and_repair(root_directory)
 
     return extractor_dirs, extractor_files
 
