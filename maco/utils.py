@@ -126,7 +126,7 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
     extractor_files = []
 
     def scan_and_repair(directory, package=None):
-        nodes =  os.listdir(directory)
+        nodes = os.listdir(directory)
 
         if "__init__.py" in nodes and not package and "-" not in os.path.basename(directory):
             # Perhaps we've found the outermost package?
@@ -167,6 +167,7 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
                                 data = data.replace(
                                     f"from {match}",
                                     f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
+                                    1,
                                 )
                         f.write(data)
 
