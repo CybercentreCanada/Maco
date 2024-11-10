@@ -5,6 +5,7 @@ import importlib.util
 import inspect
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -27,6 +28,8 @@ from maco.extractor import Extractor
 
 VENV_DIRECTORY_NAME = ".venv"
 
+RELATIVE_FROM_RE = re.compile("from (\.+)")
+RELATIVE_FROM_IMPORT_RE = re.compile("from (\.+) import")
 
 try:
     # Attempt to use the uv package manager (Recommended)
@@ -121,6 +124,7 @@ def maco_extract_rules(module: Extractor) -> bool:
 def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger) -> Tuple[List[str], List[str]]:
     extractor_dirs = set([root_directory])
     extractor_files = []
+    package = None
 
     # Search for extractors using YARA rules
     logger.info("Searching for prospective extractors based on YARA rules..")
@@ -128,6 +132,9 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
         if "site-packages" in root:
             # Ignore looking for extractors within packages
             continue
+        if "__init__.py" in files and not package:
+            # Perhaps we've found the outermost package?
+            package = os.path.basename(root)
 
         for file in files:
             if not file.endswith(".py"):
@@ -145,10 +152,30 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
 
             # Scan Python file for potential extractors
             filepath = os.path.join(root, file)
+
+            if package:
+                # Inspect the contents and look for any relative import issues
+                with open(filepath, "r") as f:
+                    data = f.read()
+
+                with open(filepath, "w") as f:
+                    # Replace any relative importing with absolute
+                    curr_dir = os.path.dirname(filepath)
+                    split = curr_dir.split("/")[::-1]
+                    for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
+                        for match in pattern.findall(data):
+                            depth = match.count(".")
+                            data = data.replace(
+                                f"from {match}",
+                                f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
+                            )
+                    f.write(data)
+
             if scanner.match(filepath):
                 # Add directory to list of hits for venv creation
                 extractor_dirs.add(root)
                 extractor_files.append(os.path.realpath(filepath))
+
     return extractor_dirs, extractor_files
 
 
