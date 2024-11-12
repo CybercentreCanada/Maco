@@ -9,8 +9,8 @@ dependencies = ["pydantic>=2.0.0"]
 requires-python = ">=3.8"
 authors = [{ name = "sl-govau" }]
 maintainers = [{ name = "cccs-rs" }]
-readme = "../README.md"
-license = { file = "../LICENSE.md" }
+readme = "README.md"
+license = { file = "LICENSE.md" }
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
