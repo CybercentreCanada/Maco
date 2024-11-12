@@ -5,6 +5,7 @@ import sys
 from maco.collector import Collector
 
 INIT_MODULES = list(sys.modules.keys())
+TESTS_DIR = os.path.dirname(__file__)
 
 CAPE_EXTRACTORS = [
     "AgentTesla",
@@ -105,10 +106,6 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
     # which can affect downstream systems using like library (ie. Assemblyline)
     import sys
 
-    # Remove the tests directory from PATH to ensure the local 'git' directory doesn't conflict
-    sys.path.pop(0)
-    sys.modules.pop("git", None)
-
     from git import Repo
     from tempfile import TemporaryDirectory
 
@@ -121,15 +118,15 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
             collector = Collector(extractor_dir, create_venv=True)
             assert set(extractors) == set(collector.extractors.keys())
 
-            # Cleanup cached modules to not interfere with later tests
-            for module in list(sys.modules.keys()):
-                if module not in INIT_MODULES:
-                    del sys.modules[module]
     else:
         pytest.skip("Unsupported Python version")
 
 
 def test_module_confusion():
+    from tempfile import TemporaryDirectory
+    import shutil
+    import git
+
     # Directories that have the same name as the Python module, shouldn't cause confusion on loading the right module
     collector = Collector(os.path.join(__file__, "../extractors/bob"))
     assert collector.extractors["Bob"]
@@ -138,15 +135,8 @@ def test_module_confusion():
     assert collector.extractors["Bob"]
 
     # Existing packages shouldn't interfere with loading extractors from directories with similar names
-
-    # Import the actual git package and not the local directory for this test
-    sys.path.pop(0)
-    sys.modules.pop("git", None)
-    import git
-
-    assert hasattr(git, "GIT_OK")
-
-    collector = Collector(os.path.join(__file__, "../git"))
-
-    # Ensure the extractor was collected and the path to the module exists (shouldn't be referenced to symlink anymore)
-    assert collector.extractors["Bob"] and os.path.exists(collector.extractors["Bob"]["module_path"])
+    with TemporaryDirectory() as ex_copy:
+        copy_ex_dir = f"{ex_copy}/git"
+        shutil.copytree(f"{TESTS_DIR}/extractors", copy_ex_dir, dirs_exist_ok=True)
+        collector = Collector(copy_ex_dir)
+        assert collector.extractors["Bob"] and os.path.exists(collector.extractors["Bob"]["module_path"])
