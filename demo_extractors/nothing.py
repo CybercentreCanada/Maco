@@ -1,9 +1,7 @@
 from io import BytesIO
 from typing import Dict, List, Optional
 
-import yara
-
-from maco import extractor, model
+from maco import extractor, model, yara
 
 
 class Nothing(extractor.Extractor):
@@ -23,8 +21,6 @@ class Nothing(extractor.Extractor):
         }
         """
 
-    def run(
-        self, stream: BytesIO, matches: List[yara.Match]
-    ) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
         # return config model formatted results
         return

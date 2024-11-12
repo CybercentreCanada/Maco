@@ -1,12 +1,15 @@
 # Common utilities shared between the MACO collector and configextractor-py
 import importlib
+import importlib.machinery
+import importlib.util
 import inspect
 import json
 import os
-import pkgutil
+import re
 import subprocess
 import sys
 import tempfile
+from maco import yara
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -17,16 +20,33 @@ from base64 import b64decode
 from copy import deepcopy
 from glob import glob
 from logging import Logger
-from sys import executable as python_exe
-from typing import Callable, Dict
+from pkgutil import walk_packages
+from typing import Callable, Dict, Tuple, List, Set
 from types import ModuleType
 
 from maco.extractor import Extractor
 
 VENV_DIRECTORY_NAME = ".venv"
 
-# Intended to help deconflict between system installed packages and extractor directories
-INSTALLED_MODULES = [d for d in os.listdir(sys.path[-1]) if not (d.endswith(".py") or d.endswith(".dist-info"))]
+RELATIVE_FROM_RE = re.compile("from (\.+)")
+RELATIVE_FROM_IMPORT_RE = re.compile("from (\.+) import")
+
+try:
+    # Attempt to use the uv package manager (Recommended)
+    from uv import find_uv_bin
+
+    UV_BIN = find_uv_bin()
+
+    PIP_CMD = f"{UV_BIN} pip"
+    VENV_CREATE_CMD = f"{UV_BIN} venv"
+    PACKAGE_MANAGER = "uv"
+except ImportError:
+    # Otherwise default to pip
+    from sys import executable
+
+    PIP_CMD = "pip"
+    VENV_CREATE_CMD = f"{executable} -m venv"
+    PACKAGE_MANAGER = "pip"
 
 
 class Base64Decoder(json.JSONDecoder):
@@ -75,11 +95,25 @@ with open("{output_path}", 'w') as fp:
             json.dump(result.dict(exclude_defaults=True, exclude_none=True), fp, cls=Base64Encoder)
 """
 
+MACO_YARA_RULE = """
+rule MACO {
+    meta:
+        desc = "Used to match on Python files that contain MACO extractors"
+    strings:
+        $from = "from maco"
+        $import = "import maco"
+        $extractor = "Extractor"
+        $class = /class \w+\(([a-zA-Z.]+)?Extractor\)\:/
+    condition:
+        ($from or $import) and $extractor and $class
+}
+"""
+
 
 def maco_extractor_validation(module: ModuleType) -> bool:
     if inspect.isclass(module):
         # 'author' has to be implemented otherwise will raise an exception according to MACO
-        return bool(issubclass(module, Extractor) and module.author)
+        return hasattr(module, "author") and module.author
     return False
 
 
@@ -87,202 +121,282 @@ def maco_extract_rules(module: Extractor) -> bool:
     return module.yara_rule
 
 
-def create_venv(root_directory: str, logger: Logger, recurse: bool = True):
-    # Recursively look for "requirements.txt" or "pyproject.toml" files and create a virtual environment
-    for root, _, files in os.walk(root_directory):
-        req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(files)))
-        if req_files:
-            install_command = [
-                f"{VENV_DIRECTORY_NAME}/bin/pip",
-                "install",
-                "-U",
-            ]
-            venv_path = os.path.join(root, VENV_DIRECTORY_NAME)
-            # Create a venv environment if it doesn't already exist
-            if not os.path.exists(venv_path):
-                logger.info(f"Creating venv at: {venv_path}")
-                subprocess.run([python_exe, "-m", "venv", venv_path], capture_output=True)
-                # Update pip
-                subprocess.run(
-                    [f"{VENV_DIRECTORY_NAME}/bin/pip", "install", "--upgrade", "pip"],
+def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger) -> Tuple[List[str], List[str]]:
+    extractor_dirs = set([root_directory])
+    extractor_files = []
+
+    def scan_and_repair(directory, package=None):
+        nodes = os.listdir(directory)
+
+        if "__init__.py" in nodes and not package and "-" not in os.path.basename(directory):
+            # Perhaps we've found the outermost package?
+            package = os.path.basename(directory)
+
+        for node in nodes:
+            path = os.path.join(directory, node)
+            if node == VENV_DIRECTORY_NAME:
+                # Ignore looking for extractors within packages
+                continue
+            elif not node.endswith(".py") and os.path.isfile(path):
+                # Ignore scanning non-Python files
+                continue
+            elif node in ["setup.py"]:
+                # Ignore setup files and markers for package directories
+                continue
+            elif "test" in node:
+                # Ignore test files
+                continue
+            elif "deprecated" in node:
+                # Ignore deprecated files
+                continue
+
+            if os.path.isfile(os.path.join(directory, node)):
+                # Scan Python file for potential extractors
+                if package:
+                    # Inspect the contents and look for any relative import issues
+                    with open(path, "r") as f:
+                        data = f.read()
+
+                    with open(path, "w") as f:
+                        # Replace any relative importing with absolute
+                        curr_dir = os.path.dirname(path)
+                        split = curr_dir.split("/")[::-1]
+                        for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
+                            for match in pattern.findall(data):
+                                depth = match.count(".")
+                                data = data.replace(
+                                    f"from {match}",
+                                    f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
+                                    1,
+                                )
+                        f.write(data)
+
+                if scanner.match(path):
+                    # Add directory to list of hits for venv creation
+                    extractor_dirs.add(directory)
+                    extractor_files.append(os.path.realpath(path))
+            else:
+                scan_and_repair(path, package)
+
+    # Search for extractors using YARA rules
+    logger.info("Searching for prospective extractors based on YARA rules..")
+    scan_and_repair(root_directory)
+
+    return extractor_dirs, extractor_files
+
+
+def create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
+    venvs = []
+    logger.info("Creating virtual environment(s)..")
+    env = deepcopy(os.environ)
+    stop_directory = os.path.dirname(sorted(directories)[0])
+    # Track directories that we've already visited
+    visited_dirs = []
+    for dir in directories:
+        # Recurse backwards through the directory structure to look for package requirements
+        while dir != stop_directory and dir not in visited_dirs:
+            req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(os.listdir(dir))))
+            if req_files:
+                venv_path = os.path.join(dir, VENV_DIRECTORY_NAME)
+                env.update({"VIRTUAL_ENV": venv_path})
+                # Create a virtual environment for the directory
+                if not os.path.exists(venv_path):
+                    cmd = VENV_CREATE_CMD
+                    if PACKAGE_MANAGER == "uv":
+                        cmd += f" --python {python_version}"
+                    subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
+
+                # Install/Update the packages in the environment
+                install_command = PIP_CMD.split(" ") + ["install", "-U"]
+
+                # Update the pip install command depending on where the dependencies are coming from
+                if "requirements.txt" in req_files:
+                    # Perform a pip install using the requirements flag
+                    install_command.extend(["-r", "requirements.txt"])
+                elif "pyproject.toml" in req_files:
+                    # Assume we're dealing with a project directory
+                    pyproject_command = ["-e", "."]
+
+                    # Check to see if there are optional dependencies required
+                    with open(os.path.join(dir, "pyproject.toml"), "rb") as f:
+                        parsed_toml_project = tomllib.load(f).get("project", {})
+                        for dep_name, dependencies in parsed_toml_project.get("optional-dependencies", {}).items():
+                            # Look for the dependency that hints at use of MACO for the extractors
+                            if "maco" in " ".join(dependencies):
+                                pyproject_command = [f".[{dep_name}]"]
+                                break
+
+                    install_command.extend(pyproject_command)
+
+                logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
+                p = subprocess.run(
+                    install_command,
+                    cwd=dir,
                     capture_output=True,
-                    cwd=root,
+                    env=env,
                 )
-            else:
-                logger.info(f"Updating venv at: {venv_path}")
+                if p.returncode != 0:
+                    if b"is being installed using the legacy" in p.stderr:
+                        # Ignore these types of errors
+                        continue
+                    logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
+                else:
+                    logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}")
+                    venvs.append(venv_path)
 
-            # Update the pip install command depending on where the dependencies are coming from
-            if "requirements.txt" in req_files:
-                # Perform a pip install using the requirements flag
-                install_command.extend(["-r", "requirements.txt"])
-            elif "pyproject.toml" in req_files:
-                # Assume we're dealing with a project directory
-                pyproject_command = ["-e", "."]
+            # Add directories to our visited list and check the parent of this directory on the next loop
+            visited_dirs.append(dir)
+            dir = os.path.dirname(dir)
+    return venvs
 
-                # Check to see if there are optional dependencies required
-                with open(os.path.join(root, "pyproject.toml"), "rb") as f:
-                    parsed_toml_project = tomllib.load(f).get("project", {})
-                    for dep_name, dependencies in parsed_toml_project.get("optional-dependencies", {}).items():
-                        # Look for the dependency that hints at use of MACO for the extractors
-                        if "maco" in " ".join(dependencies):
-                            pyproject_command = ["-e", f".[{dep_name}]"]
-                            break
 
-                install_command.extend(pyproject_command)
-
-            # Install/Update packages within the venv relative the dependencies extracted
-            logger.debug(f"Install command: {' '.join(install_command)}")
-            p = subprocess.run(
-                install_command,
-                cwd=root,
-                capture_output=True,
-            )
-            if p.returncode != 0:
-                if b"is being installed using the legacy" in p.stderr:
-                    # Ignore these types of errors
-                    continue
-                logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
-            else:
-                logger.debug(f"Installed dependencies into venv:\n{p.stdout}")
-
-        if root == root_directory and not recurse:
-            # Limit venv creation to the root directory
+def find_and_insert_venv(path: str, venvs: List[str]):
+    venv = None
+    for venv in sorted(venvs, reverse=True):
+        venv_parent = os.path.dirname(venv)
+        if path.startswith(venv_parent):
+            # Found the virtual environment that's the closest to extractor
             break
 
+    if not venv:
+        return None, None
 
-def find_extractors(
-    parsers_dir: str,
+    if venv:
+        # Insert the venv's site-packages into the PATH temporarily to load the module
+        for site_package in glob(os.path.join(venv, "lib/python*/site-packages")):
+            if site_package not in sys.path:
+                sys.path.insert(2, site_package)
+            break
+
+    return venv, site_package
+
+
+def register_extractors(
+    current_directory: str,
+    venvs: List[str],
+    extractor_files: List[str],
+    extractor_module_callback: Callable[[ModuleType, str], None],
     logger: Logger,
-    extractor_module_callback: Callable[[ModuleType, ModuleType, str], bool],
+    default_loaded_modules: Set[str] = set(sys.modules.keys()),
 ):
-    original_PATH = deepcopy(sys.path)
-    original_modules = set(sys.modules.keys())
-
-    parsers_dir = os.path.abspath(parsers_dir)
-    logger.debug("Adding directories within parser directory in case of local dependencies")
-    logger.debug(f"Adding {os.path.join(parsers_dir, os.pardir)} to PATH")
-
-    # Specific feature for Assemblyline or environments wanting to run parsers from different sources
-    # The goal is to try and introduce package isolation/specification similar to a virtual environment when running parsers
-    root_venv = None
-    if VENV_DIRECTORY_NAME in os.listdir(parsers_dir):
-        root_venv = os.path.join(parsers_dir, VENV_DIRECTORY_NAME)
-
-    # Find extractors (taken from MaCo's Collector class)
-    path_parent, foldername = os.path.split(parsers_dir)
-    sys.path.insert(1, path_parent)
-
-    def load_module(module_name: str, venv_path: str = None) -> ModuleType:
-        if venv_path:
-            # Insert the venv's site-packages into the PATH temporarily to load the module
-            for dir in glob(os.path.join(venv_path, "lib/python*/site-packages")):
-                sys.path.insert(2, dir)
-                break
-        try:
-            return importlib.import_module(module_name)
-        except BaseException as e:
-            logger.warning(f"Error loading module '{module_name}': {e}")
-        finally:
-            if venv_path:
-                # Cleanup PATH once the module has been loaded (or not)
-                sys.path.pop(2)
-
-    # To avoid module confusion, don't add the directory that has the same name as a Python module within to the PATH
-    if f"{foldername}.py" not in os.listdir(parsers_dir):
-        sys.path.insert(1, parsers_dir)
-
-    if "src" in os.listdir(parsers_dir):
-        # The actual module might be located in the src subdirectory
-        # Ref: https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/
-        src_path = os.path.join(parsers_dir, "src")
-        sys.path.insert(1, src_path)
-
-        # The module to be loaded should be the directory within src
-        foldername = [
-            d for d in os.listdir(src_path) if os.path.isdir(os.path.join(src_path, d)) and not d.endswith(".egg-info")
-        ][0]
-
+    package_name = os.path.basename(current_directory)
+    parent_directory = os.path.dirname(current_directory)
     symlink = None
-    existing_modules = set(INSTALLED_MODULES).union(original_modules)
-    while foldername in existing_modules:
-        # Prepend foldername with '_' until it doesn't conflict with an already installed package
-        foldername = f"_{foldername}"
+    while package_name in sys.modules:
+        # Package name conflicts with an existing loaded module, let's deconflict that
+        package_name = f"_{package_name}"
 
-        if foldername not in existing_modules:
-            # Create a symbolic link back to the original directory
-            symlink = os.path.join(path_parent, foldername)
-            if not os.path.exists(symlink):
-                os.symlink(parsers_dir, symlink)
+        # We'll need to create a link back to the original
+        if package_name not in sys.modules:
+            symlink = os.path.join(parent_directory, package_name)
+            os.symlink(current_directory, symlink)
 
-            # Assign the symlink as the target directory parsing to avoid recursion-based errors
-            parsers_dir = symlink
+    try:
+        # Modify the PATH so we can recognize this new package on import
+        sys.path.insert(1, current_directory)
+        sys.path.insert(1, parent_directory)
 
-    # Load in specified directory as a module for package walking
-    mod = load_module(foldername, root_venv)
+        # Insert any virtual environment necessary to load directory as package
+        package_venv, package_site_packages = find_and_insert_venv(current_directory, venvs)
+        package = importlib.import_module(package_name)
 
-    def find_venv(path: str) -> str:
-        parent_dir = os.path.dirname(path)
-        if VENV_DIRECTORY_NAME in os.listdir(path):
-            # venv is in the same directory as the parser
-            return os.path.join(path, VENV_DIRECTORY_NAME)
-        elif parent_dir == parsers_dir or path == parsers_dir:
-            # We made it all the way back to the parser directory
-            # Use root venv, if any
-            return root_venv
-        elif VENV_DIRECTORY_NAME in os.listdir(parent_dir):
-            # We found a venv before going back to the root of the parser directory
-            # Assume that because it's the closest, it's the most relevant
-            return os.path.join(parent_dir, VENV_DIRECTORY_NAME)
-        else:
-            # Keep searching in the parent directory for a venv
-            return find_venv(parent_dir)
+        # Walk through our new package and find the extractors that YARA identified
+        for module_path, module_name, ispkg in walk_packages(package.__path__, package.__name__ + "."):
+            if ispkg:
+                # Skip packages
+                continue
 
-    # walk packages in the extractors directory to find all extactors
-    for module_path, module_name, ispkg in pkgutil.walk_packages(mod.__path__, mod.__name__ + "."):
+            module_path = os.path.realpath(os.path.join(module_path.path, module_name.rsplit(".", 1)[1]) + ".py")
+            if module_path in extractor_files:
+                # Cross this extractor off the list of extractors to find
+                logger.debug(f"Inspecting '{module_name}' for extractors..")
+                extractor_files.remove(module_path)
+                try:
+                    # This is an extractor we've been looking for, load the module and invoke callback
+                    venv, site_packages = find_and_insert_venv(module_path, venvs)
+                    module = importlib.import_module(module_name)
+                    module.__file__ = os.path.realpath(module.__file__)
 
-        if ispkg:
-            # skip __init__.py
-            continue
+                    # Patch the original directory information into the module
+                    original_package_name = os.path.basename(current_directory)
+                    module.__name__ = module.__name__.replace(package_name, original_package_name)
+                    module.__package__ = module.__package__.replace(package_name, original_package_name)
+                    extractor_module_callback(module, venv)
+                finally:
+                    # Cleanup virtual environment that was loaded into PATH
+                    if venv and site_packages in sys.path:
+                        sys.path.remove(site_packages)
 
-        if module_name.endswith(".setup"):
-            # skip setup.py
-            continue
+            if not extractor_files:
+                return
+    finally:
+        # Cleanup changes made to PATH
+        sys.path.remove(parent_directory)
+        sys.path.remove(current_directory)
 
-        logger.debug(f"Inspecting '{module_name}' for extractors")
+        if package_venv and package_site_packages in sys.path:
+            sys.path.remove(package_site_packages)
 
-        # Local site packages, if any, need to be loaded before attempting to import the module
-        parser_venv = find_venv(module_path.path)
-        module = load_module(module_name, parser_venv)
-        if not module:
-            continue
+        # Remove any modules that were loaded to deconflict with later modules loads
+        [sys.modules.pop(k) for k in set(sys.modules.keys()) - default_loaded_modules]
 
-        # Determine if module contains parsers of a supported framework
-        candidates = [module] + [member for _, member in inspect.getmembers(module) if inspect.isclass(member)]
-        for member in candidates:
-            try:
-                if "test" in member.__name__.lower():
-                    continue
+        # Cleanup any symlinks
+        if symlink:
+            os.remove(symlink)
 
-                # Resolve the real paths before invoking the callback
-                module.__file__ = os.path.realpath(module.__file__)
-                if parser_venv:
-                    parser_venv = os.path.realpath(parser_venv)
+    # If there still exists extractor files we haven't found yet, try searching in the available subdirectories
+    if extractor_files:
+        for dir in os.listdir(current_directory):
+            path = os.path.join(current_directory, dir)
+            if dir == "__pycache__":
+                # Ignore the cache created
+                continue
+            elif dir.endswith(".egg-info"):
+                # Ignore these directories
+                continue
+            elif dir.startswith("."):
+                # Ignore hidden directories
+                continue
 
-                if extractor_module_callback(member, module, parser_venv):
-                    # If the callback returns with a positive response, we can move onto the next module
-                    break
+            if os.path.isdir(path):
+                # Check subdirectory to find the rest of the detected extractors
+                register_extractors(
+                    path, venvs, extractor_files, extractor_module_callback, logger, default_loaded_modules
+                )
 
-            except TypeError:
-                pass
-            except Exception as e:
-                logger.error(f"{member}: {e}")
+            if not extractor_files:
+                # We were able to find all the extractor files
+                break
 
-    # Restore PATH to it's original settings and remove any cached modules that was added during this run
-    sys.path = original_PATH
-    [sys.modules.pop(k) for k in set(sys.modules.keys()) - original_modules]
-    if symlink:
-        # Cleanup the symlink that was created, it's not needed anymore
-        os.remove(symlink)
+
+def import_extractors(
+    root_directory: str,
+    scanner: yara.Rules,
+    extractor_module_callback: Callable[[ModuleType, str], bool],
+    logger: Logger,
+    create_venv: bool = False,
+    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+):
+    extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
+
+    logger.info(f"Extractor files found based on scanner ({len(extractor_files)}).")
+    logger.debug(extractor_files)
+
+    venvs = []
+    if create_venv:
+        venvs = create_virtual_environments(extractor_dirs, python_version, logger)
+    else:
+        # Look for pre-existing virtual environments, if any
+        logger.info("Checking for pre-existing virtual environment(s)..")
+        venvs = [
+            os.path.join(root, VENV_DIRECTORY_NAME)
+            for root, dirs, _ in os.walk(root_directory)
+            if VENV_DIRECTORY_NAME in dirs
+        ]
+
+    # With the environment prepared, we can now hunt for the extractors and register them
+    logger.info("Registering extractors..")
+    register_extractors(root_directory, venvs, extractor_files, extractor_module_callback, logger)
 
 
 def run_in_venv(

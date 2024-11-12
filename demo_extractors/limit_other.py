@@ -1,9 +1,7 @@
 from io import BytesIO
 from typing import Dict, List, Optional
 
-import yara
-
-from maco import extractor, model
+from maco import extractor, model, yara
 
 from . import shared
 
@@ -25,9 +23,7 @@ class LimitOther(extractor.Extractor):
         }
         """
 
-    def run(
-        self, stream: BytesIO, matches: List[yara.Match]
-    ) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
         # use a custom model that inherits from ExtractorModel
         # this model defines what can go in the 'other' dict
         tmp = shared.MyCustomModel(family="specify_other")

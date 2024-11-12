@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maco-model"
+dynamic = ["version"]
+dependencies = ["pydantic>=2.0.0"]
+requires-python = ">=3.8"
+authors = [{ name = "sl-govau" }]
+maintainers = [{ name = "cccs-rs" }]
+readme = "README.md"
+license = { file = "LICENSE.md" }
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+
+    "Topic :: Software Development :: Libraries :: Python Modules",
+
+    "License :: OSI Approved :: MIT License",
+
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+
+[project.urls]
+Repository = "https://github.com/CybercentreCanada/Maco"
+Issues = "https://github.com/CybercentreCanada/Maco/issues"
+
+[tool.setuptools_scm]
+root = ".."
+
+[tool.setuptools]
+packages = ["maco.model"]

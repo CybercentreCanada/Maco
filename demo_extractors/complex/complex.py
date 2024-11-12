@@ -1,9 +1,7 @@
 from io import BytesIO
 from typing import Dict, List, Optional
 
-import yara
-
-from maco import extractor, model
+from maco import extractor, model, yara
 
 from . import complex_utils
 
@@ -41,9 +39,7 @@ class Complex(extractor.Extractor):
         }
         """
 
-    def run(
-        self, stream: BytesIO, matches: List[yara.Match]
-    ) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
         self.logger.info("starting run")
         self.logger.debug(f"{[x.rule for x in matches]=}")
         data = stream.read()

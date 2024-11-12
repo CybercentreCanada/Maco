@@ -1,4 +1,6 @@
 cart
 pydantic>=2.0.0
-yara-python
 tomli >= 1.1.0 ; python_version < "3.11"
+uv
+yara-python
+yara-x==0.10.0
