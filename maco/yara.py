@@ -27,6 +27,9 @@ class StringMatchInstance:
         else:
             return bytes(c ^ k for c, k in zip(self.matched_data, cycle(self.xor_key)))
 
+    def decode(self, encoding: str = "utf8"):
+        return self.plaintext().decode(encoding=encoding)
+
 
 class StringMatch:
     def __init__(self, pattern: yara_x.Pattern, file_content: bytes):
@@ -36,6 +39,9 @@ class StringMatch:
 
     def is_xor(self):
         return self._is_xor
+
+    def __getitem__(self, index):
+        return self.instances[index]
 
 
 class Match:
