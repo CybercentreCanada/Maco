@@ -4,19 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "maco"
-dynamic = ["version"]
-dependencies = [
-    "cart",
-    "pydantic>=2.0.0",
-    'tomli >= 1.1.0 ; python_version < "3.11"',
-    "uv",
-    "yara-python",
-    "yara-x==0.10.0",
-]
+dynamic = ["version", "readme", "dependencies"]
 requires-python = ">=3.8"
 authors = [{ name = "sl-govau" }]
 maintainers = [{ name = "cccs-rs" }]
-readme = "README.md"
 license = { file = "LICENSE.md" }
 
 classifiers = [
@@ -42,6 +33,10 @@ Repository = "https://github.com/CybercentreCanada/Maco"
 Issues = "https://github.com/CybercentreCanada/Maco/issues"
 
 [tool.setuptools_scm]
+
+[tool.setuptools.dynamic]
+readme = { file = ["README.md"] }
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["."]
