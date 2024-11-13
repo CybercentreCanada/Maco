@@ -203,7 +203,7 @@ def create_virtual_environments(directories: List[str], python_version: str, log
                 if not os.path.exists(venv_path):
                     cmd = VENV_CREATE_CMD
                     if PACKAGE_MANAGER == "uv":
-                        cmd += f" --python {python_version}"
+                        cmd += f" --python {python_version} --seed"
                     subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
