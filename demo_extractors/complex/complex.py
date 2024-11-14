@@ -50,7 +50,7 @@ class Complex(extractor.Extractor):
         other = complex_utils.getdata()["result"]
         self.logger.debug("got data from lib")
         # example - accessing yara strings
-        strings = {z.plaintext().decode("utf8") for x in matches for y in x.strings for z in y.instances}
+        strings = sorted({z.plaintext().decode("utf8") for x in matches for y in x.strings for z in y.instances})
         self.logger.debug(f"{strings=}")
         # construct model of results
         tmp = model.ExtractorModel(family=self.family)
