@@ -1,9 +1,9 @@
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from maco import extractor, model, yara
 
-from . import complex_utils
+from complex import complex_utils
 
 
 class Complex(extractor.Extractor):
@@ -50,7 +50,7 @@ class Complex(extractor.Extractor):
         other = complex_utils.getdata()["result"]
         self.logger.debug("got data from lib")
         # example - accessing yara strings
-        strings = {y[2].decode("utf8") for x in matches for y in x.strings}
+        strings = sorted({z.plaintext().decode("utf8") for x in matches for y in x.strings for z in y.instances})
         self.logger.debug(f"{strings=}")
         # construct model of results
         tmp = model.ExtractorModel(family=self.family)
