@@ -36,7 +36,7 @@ class TestDemoExtractors(unittest.TestCase):
                 "Complex": {
                     "family": "complex",
                     "version": "5",
-                    "decoded_strings": ["Paradise", "Complex"],
+                    "decoded_strings": sorted(["Paradise", "Complex"]),
                     "binaries": [
                         {
                             "datatype": "payload",
