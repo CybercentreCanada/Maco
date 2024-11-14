@@ -1,0 +1,6 @@
+file to trigger demo extractors
+
+self_trigger
+
+Complex
+Paradise
