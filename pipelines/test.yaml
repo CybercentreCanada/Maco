@@ -30,7 +30,7 @@ jobs:
 
       - script: |
           runtests=true
-          if [ ! -d "$(pwd)/tests" ]l then
+          if [ ! -d "$(pwd)/tests" ]; then
             echo "No tests found"
             runtest=false
           else
