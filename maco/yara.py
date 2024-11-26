@@ -1,10 +1,10 @@
 import re
-import yara
-import yara_x
-
 from collections import namedtuple
 from itertools import cycle
 from typing import Dict
+
+import yara
+import yara_x
 
 RULE_ID_RE = re.compile("(\w+)? ?rule (\w+)")
 
@@ -42,7 +42,7 @@ class Match:
     def __init__(self, rule: yara_x.Rule, file_content: bytes):
         self.rule = rule.identifier
         self.namespace = rule.namespace
-        self.tags = rule.tags if hasattr(rule, "tags") else []
+        self.tags = list(rule.tags) or []
         self.meta = dict()
         # Ensure metadata doesn't get overwritten
         for k, v in rule.metadata:
