@@ -220,7 +220,7 @@ def create_virtual_environments(directories: List[str], python_version: str, log
                     install_command.extend(["-r", "requirements.txt"])
                 elif "pyproject.toml" in req_files:
                     # Assume we're dealing with a project directory
-                    pyproject_command = ["-e", "."]
+                    pyproject_command = ["."]
 
                     # Check to see if there are optional dependencies required
                     with open(os.path.join(dir, "pyproject.toml"), "rb") as f:
