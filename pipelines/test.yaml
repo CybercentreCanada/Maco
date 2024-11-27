@@ -4,7 +4,7 @@ trigger: ["*"]
 pr: ["*"]
 
 pool:
-  vmImage: "ubuntu-20.04"
+  vmImage: "ubuntu-22.04"
 
 jobs:
   - job: run_test
@@ -27,15 +27,19 @@ jobs:
         displayName: Set python version
         inputs:
           versionSpec: "$(python.version)"
-      - script: |
-          [ ! -d "$(pwd)/tests" ] && echo "No tests found" && exit
-          [ -f $(pwd)/requirements.txt ] && sudo env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/requirements.txt
-          [ -f $(pwd)/tests/requirements.txt ] && sudo env "PATH=$PATH" python -m pip install -U --no-cache-dir -r $(pwd)/tests/requirements.txt
-          sudo rm -rf /tmp/* /var/lib/apt/lists/* ~/.cache/pip
 
-        displayName: Setup environment
       - script: |
-          [ ! -d "$(pwd)/tests" ] && echo "No tests found" && exit
-          export REPO_NAME=${BUILD_REPOSITORY_NAME##*/}
-          python -m pytest -p no:cacheprovider --durations=10 -rsx -vv -W ignore::DeprecationWarning
-        displayName: Test
+          runtests=true
+          if [ ! -d "$(pwd)/tests" ]; then
+            echo "No tests found"
+            runtest=false
+          else
+            python -m pip install -U tox
+          fi
+          echo "##vso[task.setvariable variable=runtests;]$runtests"
+        displayName: Install tox
+
+      - script: |
+          python -m tox -e py
+        displayName: "Run tests"
+        condition: and(succeeded(), eq(variables.runtests, true))
