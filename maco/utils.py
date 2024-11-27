@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile
+
 from maco import yara
 
 if sys.version_info >= (3, 11):
@@ -21,8 +22,8 @@ from copy import deepcopy
 from glob import glob
 from logging import Logger
 from pkgutil import walk_packages
-from typing import Callable, Dict, Tuple, List, Set
 from types import ModuleType
+from typing import Callable, Dict, List, Set, Tuple
 
 from maco.extractor import Extractor
 
@@ -67,7 +68,11 @@ import importlib
 import json
 import os
 import sys
-import yara
+
+try:
+    from maco import yara
+except:
+    import yara
 
 from base64 import b64encode
 parent_package_path = "{parent_package_path}"
@@ -399,21 +404,23 @@ def import_extractors(
     register_extractors(root_directory, venvs, extractor_files, extractor_module_callback, logger)
 
 
-def run_in_venv(
+def run_extractor(
     sample_path,
-    module,
+    module_name,
+    extractor_class,
     module_path,
     venv,
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
 ) -> Dict[str, dict]:
     # Write temporary script in the same directory as extractor to resolve relative imports
-    python_exe = os.path.join(venv, "bin", "python")
+    python_exe = sys.executable
+    if venv:
+        # If there is a linked virtual environment, execute within that environment
+        python_exe = os.path.join(venv, "bin", "python")
     dirname = os.path.dirname(module_path)
     with tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script:
         with tempfile.NamedTemporaryFile() as output:
-            module_name = module.__module__
-            module_class = module.__name__
             parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
             root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
 
@@ -421,7 +428,7 @@ def run_in_venv(
                 venv_script.format(
                     parent_package_path=parent_package_path,
                     module_name=module_name,
-                    module_class=module_class,
+                    module_class=extractor_class,
                     sample_path=sample_path,
                     output_path=output.name,
                 )

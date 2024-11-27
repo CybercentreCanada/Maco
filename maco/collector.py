@@ -3,15 +3,14 @@
 import inspect
 import logging
 import os
-
+from multiprocessing import Manager, Process
 from tempfile import NamedTemporaryFile
-from typing import Any, BinaryIO, Dict, List
 from types import ModuleType
+from typing import Any, BinaryIO, Dict, List, Union
 
-from maco import yara
 from pydantic import BaseModel
 
-from maco import extractor, model, utils
+from maco import extractor, model, utils, yara
 
 
 class ExtractorLoadError(Exception):
@@ -21,12 +20,14 @@ class ExtractorLoadError(Exception):
 logger = logging.getLogger("maco.lib.helpers")
 
 
-def _verify_response(resp: BaseModel) -> Dict:
+def _verify_response(resp: Union[BaseModel, dict]) -> Dict:
     """Enforce types and verify properties, and remove defaults."""
+    if not resp:
+        return None
     # check the response is valid for its own model
     # this is useful if a restriction on the 'other' dictionary is needed
     resp_model = type(resp)
-    if resp_model != model.ExtractorModel:
+    if resp_model != model.ExtractorModel and hasattr(resp_model, "model_validate"):
         resp = resp_model.model_validate(resp)
     # check the response is valid according to the ExtractorModel
     resp = model.ExtractorModel.model_validate(resp)
@@ -43,44 +44,59 @@ class Collector:
     ):
         """Discover and load extractors from file system."""
         path_extractors = os.path.realpath(path_extractors)
-        self.path = path_extractors
-        self.extractors = {}
-        namespaced_rules = {}
+        self.path: str = path_extractors
+        self.extractors: Dict[str, Dict[str, str]] = {}
 
-        def extractor_module_callback(module: ModuleType, venv: str):
-            members = inspect.getmembers(module, predicate=utils.maco_extractor_validation)
-            for member in members:
-                name, member = member
-                if exclude and name in exclude:
-                    # Module is part of the exclusion list, skip
-                    logger.debug(f"exclude excluded '{name}'")
-                    return
+        with Manager() as manager:
+            extractors = manager.dict()
+            namespaced_rules = manager.dict()
 
-                if include and name not in include:
-                    # Module wasn't part of the inclusion list, skip
-                    logger.debug(f"include excluded '{name}'")
-                    return
+            def extractor_module_callback(module: ModuleType, venv: str):
+                members = inspect.getmembers(module, predicate=utils.maco_extractor_validation)
+                for member in members:
+                    name, member = member
+                    if exclude and name in exclude:
+                        # Module is part of the exclusion list, skip
+                        logger.debug(f"exclude excluded '{name}'")
+                        return
 
-                # initialise and register
-                logger.debug(f"register '{name}'")
-                self.extractors[name] = dict(module=member, venv=venv, module_path=module.__file__)
-                namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
+                    if include and name not in include:
+                        # Module wasn't part of the inclusion list, skip
+                        logger.debug(f"include excluded '{name}'")
+                        return
 
-        # Find the extractors within the given directory
-        utils.import_extractors(
-            path_extractors,
-            yara.compile(source=utils.MACO_YARA_RULE),
-            extractor_module_callback,
-            logger,
-            create_venv and os.path.isdir(path_extractors),
-        )
+                    # initialise and register
+                    logger.debug(f"register '{name}'")
+                    extractors[name] = dict(
+                        venv=venv,
+                        module_path=module.__file__,
+                        module_name=member.__module__,
+                        extractor_class=member.__name__,
+                    )
+                    namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
-        if not self.extractors:
-            raise ExtractorLoadError("no extractors were loaded")
-        logger.debug(f"found extractors {list(self.extractors.keys())}\n")
+            # Find the extractors within the given directory
+            # Execute within a child process to ensure main process interpreter is kept clean
+            p = Process(
+                target=utils.import_extractors,
+                args=(
+                    path_extractors,
+                    yara.compile(source=utils.MACO_YARA_RULE),
+                    extractor_module_callback,
+                    logger,
+                    create_venv and os.path.isdir(path_extractors),
+                ),
+            )
+            p.start()
+            p.join()
 
-        # compile yara rules gathered from extractors
-        self.rules = yara.compile(sources=namespaced_rules)
+            self.extractors = dict(extractors)
+            if not self.extractors:
+                raise ExtractorLoadError("no extractors were loaded")
+            logger.debug(f"found extractors {list(self.extractors.keys())}\n")
+
+            # compile yara rules gathered from extractors
+            self.rules = yara.compile(sources=dict(namespaced_rules))
 
     def match(self, stream: BinaryIO) -> Dict[str, List[yara.Match]]:
         """Return extractors that should run based on yara rules."""
@@ -105,17 +121,13 @@ class Collector:
     ) -> Dict[str, Any]:
         """Run extractor with stream and verify output matches the model."""
         extractor = self.extractors[extractor_name]
-        resp = None
         try:
-            if extractor["venv"]:
-                # Run extractor within a virtual environment
-                with NamedTemporaryFile() as sample_path:
-                    sample_path.write(stream.read())
-                    sample_path.flush()
-                    return utils.run_in_venv(sample_path.name, **extractor)
-            else:
-                # Run extractor within on host environment
-                resp = extractor["module"]().run(stream, matches)
+            # Run extractor on a copy of the sample
+            with NamedTemporaryFile() as sample_path:
+                sample_path.write(stream.read())
+                sample_path.flush()
+                # enforce types and verify properties, and remove defaults
+                return _verify_response(utils.run_extractor(sample_path.name, **extractor))
         except Exception:
             # caller can deal with the exception
             raise
@@ -123,9 +135,3 @@ class Collector:
             # make sure to reset where we are in the file
             # otherwise follow on extractors are going to read 0 bytes
             stream.seek(0)
-
-        # enforce types and verify properties, and remove defaults
-        if resp is not None:
-            resp = _verify_response(resp)
-
-        return resp
