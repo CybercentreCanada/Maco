@@ -6,6 +6,7 @@ import inspect
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -220,7 +221,7 @@ def create_virtual_environments(directories: List[str], python_version: str, log
                     install_command.extend(["-r", "requirements.txt"])
                 elif "pyproject.toml" in req_files:
                     # Assume we're dealing with a project directory
-                    pyproject_command = ["."]
+                    pyproject_command = ["-e", "."]
 
                     # Check to see if there are optional dependencies required
                     with open(os.path.join(dir, "pyproject.toml"), "rb") as f:
@@ -248,6 +249,11 @@ def create_virtual_environments(directories: List[str], python_version: str, log
                 else:
                     logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}")
                     venvs.append(venv_path)
+
+                # Cleanup any build directories that are the product of package installation
+                expected_build_path = os.path.join(dir, "build")
+                if os.path.exists(expected_build_path):
+                    shutil.rmtree(expected_build_path)
 
             # Add directories to our visited list and check the parent of this directory on the next loop
             visited_dirs.append(dir)
