@@ -98,11 +98,11 @@ def process_filesystem(
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
     for _, extractor in collected.extractors.items():
-        extractor = extractor["module"]
+        extractor_meta = extractor["metadata"]
         logger.info(
-            f"{extractor.family} by {extractor.author}"
-            f" {extractor.last_modified} {extractor.sharing}"
-            f"\n{extractor.__doc__}\n"
+            f"{extractor_meta['family']} by {extractor_meta['author']}"
+            f" {extractor_meta['last_modified']} {extractor_meta['sharing']}"
+            f"\n{extractor_meta['description']}\n"
         )
 
     num_analysed = 0

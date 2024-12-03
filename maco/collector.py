@@ -72,6 +72,11 @@ class Collector:
                         module_path=module.__file__,
                         module_name=member.__module__,
                         extractor_class=member.__name__,
+                        metadata={'family': member.family,
+                                  'author': member.author,
+                                  'last_modified': member.last_modified,
+                                  'sharing': member.sharing,
+                                  'description': member.__doc__}
                     )
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
