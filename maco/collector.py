@@ -40,7 +40,11 @@ def _verify_response(resp: Union[BaseModel, dict]) -> Dict:
 
 class Collector:
     def __init__(
-        self, path_extractors: str, include: List[str] = None, exclude: List[str] = None, create_venv: bool = False
+        self,
+        path_extractors: str,
+        include: List[str] = None,
+        exclude: List[str] = None,
+        create_venv: bool = False,
     ):
         """Discover and load extractors from file system."""
         path_extractors = os.path.realpath(path_extractors)
@@ -72,11 +76,13 @@ class Collector:
                         module_path=module.__file__,
                         module_name=member.__module__,
                         extractor_class=member.__name__,
-                        metadata={'family': member.family,
-                                  'author': member.author,
-                                  'last_modified': member.last_modified,
-                                  'sharing': member.sharing,
-                                  'description': member.__doc__}
+                        metadata={
+                            "family": member.family,
+                            "author": member.author,
+                            "last_modified": member.last_modified,
+                            "sharing": member.sharing,
+                            "description": member.__doc__,
+                        },
                     )
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
@@ -121,7 +127,6 @@ class Collector:
     def extract(
         self,
         stream: BinaryIO,
-        matches: List[yara.Match],
         extractor_name: str,
     ) -> Dict[str, Any]:
         """Run extractor with stream and verify output matches the model."""
@@ -132,7 +137,15 @@ class Collector:
                 sample_path.write(stream.read())
                 sample_path.flush()
                 # enforce types and verify properties, and remove defaults
-                return _verify_response(utils.run_extractor(sample_path.name, **extractor))
+                return _verify_response(
+                    utils.run_extractor(
+                        sample_path.name,
+                        module_name=extractor["module_name"],
+                        extractor_class=extractor["extractor_class"],
+                        module_path=extractor["module_path"],
+                        venv=extractor["venv"],
+                    )
+                )
         except Exception:
             # caller can deal with the exception
             raise

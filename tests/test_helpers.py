@@ -43,11 +43,11 @@ class TestHelpersAnalyseStream(unittest.TestCase):
 
     def test_analyse_stream(self):
         data = b""
-        resp = self.m.extract(io.BytesIO(data), [], "Complex")
+        resp = self.m.extract(io.BytesIO(data), "Complex")
         self.assertEqual(resp, None)
 
         data = b"data"
-        resp = self.m.extract(io.BytesIO(data), [], "Complex")
+        resp = self.m.extract(io.BytesIO(data), "Complex")
         self.assertEqual(
             resp,
             {

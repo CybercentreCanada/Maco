@@ -46,8 +46,7 @@ class BaseTest(unittest.TestCase):
         runs = self.c.match(stream)
         if not runs:
             raise NoHitException("no yara rule hit")
-        hits = runs[self.name]
-        resp = self.c.extract(stream, hits, self.name)
+        resp = self.c.extract(stream, self.name)
         return resp
 
     def _get_location(self) -> str:
