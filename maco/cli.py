@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import sys
-from typing import BinaryIO, List
+from typing import BinaryIO, List, Tuple
 
 import cart
 
@@ -57,7 +57,7 @@ def process_file(
         # run and store results for extractor
         logger.info(f"run {extractor_name} extractor from rules {[x.rule for x in hits]}")
         try:
-            resp = collected.extract(stream, hits, extractor_name)
+            resp = collected.extract(stream, extractor_name)
         except Exception as e:
             logger.exception(f"extractor error with {path_file} ({e})")
             resp = None
@@ -91,18 +91,22 @@ def process_filesystem(
     force: bool,
     include_base64: bool,
     create_venv: bool = False,
-):
+) -> Tuple[int, int, int]:
+    """Process filesystem with extractors and print results of extraction.
+
+    Returns total number of analysed files, yara hits and successful maco extractions.
+    """
     if force:
         logger.warning("force execute will cause errors if an extractor requires a yara rule hit during execution")
     collected = collector.Collector(path_extractors, include=include, exclude=exclude, create_venv=create_venv)
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
     for _, extractor in collected.extractors.items():
-        extractor = extractor["module"]
+        extractor_meta = extractor["metadata"]
         logger.info(
-            f"{extractor.family} by {extractor.author}"
-            f" {extractor.last_modified} {extractor.sharing}"
-            f"\n{extractor.__doc__}\n"
+            f"{extractor_meta['family']} by {extractor_meta['author']}"
+            f" {extractor_meta['last_modified']} {extractor_meta['sharing']}"
+            f"\n{extractor_meta['description']}\n"
         )
 
     num_analysed = 0
@@ -144,7 +148,7 @@ def process_filesystem(
     finally:
         logger.info("")
         logger.info(f"{num_analysed} analysed, {num_hits} hits, {num_extracted} extracted")
-
+    return num_analysed, num_hits, num_extracted
 
 def main():
     parser = argparse.ArgumentParser(description="Run extractors over samples.")
