@@ -265,7 +265,7 @@ def find_and_insert_venv(path: str, venvs: List[str]):
     venv = None
     for venv in sorted(venvs, reverse=True):
         venv_parent = os.path.dirname(venv)
-        if path.startswith(venv_parent):
+        if path.startswith(f"{venv_parent}/"):
             # Found the virtual environment that's the closest to extractor
             break
 
