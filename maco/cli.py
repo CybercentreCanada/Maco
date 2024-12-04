@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import sys
-from typing import BinaryIO, List
+from typing import BinaryIO, List, Tuple
 
 import cart
 
@@ -91,7 +91,7 @@ def process_filesystem(
     force: bool,
     include_base64: bool,
     create_venv: bool = False,
-) -> tuple[int, int, int]:
+) -> Tuple[int, int, int]:
     """Process filesystem with extractors and print results of extraction.
 
     Returns total number of analysed files, yara hits and successful maco extractions.
