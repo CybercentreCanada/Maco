@@ -4,11 +4,14 @@ import importlib.machinery
 import importlib.util
 import inspect
 import json
+import logging.handlers
 import os
 import re
 import shutil
 import subprocess
 import sys
+import multiprocessing
+import logging
 import tempfile
 
 from maco import yara
@@ -28,10 +31,12 @@ from typing import Callable, Dict, List, Set, Tuple
 
 from maco.extractor import Extractor
 
+logger = logging.getLogger("maco.lib.utils")
+
 VENV_DIRECTORY_NAME = ".venv"
 
-RELATIVE_FROM_RE = re.compile("from (\.+)")
-RELATIVE_FROM_IMPORT_RE = re.compile("from (\.+) import")
+RELATIVE_FROM_RE = re.compile(r"from (\.+)")
+RELATIVE_FROM_IMPORT_RE = re.compile(r"from (\.+) import")
 
 try:
     # Attempt to use the uv package manager (Recommended)
@@ -69,6 +74,7 @@ import importlib
 import json
 import os
 import sys
+import logging
 
 try:
     from maco import yara
@@ -76,6 +82,19 @@ except:
     import yara
 
 from base64 import b64encode
+
+# ensure we have a logger to stderr
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+sh = logging.StreamHandler()
+logger.addHandler(sh)
+sh.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    fmt="%(asctime)s, [%(levelname)s] %(module)s.%(funcName)s: %(message)s", datefmt="%Y-%m-%d (%H:%M:%S)"
+)
+sh.setFormatter(formatter)
+
 parent_package_path = "{parent_package_path}"
 sys.path.insert(1, parent_package_path)
 mod = importlib.import_module("{module_name}")
@@ -101,7 +120,7 @@ with open("{output_path}", 'w') as fp:
             json.dump(result.dict(exclude_defaults=True, exclude_none=True), fp, cls=Base64Encoder)
 """
 
-MACO_YARA_RULE = """
+MACO_YARA_RULE = r"""
 rule MACO {
     meta:
         desc = "Used to match on Python files that contain MACO extractors"
@@ -293,14 +312,10 @@ def register_extractors(
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
     symlink = None
-    while package_name in sys.modules:
-        # Package name conflicts with an existing loaded module, let's deconflict that
-        package_name = f"_{package_name}"
-
-        # We'll need to create a link back to the original
-        if package_name not in sys.modules:
-            symlink = os.path.join(parent_directory, package_name)
-            os.symlink(current_directory, symlink)
+    if package_name in sys.modules:
+        # this may happen as part of testing if some part of the extractor code was directly imported
+        logger.warning(f"Looks like {package_name} is already loaded. "
+                       "If your maco extractor overlaps an existing package name this could cause problems.")
 
     try:
         # Modify the PATH so we can recognize this new package on import
@@ -379,14 +394,22 @@ def register_extractors(
                 # We were able to find all the extractor files
                 break
 
+def proxy_logging(queue: multiprocessing.Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
+    """Ensures logging is set up correctly for a child process and then executes the callback."""
+    logger = logging.getLogger()
+    qh = logging.handlers.QueueHandler(queue)
+    qh.setLevel(logging.DEBUG)
+    logger.addHandler(qh)
+    callback(*args, **kwargs, logger=logger)
 
 def import_extractors(
+    extractor_module_callback: Callable[[ModuleType, str], bool],
+    *,
     root_directory: str,
     scanner: yara.Rules,
-    extractor_module_callback: Callable[[ModuleType, str], bool],
-    logger: Logger,
     create_venv: bool = False,
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    logger: Logger,
 ):
     extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
 
@@ -453,14 +476,20 @@ def run_extractor(
                 cwd=cwd,
                 capture_output=True,
             )
+            stderr = proc.stderr.decode()
             try:
                 # Load results and return them
                 output.seek(0)
-                return json.load(output, cls=json_decoder)
-            except Exception:
+                loaded =  json.load(output, cls=json_decoder)
+            except Exception as e:
                 # If there was an error raised during runtime, then propagate
                 delim = f'File "{module_path}"'
-                exception = proc.stderr.decode()
+                exception = stderr
                 if delim in exception:
                     exception = f"{delim}{exception.split(delim, 1)[1]}"
-                raise Exception(exception)
+                # print extractor logging at error level
+                logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
+                raise Exception(exception) from e
+            # ensure that extractor logging is available
+            logger.info(f"maco extractor stderr:\n{stderr}")
+            return loaded

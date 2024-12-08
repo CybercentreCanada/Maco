@@ -2,8 +2,9 @@
 
 import inspect
 import logging
+import logging.handlers
 import os
-from multiprocessing import Manager, Process
+from multiprocessing import Manager, Process, Queue
 from tempfile import NamedTemporaryFile
 from types import ModuleType
 from typing import Any, BinaryIO, Dict, List, Union
@@ -86,20 +87,32 @@ class Collector:
                     )
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
+            # multiprocess logging is awkward - set up a queue to ensure we can log
+            logging_queue = Queue()
+            queue_handler = logging.handlers.QueueListener(logging_queue,*logging.getLogger().handlers)
+            queue_handler.start()
+
             # Find the extractors within the given directory
             # Execute within a child process to ensure main process interpreter is kept clean
             p = Process(
-                target=utils.import_extractors,
+                target=utils.proxy_logging,
                 args=(
-                    path_extractors,
-                    yara.compile(source=utils.MACO_YARA_RULE),
+                    logging_queue,
+                    utils.import_extractors,
                     extractor_module_callback,
-                    logger,
-                    create_venv and os.path.isdir(path_extractors),
+                ),
+                kwargs=dict(
+                    root_directory=path_extractors,
+                    scanner=yara.compile(source=utils.MACO_YARA_RULE),
+                    create_venv=create_venv and os.path.isdir(path_extractors),
                 ),
             )
             p.start()
             p.join()
+
+            # stop multiprocess logging
+            queue_handler.stop()
+            logging_queue.close()
 
             self.extractors = dict(extractors)
             if not self.extractors:

@@ -17,4 +17,4 @@ class TestCLI(unittest.TestCase):
             force=False,
             include_base64=False,
         )
-        self.assertEqual(results, (2, 2, 2))
+        self.assertEqual(results, (3, 3, 3))
