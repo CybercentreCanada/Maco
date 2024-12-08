@@ -30,8 +30,8 @@ from maco.extractor import Extractor
 
 VENV_DIRECTORY_NAME = ".venv"
 
-RELATIVE_FROM_RE = re.compile("from (\.+)")
-RELATIVE_FROM_IMPORT_RE = re.compile("from (\.+) import")
+RELATIVE_FROM_RE = re.compile(r"from (\.+)")
+RELATIVE_FROM_IMPORT_RE = re.compile(r"from (\.+) import")
 
 try:
     # Attempt to use the uv package manager (Recommended)
@@ -101,7 +101,7 @@ with open("{output_path}", 'w') as fp:
             json.dump(result.dict(exclude_defaults=True, exclude_none=True), fp, cls=Base64Encoder)
 """
 
-MACO_YARA_RULE = """
+MACO_YARA_RULE = r"""
 rule MACO {
     meta:
         desc = "Used to match on Python files that contain MACO extractors"
