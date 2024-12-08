@@ -114,7 +114,6 @@ class Collector:
             queue_handler.stop()
             logging_queue.close()
 
-            logger.warning("warnings work outside of process")
             self.extractors = dict(extractors)
             if not self.extractors:
                 raise ExtractorLoadError("no extractors were loaded")
