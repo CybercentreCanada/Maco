@@ -31,6 +31,8 @@ from typing import Callable, Dict, List, Set, Tuple
 
 from maco.extractor import Extractor
 
+logger = logging.getLogger("maco.lib.utils")
+
 VENV_DIRECTORY_NAME = ".venv"
 
 RELATIVE_FROM_RE = re.compile(r"from (\.+)")
@@ -72,6 +74,7 @@ import importlib
 import json
 import os
 import sys
+import logging
 
 try:
     from maco import yara
@@ -79,6 +82,19 @@ except:
     import yara
 
 from base64 import b64encode
+
+# ensure we have a logger to stderr
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+sh = logging.StreamHandler()
+logger.addHandler(sh)
+sh.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    fmt="%(asctime)s, [%(levelname)s] %(module)s.%(funcName)s: %(message)s", datefmt="%Y-%m-%d (%H:%M:%S)"
+)
+sh.setFormatter(formatter)
+
 parent_package_path = "{parent_package_path}"
 sys.path.insert(1, parent_package_path)
 mod = importlib.import_module("{module_name}")
@@ -459,14 +475,20 @@ def run_extractor(
                 cwd=cwd,
                 capture_output=True,
             )
+            stderr = proc.stderr.decode()
             try:
                 # Load results and return them
                 output.seek(0)
-                return json.load(output, cls=json_decoder)
-            except Exception:
+                loaded =  json.load(output, cls=json_decoder)
+            except Exception as e:
                 # If there was an error raised during runtime, then propagate
                 delim = f'File "{module_path}"'
-                exception = proc.stderr.decode()
+                exception = stderr
                 if delim in exception:
                     exception = f"{delim}{exception.split(delim, 1)[1]}"
-                raise Exception(exception)
+                # print extractor logging at error level
+                logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
+                raise Exception(exception) from e
+            # ensure that extractor logging is available
+            logger.info(f"maco extractor stderr:\n{stderr}")
+            return loaded
