@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from maco import extractor, model, yara
 
-from complex import complex_utils
+from demo_extractors.complex import complex_utils
 
 
 class Complex(extractor.Extractor):

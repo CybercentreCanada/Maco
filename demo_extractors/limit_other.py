@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from maco import extractor, model, yara
 
-from . import shared
+from demo_extractors import shared
 
 
 class LimitOther(extractor.Extractor):

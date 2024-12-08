@@ -1,5 +1,7 @@
+import io
 import os
 
+from demo_extractors.complex import complex, complex_utils
 from maco import base_test
 
 
@@ -11,7 +13,33 @@ class TestLimitOther(base_test.BaseTest):
         data = self.load_cart("data/example.txt.cart").read()
         self.assertEqual(data, b"LimitOther\n")
 
-    def test_run(self):
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
         ret = self.extract(self.load_cart("data/example.txt.cart"))
         self.assertEqual(ret["family"], "specify_other")
         self.assertEqual(ret["campaign_id"], ["12345"])
+
+class TestComplex(base_test.BaseTest):
+    name = "Complex"
+    path = os.path.join(__file__, "../../demo_extractors")
+
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+        self.assertEqual(ret["family"], "complex")
+        self.assertEqual(ret["version"], "5")
+
+    def test_subfunction(self):
+        """Tests that we can import directly from the extractor module and run a function."""
+        self.assertEqual(complex_utils.getdata(), {"result": 5})
+
+    def test_manual_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ref = complex.Complex
+        self.assertGreater(len(ref.yara_rule), 100)
+        instance = complex.Complex()
+        self.assertGreater(len(instance.yara_rule), 100)
+
+        data = io.BytesIO(b"my malwarez")
+        result = instance.run(data, [])
+        self.assertEqual(result.family, "complex")
