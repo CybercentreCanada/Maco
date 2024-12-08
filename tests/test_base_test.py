@@ -1,8 +1,9 @@
+import io
 import os
 
+from demo_extractors.complex import complex, complex_utils
 from maco import base_test
 
-from demo_extractors.complex import complex_utils
 
 class TestLimitOther(base_test.BaseTest):
     name = "LimitOther"
@@ -13,9 +14,22 @@ class TestLimitOther(base_test.BaseTest):
         self.assertEqual(data, b"LimitOther\n")
 
     def test_subfunction(self):
+        """Tests that we can import directly from the extractor module and run a function."""
         self.assertEqual(complex_utils.getdata(), {"result": 5})
 
-    def test_run(self):
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
         ret = self.extract(self.load_cart("data/example.txt.cart"))
         self.assertEqual(ret["family"], "specify_other")
         self.assertEqual(ret["campaign_id"], ["12345"])
+
+    def test_manual_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ref = complex.Complex
+        self.assertGreater(len(ref.yara_rule), 100)
+        instance = complex.Complex()
+        self.assertGreater(len(instance.yara_rule), 100)
+
+        data = io.BytesIO(b"my malwarez")
+        result = instance.run(data, [])
+        self.assertEqual(result.family, "complex")

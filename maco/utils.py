@@ -293,14 +293,8 @@ def register_extractors(
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
     symlink = None
-    while package_name in sys.modules:
-        # Package name conflicts with an existing loaded module, let's deconflict that
-        package_name = f"_{package_name}"
-
-        # We'll need to create a link back to the original
-        if package_name not in sys.modules:
-            symlink = os.path.join(parent_directory, package_name)
-            os.symlink(current_directory, symlink)
+    if package_name in sys.modules:
+        print(f"Looks like {package_name} is already loaded. If your maco extractor overlaps an existing package name this could cause problems.")
 
     try:
         # Modify the PATH so we can recognize this new package on import
