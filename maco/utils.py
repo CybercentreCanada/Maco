@@ -395,6 +395,7 @@ def register_extractors(
                 break
 
 def proxy_logging(queue: multiprocessing.Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
+    """Ensures logging is set up correctly for a child process and then executes the callback."""
     logger = logging.getLogger()
     qh = logging.handlers.QueueHandler(queue)
     qh.setLevel(logging.DEBUG)

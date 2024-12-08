@@ -87,16 +87,17 @@ class Collector:
                     )
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
-            logq = Queue()
-            qh = logging.handlers.QueueListener(logq,*logging.getLogger().handlers)
-            qh.start()
+            # multiprocess logging is awkward - set up a queue to ensure we can log
+            logging_queue = Queue()
+            queue_handler = logging.handlers.QueueListener(logging_queue,*logging.getLogger().handlers)
+            queue_handler.start()
 
             # Find the extractors within the given directory
             # Execute within a child process to ensure main process interpreter is kept clean
             p = Process(
                 target=utils.proxy_logging,
                 args=(
-                    logq,
+                    logging_queue,
                     utils.import_extractors,
                     extractor_module_callback,
                 ),
@@ -109,9 +110,9 @@ class Collector:
             p.start()
             p.join()
 
-            # stop logging
-            qh.stop()
-            logq.close()
+            # stop multiprocess logging
+            queue_handler.stop()
+            logging_queue.close()
 
             logger.warning("warnings work outside of process")
             self.extractors = dict(extractors)
