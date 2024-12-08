@@ -4,11 +4,14 @@ import importlib.machinery
 import importlib.util
 import inspect
 import json
+import logging.handlers
 import os
 import re
 import shutil
 import subprocess
 import sys
+import multiprocessing
+import logging
 import tempfile
 
 from maco import yara
@@ -294,7 +297,9 @@ def register_extractors(
     parent_directory = os.path.dirname(current_directory)
     symlink = None
     if package_name in sys.modules:
-        print(f"Looks like {package_name} is already loaded. If your maco extractor overlaps an existing package name this could cause problems.")
+        # this may happen as part of testing if some part of the extractor code was directly imported
+        logger.warning(f"Looks like {package_name} is already loaded. "
+                       "If your maco extractor overlaps an existing package name this could cause problems.")
 
     try:
         # Modify the PATH so we can recognize this new package on import
@@ -373,14 +378,21 @@ def register_extractors(
                 # We were able to find all the extractor files
                 break
 
+def proxy_logging(queue: multiprocessing.Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
+    logger = logging.getLogger()
+    qh = logging.handlers.QueueHandler(queue)
+    qh.setLevel(logging.DEBUG)
+    logger.addHandler(qh)
+    callback(*args, **kwargs, logger=logger)
 
 def import_extractors(
+    extractor_module_callback: Callable[[ModuleType, str], bool],
+    *,
     root_directory: str,
     scanner: yara.Rules,
-    extractor_module_callback: Callable[[ModuleType, str], bool],
-    logger: Logger,
     create_venv: bool = False,
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    logger: Logger,
 ):
     extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
 
