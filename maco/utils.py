@@ -311,7 +311,6 @@ def register_extractors(
 ):
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
-    symlink = None
     if package_name in sys.modules:
         # this may happen as part of testing if some part of the extractor code was directly imported
         logger.warning(f"Looks like {package_name} is already loaded. "
@@ -365,10 +364,6 @@ def register_extractors(
 
         # Remove any modules that were loaded to deconflict with later modules loads
         [sys.modules.pop(k) for k in set(sys.modules.keys()) - default_loaded_modules]
-
-        # Cleanup any symlinks
-        if symlink:
-            os.remove(symlink)
 
     # If there still exists extractor files we haven't found yet, try searching in the available subdirectories
     if extractor_files:
