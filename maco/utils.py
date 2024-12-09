@@ -311,7 +311,7 @@ def register_extractors(
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
     symlink = None
-    if package_name in sys.modules:
+    if venvs and package_name in sys.modules:
         # this may happen as part of testing if some part of the extractor code was directly imported
         logger.warning(f"Looks like {package_name} is already loaded. "
                        "If your maco extractor overlaps an existing package name this could cause problems.")

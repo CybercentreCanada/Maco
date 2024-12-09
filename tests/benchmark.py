@@ -57,9 +57,11 @@ def make_venv():
 
 
 if __name__ == "__main__":
-    print("bypass hack - synthetic comparison (directly import and execute extractor)")
-    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=10))
+    trials = 100
+    print(f"num trials: {trials}")
+    print("bypass hack - synthetic comparison (directly import and execute extractor) ")
+    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=trials))
     print("maco no venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=10))
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=trials))
     print("maco venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make_venv; tc=make_venv()", number=10))
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make_venv; tc=make_venv()", number=trials))
