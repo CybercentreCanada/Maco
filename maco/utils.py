@@ -455,7 +455,6 @@ def import_extractors(
     *,
     root_directory: str,
     scanner: yara.Rules,
-    use_venv: bool,
     create_venv: bool,
     logger: Logger,
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
@@ -466,12 +465,11 @@ def import_extractors(
     logger.debug(extractor_files)
 
     venvs = []
-    if not use_venv:
+    if not create_venv:
         # install packages into current environment
         _install_required_packages(extractor_dirs, logger)
-    elif create_venv:
-        venvs = _create_virtual_environments(extractor_dirs, python_version, logger)
     else:
+        venvs = _create_virtual_environments(extractor_dirs, python_version, logger)
         # Look for pre-existing virtual environments, if any
         logger.info("Checking for pre-existing virtual environment(s)..")
         venvs = [

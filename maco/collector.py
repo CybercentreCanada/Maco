@@ -45,7 +45,6 @@ class Collector:
         path_extractors: str,
         include: List[str] = None,
         exclude: List[str] = None,
-        use_venv: bool = False,
         create_venv: bool = False,
     ):
         """Discover and load extractors from file system."""
@@ -88,14 +87,16 @@ class Collector:
                     )
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
-            if not use_venv:
+            if not create_venv:
+                # Install packages and scan for extractors using current python interpreter.
+                # All extractors must have compatible library requirements.
                 utils.import_extractors(
                     extractor_module_callback,
-                        root_directory=path_extractors,
-                        scanner=yara.compile(source=utils.MACO_YARA_RULE),
-                        create_venv=False,use_venv=False,logger=logger
-                        )
-
+                    root_directory=path_extractors,
+                    scanner=yara.compile(source=utils.MACO_YARA_RULE),
+                    create_venv=create_venv,
+                    logger=logger,
+                )
             else:
                 # multiprocess logging is awkward - set up a queue to ensure we can log
                 logging_queue = Queue()
@@ -115,7 +116,6 @@ class Collector:
                         root_directory=path_extractors,
                         scanner=yara.compile(source=utils.MACO_YARA_RULE),
                         create_venv=create_venv and os.path.isdir(path_extractors),
-                        use_venv=use_venv,
                     ),
                 )
                 p.start()
