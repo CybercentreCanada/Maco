@@ -1,6 +1,6 @@
 import os
-
 import unittest
+
 from maco import cli
 
 

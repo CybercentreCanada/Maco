@@ -1,10 +1,11 @@
-import timeit
+import cProfile
 import io
 import os
+import timeit
 
 from demo_extractors.complex import complex, complex_utils
 from maco import base_test
-import cProfile
+
 instance = complex.Complex()
 
 class TestComplex(base_test.BaseTest):

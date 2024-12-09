@@ -1,6 +1,7 @@
 import os
-import pytest
 import sys
+
+import pytest
 
 from maco.collector import Collector
 
@@ -105,9 +106,9 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
     # Ensure that any changes we make doesn't break usage of public projects
     # which can affect downstream systems using like library (ie. Assemblyline)
     import sys
+    from tempfile import TemporaryDirectory
 
     from git import Repo
-    from tempfile import TemporaryDirectory
 
     if sys.version_info >= (3, python_minor):
         with TemporaryDirectory() as working_dir:
@@ -123,8 +124,9 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
 
 
 def test_module_confusion():
-    from tempfile import TemporaryDirectory
     import shutil
+    from tempfile import TemporaryDirectory
+
     import git
 
     # Directories that have the same name as the Python module, shouldn't cause confusion on loading the right module

@@ -1,9 +1,8 @@
 from io import BytesIO
 from typing import Dict, List, Optional
 
-from maco import extractor, model, yara
-
 from demo_extractors import shared
+from maco import extractor, model, yara
 
 
 class LimitOther(extractor.Extractor):

@@ -4,14 +4,14 @@ import importlib.machinery
 import importlib.util
 import inspect
 import json
+import logging
 import logging.handlers
+import multiprocessing
 import os
 import re
 import shutil
 import subprocess
 import sys
-import multiprocessing
-import logging
 import tempfile
 
 from maco import yara
@@ -27,12 +27,12 @@ from glob import glob
 from logging import Logger
 from pkgutil import walk_packages
 from types import ModuleType
-from typing import Callable, Dict, List, Set, Tuple
-
-from maco.extractor import Extractor
+from typing import Callable, Dict, List, Set, Tuple, Union
 
 from uv import find_uv_bin
-import uv
+
+from maco import model
+from maco.extractor import Extractor
 
 logger = logging.getLogger("maco.lib.utils")
 
@@ -491,7 +491,7 @@ def run_extractor(
     venv,
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
-) -> Dict[str, dict]:
+) -> Union[Dict[str, dict], model.ExtractorModel]:
     # Write temporary script in the same directory as extractor to resolve relative imports
     python_exe = sys.executable
     if venv:
@@ -535,10 +535,7 @@ def run_extractor(
                 sys.path.insert(1, parent_package_path)
                 if extractor.yara_rule:
                     matches = yara.compile(source=extractor.yara_rule).match(sample_path)
-                result = extractor().run(open(sample_path, 'rb'), matches=matches)
-                if result:
-                    encoded =json.dumps(result.model_dump(exclude_defaults=True, exclude_none=True), cls=Base64Encoder)
-                    loaded = json.loads(encoded, cls=Base64Decoder)
+                loaded = extractor().run(open(sample_path, 'rb'), matches=matches)
             else:
                 # run the maco extractor in full venv process isolation (slow)
                 proc = subprocess.run(
