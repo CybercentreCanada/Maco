@@ -201,67 +201,9 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
 
     return extractor_dirs, extractor_files
 
-def _install_required_packages(directories: List[str], logger: Logger):
-    """Install required packages into current environment."""
-    logger.info("Creating virtual environment(s)..")
-    env = deepcopy(os.environ)
-    stop_directory = os.path.dirname(sorted(directories)[0])
-    # Track directories that we've already visited
-    visited_dirs = []
-    for dir in directories:
-        # Recurse backwards through the directory structure to look for package requirements
-        while dir != stop_directory and dir not in visited_dirs:
-            req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(os.listdir(dir))))
-            if req_files:
-                # Install/Update the packages in the environment
-                # Due to issues installing latest maco during development, does not install latest packages
-                install_command = PIP_CMD.split(" ") + ["install"]
-                # Update the pip install command depending on where the dependencies are coming from
-                if "requirements.txt" in req_files:
-                    # Perform a pip install using the requirements flag
-                    install_command.extend(["-r", "requirements.txt"])
-                elif "pyproject.toml" in req_files:
-                    # Assume we're dealing with a project directory
-                    pyproject_command = ["-e", "."]
 
-                    # Check to see if there are optional dependencies required
-                    with open(os.path.join(dir, "pyproject.toml"), "rb") as f:
-                        parsed_toml_project = tomllib.load(f).get("project", {})
-                        for dep_name, dependencies in parsed_toml_project.get("optional-dependencies", {}).items():
-                            # Look for the dependency that hints at use of MACO for the extractors
-                            if "maco" in " ".join(dependencies):
-                                pyproject_command = [f".[{dep_name}]"]
-                                break
-
-                    install_command.extend(pyproject_command)
-
-                logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
-                p = subprocess.run(
-                    install_command,
-                    cwd=dir,
-                    capture_output=True,
-                    env=env,
-                )
-                if p.returncode != 0:
-                    if b"is being installed using the legacy" in p.stderr:
-                        # Ignore these types of errors
-                        continue
-                    logger.error(f"Error installing:\n{p.stdout.decode()}\n{p.stderr.decode()}")
-                else:
-                    logger.debug(f"Installed dependencies:\n{p.stdout.decode()}\n{p.stderr.decode()}")
-
-                # Cleanup any build directories that are the product of package installation
-                expected_build_path = os.path.join(dir, "build")
-                if os.path.exists(expected_build_path):
-                    shutil.rmtree(expected_build_path)
-
-            # Add directories to our visited list and check the parent of this directory on the next loop
-            visited_dirs.append(dir)
-            dir = os.path.dirname(dir)
-
-def _create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
+def _install_required_packages(create_venv: bool, directories: List[str], python_version: str, logger: Logger):
     venvs = []
-    logger.info("Creating virtual environment(s)..")
     env = deepcopy(os.environ)
     stop_directory = os.path.dirname(sorted(directories)[0])
     # Track directories that we've already visited
@@ -271,14 +213,17 @@ def _create_virtual_environments(directories: List[str], python_version: str, lo
         while dir != stop_directory and dir not in visited_dirs:
             req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(os.listdir(dir))))
             if req_files:
-                venv_path = os.path.join(dir, VENV_DIRECTORY_NAME)
-                env.update({"VIRTUAL_ENV": venv_path})
-                # Create a virtual environment for the directory
-                if not os.path.exists(venv_path):
-                    cmd = VENV_CREATE_CMD
-                    if PACKAGE_MANAGER == "uv":
-                        cmd += f" --python {python_version}"
-                    subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
+                # create a virtual environment, otherwise directly install into current env
+                if create_venv:
+                    venv_path = os.path.join(dir, VENV_DIRECTORY_NAME)
+                    logger.info(f"Updating virtual environment {venv_path}")
+                    env.update({"VIRTUAL_ENV": venv_path})
+                    # Create a virtual environment for the directory
+                    if not os.path.exists(venv_path):
+                        cmd = VENV_CREATE_CMD
+                        if PACKAGE_MANAGER == "uv":
+                            cmd += f" --python {python_version}"
+                        subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
                 # Due to issues installing latest maco during development, does not install latest packages
@@ -303,7 +248,10 @@ def _create_virtual_environments(directories: List[str], python_version: str, lo
 
                     install_command.extend(pyproject_command)
 
+                # always require maco to be installed
+                install_command.append("maco")
                 logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
+                # this uses VIRTUAL_ENV to control usage of a virtual environment
                 p = subprocess.run(
                     install_command,
                     cwd=dir,
@@ -317,7 +265,8 @@ def _create_virtual_environments(directories: List[str], python_version: str, lo
                     logger.error(f"Error installing into venv:\n{p.stdout.decode()}\n{p.stderr.decode()}")
                 else:
                     logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}\n{p.stderr.decode()}")
-                    venvs.append(venv_path)
+                    if create_venv:
+                        venvs.append(venv_path)
 
                 # Cleanup any build directories that are the product of package installation
                 expected_build_path = os.path.join(dir, "build")
@@ -469,9 +418,9 @@ def import_extractors(
     venvs = []
     if not create_venv:
         # install packages into current environment
-        _install_required_packages(extractor_dirs, logger)
+        _install_required_packages(False, extractor_dirs, None, logger)
     else:
-        venvs = _create_virtual_environments(extractor_dirs, python_version, logger)
+        venvs = _install_required_packages(True,extractor_dirs, python_version, logger)
         # Look for pre-existing virtual environments, if any
         logger.info("Checking for pre-existing virtual environment(s)..")
         venvs = [

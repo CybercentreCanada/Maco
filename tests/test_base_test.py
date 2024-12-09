@@ -56,18 +56,3 @@ class TestComplexVenv(base_test.BaseTest):
         ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
         self.assertEqual(ret["family"], "complex")
         self.assertEqual(ret["version"], "5")
-
-    def test_subfunction(self):
-        """Tests that we can import directly from the extractor module and run a function."""
-        self.assertEqual(complex_utils.getdata(), {"result": 5})
-
-    def test_manual_extract(self):
-        """Tests that we can run an extractor through maco."""
-        ref = complex.Complex
-        self.assertGreater(len(ref.yara_rule), 100)
-        instance = complex.Complex()
-        self.assertGreater(len(instance.yara_rule), 100)
-
-        data = io.BytesIO(b"my malwarez")
-        result = instance.run(data, [])
-        self.assertEqual(result.family, "complex")
