@@ -35,6 +35,6 @@ def make():
 
 if __name__ == "__main__":
     print("maco hot loading and venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=10))
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=100))
     print("bypass hack")
-    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=10))
+    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=100))

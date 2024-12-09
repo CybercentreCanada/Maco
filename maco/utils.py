@@ -258,7 +258,7 @@ def _install_required_packages(directories: List[str], logger: Logger):
             visited_dirs.append(dir)
             dir = os.path.dirname(dir)
 
-def create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
+def _create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
     venvs = []
     logger.info("Creating virtual environment(s)..")
     env = deepcopy(os.environ)
@@ -455,10 +455,10 @@ def import_extractors(
     *,
     root_directory: str,
     scanner: yara.Rules,
-    create_venv: bool = False,
-    use_venv: bool = False,
-    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    use_venv: bool,
+    create_venv: bool,
     logger: Logger,
+    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
 ):
     extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
 
@@ -470,7 +470,7 @@ def import_extractors(
         # install packages into current environment
         _install_required_packages(extractor_dirs, logger)
     elif create_venv:
-        venvs = create_virtual_environments(extractor_dirs, python_version, logger)
+        venvs = _create_virtual_environments(extractor_dirs, python_version, logger)
     else:
         # Look for pre-existing virtual environments, if any
         logger.info("Checking for pre-existing virtual environment(s)..")
@@ -523,25 +523,45 @@ def run_extractor(
                 custom_module = custom_module[4:]
                 cwd = os.path.join(cwd, "src")
 
-            proc = subprocess.run(
-                [python_exe, "-m", custom_module],
-                cwd=cwd,
-                capture_output=True,
-            )
-            stderr = proc.stderr.decode()
-            try:
-                # Load results and return them
-                output.seek(0)
-                loaded =  json.load(output, cls=json_decoder)
-            except Exception as e:
-                # If there was an error raised during runtime, then propagate
-                delim = f'File "{module_path}"'
-                exception = stderr
-                if delim in exception:
-                    exception = f"{delim}{exception.split(delim, 1)[1]}"
-                # print extractor logging at error level
-                logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
-                raise Exception(exception) from e
-            # ensure that extractor logging is available
-            logger.info(f"maco extractor stderr:\n{stderr}")
+            loaded = {}
+            if not venv:
+                # run the maco extractor in current process (fast)
+                mod = importlib.import_module(module_name)
+                from base64 import b64encode
+                class Base64Encoder(json.JSONEncoder):
+                    def default(self, o):
+                        if isinstance(o, bytes):
+                            return dict(__class__="bytes", data=b64encode(o).decode())
+                        return json.JSONEncoder.default(self, o)
+                extractor = mod.__getattribute__(extractor_class)
+                sys.path.insert(1, parent_package_path)
+                if extractor.yara_rule:
+                    matches = yara.compile(source=extractor.yara_rule).match(sample_path)
+                result = extractor().run(open(sample_path, 'rb'), matches=matches)
+                if result:
+                    encoded =json.dumps(result.model_dump(exclude_defaults=True, exclude_none=True), cls=Base64Encoder)
+                    loaded = json.loads(encoded, cls=Base64Decoder)
+            else:
+                # run the maco extractor in full venv process isolation (slow)
+                proc = subprocess.run(
+                    [python_exe, "-m", custom_module],
+                    cwd=cwd,
+                    capture_output=True,
+                )
+                stderr = proc.stderr.decode()
+                try:
+                    # Load results and return them
+                    output.seek(0)
+                    loaded =  json.load(output, cls=json_decoder)
+                except Exception as e:
+                    # If there was an error raised during runtime, then propagate
+                    delim = f'File "{module_path}"'
+                    exception = stderr
+                    if delim in exception:
+                        exception = f"{delim}{exception.split(delim, 1)[1]}"
+                    # print extractor logging at error level
+                    logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
+                    raise Exception(exception) from e
+                # ensure that extractor logging is available
+                logger.info(f"maco extractor stderr:\n{stderr}")
             return loaded
