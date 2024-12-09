@@ -51,14 +51,14 @@ class Extractor:
         # check yara rules conform to expected structure
         # we throw away these compiled rules as we need all rules in system compiled together
         try:
-            rules = yara.compile(source=self.yara_rule)
+            self.yara_compiled = yara.compile(source=self.yara_rule)
         except yara.SyntaxError as e:
             raise InvalidExtractor(f"{self.name} - invalid yara rule") from e
         # need to track which plugin owns the rules
-        self.yara_rule_names = [x.identifier for x in rules]
-        if not len(list(rules)):
+        self.yara_rule_names = [x.identifier for x in self.yara_compiled]
+        if not len(list(self.yara_compiled)):
             raise InvalidExtractor(f"{name} must define at least one yara rule")
-        for x in rules:
+        for x in self.yara_compiled:
             if x.is_global:
                 raise InvalidExtractor(f"{x.identifier} yara rule must not be global")
 

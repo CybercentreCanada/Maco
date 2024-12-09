@@ -483,6 +483,8 @@ def import_extractors(
     register_extractors(root_directory, venvs, extractor_files, extractor_module_callback, logger)
 
 
+# loaded_extractors: Dict[str, ]
+
 def run_extractor(
     sample_path,
     module_name,
@@ -492,51 +494,43 @@ def run_extractor(
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
 ) -> Union[Dict[str, dict], model.ExtractorModel]:
-    # Write temporary script in the same directory as extractor to resolve relative imports
-    python_exe = sys.executable
-    if venv:
+    if not venv:
+        # run the maco extractor in current process (fast)
+        mod = importlib.import_module(module_name)
+        extractor_cls = mod.__getattribute__(extractor_class)
+        extractor = extractor_cls()
+        if extractor.yara_compiled:
+            matches = extractor.yara_compiled.match(sample_path)
+        loaded = extractor.run(open(sample_path, 'rb'), matches=matches)
+    else:
+        # Write temporary script in the same directory as extractor to resolve relative imports
+        python_exe = sys.executable
         # If there is a linked virtual environment, execute within that environment
         python_exe = os.path.join(venv, "bin", "python")
-    dirname = os.path.dirname(module_path)
-    with tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script:
-        with tempfile.NamedTemporaryFile() as output:
-            parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
-            root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
+        dirname = os.path.dirname(module_path)
+        with tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script:
+            with tempfile.NamedTemporaryFile() as output:
+                parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
+                root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
 
-            script.write(
-                venv_script.format(
-                    parent_package_path=parent_package_path,
-                    module_name=module_name,
-                    module_class=extractor_class,
-                    sample_path=sample_path,
-                    output_path=output.name,
+                script.write(
+                    venv_script.format(
+                        parent_package_path=parent_package_path,
+                        module_name=module_name,
+                        module_class=extractor_class,
+                        sample_path=sample_path,
+                        output_path=output.name,
+                    )
                 )
-            )
-            script.flush()
-            cwd = root_directory
-            custom_module = script.name[:-3].replace(root_directory, "").replace("/", ".")
+                script.flush()
+                cwd = root_directory
+                custom_module = script.name[:-3].replace(root_directory, "").replace("/", ".")
 
-            if custom_module.startswith("src."):
-                # src layout found, which means the actual module content is within 'src' directory
-                custom_module = custom_module[4:]
-                cwd = os.path.join(cwd, "src")
+                if custom_module.startswith("src."):
+                    # src layout found, which means the actual module content is within 'src' directory
+                    custom_module = custom_module[4:]
+                    cwd = os.path.join(cwd, "src")
 
-            loaded = {}
-            if not venv:
-                # run the maco extractor in current process (fast)
-                mod = importlib.import_module(module_name)
-                from base64 import b64encode
-                class Base64Encoder(json.JSONEncoder):
-                    def default(self, o):
-                        if isinstance(o, bytes):
-                            return dict(__class__="bytes", data=b64encode(o).decode())
-                        return json.JSONEncoder.default(self, o)
-                extractor = mod.__getattribute__(extractor_class)
-                sys.path.insert(1, parent_package_path)
-                if extractor.yara_rule:
-                    matches = yara.compile(source=extractor.yara_rule).match(sample_path)
-                loaded = extractor().run(open(sample_path, 'rb'), matches=matches)
-            else:
                 # run the maco extractor in full venv process isolation (slow)
                 proc = subprocess.run(
                     [python_exe, "-m", custom_module],
@@ -559,4 +553,4 @@ def run_extractor(
                     raise Exception(exception) from e
                 # ensure that extractor logging is available
                 logger.info(f"maco extractor stderr:\n{stderr}")
-            return loaded
+    return loaded
