@@ -41,7 +41,7 @@ class BaseTest(unittest.TestCase):
         cls.c = collector.Collector(cls.path, include=[cls.name], create_venv=cls.create_venv)
         return super().setUpClass()
 
-    def test_metadata(self):
+    def test_default_metadata(self):
         """Require extractor to be loadable and valid."""
         self.assertIn(self.name, self.c.extractors)
         self.assertEqual(len(self.c.extractors), 1)

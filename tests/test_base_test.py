@@ -19,9 +19,11 @@ class TestLimitOther(base_test.BaseTest):
         self.assertEqual(ret["family"], "specify_other")
         self.assertEqual(ret["campaign_id"], ["12345"])
 
+
 class TestComplex(base_test.BaseTest):
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = False
 
     def test_extract(self):
         """Tests that we can run an extractor through maco."""
@@ -43,3 +45,30 @@ class TestComplex(base_test.BaseTest):
         data = io.BytesIO(b"my malwarez")
         result = instance.run(data, [])
         self.assertEqual(result.family, "complex")
+
+# FUTURE requires import PR to be merged as this installs the latest maco from pypi into the venv
+# class TestComplexVenv(base_test.BaseTest):
+#     name = "Complex"
+#     path = os.path.join(__file__, "../../demo_extractors")
+#     create_venv = True
+
+#     def test_extract(self):
+#         """Tests that we can run an extractor through maco."""
+#         ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+#         self.assertEqual(ret["family"], "complex")
+#         self.assertEqual(ret["version"], "5")
+
+#     def test_subfunction(self):
+#         """Tests that we can import directly from the extractor module and run a function."""
+#         self.assertEqual(complex_utils.getdata(), {"result": 5})
+
+#     def test_manual_extract(self):
+#         """Tests that we can run an extractor through maco."""
+#         ref = complex.Complex
+#         self.assertGreater(len(ref.yara_rule), 100)
+#         instance = complex.Complex()
+#         self.assertGreater(len(instance.yara_rule), 100)
+
+#         data = io.BytesIO(b"my malwarez")
+#         result = instance.run(data, [])
+#         self.assertEqual(result.family, "complex")

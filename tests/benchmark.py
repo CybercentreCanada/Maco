@@ -9,9 +9,10 @@ from maco import base_test
 instance = complex.Complex()
 
 class TestComplex(base_test.BaseTest):
+    """Test extractors work under default conditions."""
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
-
+    create_venv=False
 
     def test_auto_extract(self):
         """Tests that we can run an extractor through maco."""
@@ -27,6 +28,20 @@ class TestComplex(base_test.BaseTest):
         inputs.seek(0)
         result = instance.run(inputs, [])
         self.assertEqual(result.family, "complex")
+
+class TestComplexVenv(base_test.BaseTest):
+    """Test extractors work when run with virtual environments."""
+    name = "Complex"
+    path = os.path.join(__file__, "../../demo_extractors")
+    create_venv=True
+
+    def test_auto_extract(self):
+        """Tests that we can run an extractor through maco."""
+        inputs = self.load_cart("data/trigger_complex.txt.cart")
+        inputs.seek(0)
+        ret = self.extract(inputs)
+        self.assertEqual(ret["family"], "complex")
+        self.assertEqual(ret["version"], "5")
 
 def make():
     tc = TestComplex()

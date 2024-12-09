@@ -312,9 +312,9 @@ def _create_virtual_environments(directories: List[str], python_version: str, lo
                     if b"is being installed using the legacy" in p.stderr:
                         # Ignore these types of errors
                         continue
-                    logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
+                    logger.error(f"Error installing into venv:\n{p.stdout.decode()}\n{p.stderr.decode()}")
                 else:
-                    logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}")
+                    logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}\n{p.stderr.decode()}")
                     venvs.append(venv_path)
 
                 # Cleanup any build directories that are the product of package installation
