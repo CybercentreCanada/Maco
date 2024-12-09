@@ -54,18 +54,20 @@ class BaseTest(unittest.TestCase):
         resp = self.c.extract(stream, self.name)
         return resp
 
-    def _get_location(self) -> str:
+    @classmethod
+    def _get_location(cls) -> str:
         """Return path to child class that implements this class."""
         # import child module
-        module = type(self).__module__
+        module = cls.__module__
         i = importlib.import_module(module)
         # get location to child module
         return i.__file__
 
-    def load_cart(self, filepath: str) -> io.BytesIO:
+    @classmethod
+    def load_cart(cls, filepath: str) -> io.BytesIO:
         """Load and unneuter a test file (likely malware) into memory for processing."""
         # it is nice if we can load files relative to whatever is implementing base_test
-        dirpath = os.path.split(self._get_location())[0]
+        dirpath = os.path.split(cls._get_location())[0]
         # either filepath is absolute, or should be loaded relative to child of base_test
         filepath = os.path.join(dirpath, filepath)
         if not os.path.isfile(filepath):

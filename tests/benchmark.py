@@ -1,53 +1,74 @@
-import cProfile
-import io
 import os
 import timeit
 
-from demo_extractors.complex import complex, complex_utils
+from demo_extractors.complex import complex
 from maco import base_test
 
+# instance of extractor for synthetic comparison to maco
 instance = complex.Complex()
 
-class TestComplex(base_test.BaseTest):
-    """Test extractors work under default conditions."""
+
+class LocalBaseTest(base_test.BaseTest):
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
-    create_venv=False
+    create_venv = False
 
-    def test_auto_extract(self):
-        """Tests that we can run an extractor through maco."""
-        inputs = self.load_cart("data/trigger_complex.txt.cart")
-        inputs.seek(0)
-        ret = self.extract(inputs)
-        self.assertEqual(ret["family"], "complex")
-        self.assertEqual(ret["version"], "5")
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.input_file = cls.load_cart("data/trigger_complex.txt.cart")
+        cls.input_file.seek(0)
 
-    def test_manual_extract(self):
-        """Tests that we can run an extractor through maco."""
-        inputs = self.load_cart("data/trigger_complex.txt.cart")
-        inputs.seek(0)
-        result = instance.run(inputs, [])
+
+class TestComplexSynthetic(LocalBaseTest):
+    """Test extractors work bypassing maco."""
+
+    def test_extract(self):
+        self.input_file.seek(0)
+        raw = self.input_file.read()
+        self.input_file.seek(0)
+        # run yara rules against sample
+        matches = instance.yara_compiled.match(data=raw)
+        self.assertEqual(len(matches), 2)
+        result = instance.run(self.input_file, [])
         self.assertEqual(result.family, "complex")
 
-class TestComplexVenv(base_test.BaseTest):
-    """Test extractors work when run with virtual environments."""
-    name = "Complex"
-    path = os.path.join(__file__, "../../demo_extractors")
-    create_venv=True
 
-    def test_auto_extract(self):
-        """Tests that we can run an extractor through maco."""
-        inputs = self.load_cart("data/trigger_complex.txt.cart")
-        inputs.seek(0)
-        ret = self.extract(inputs)
+class TestComplexNoVenv(LocalBaseTest):
+    """Test extractors work without full venv isolation."""
+
+    def test_extract(self):
+        self.input_file.seek(0)
+        ret = self.extract(self.input_file)
         self.assertEqual(ret["family"], "complex")
         self.assertEqual(ret["version"], "5")
 
-def make():
-    TestComplex.setUpClass()
-    tc = TestComplex()
+
+class TestComplexVenv(LocalBaseTest):
+    """Test extractors work when run with virtual environments."""
+
+    create_venv = True
+
+    def test_extract(self):
+        self.input_file.seek(0)
+        ret = self.extract(self.input_file)
+        self.assertEqual(ret["family"], "complex")
+        self.assertEqual(ret["version"], "5")
+
+
+def make_synthetic():
+    TestComplexSynthetic.setUpClass()
+    tc = TestComplexSynthetic()
     tc.setUp()
     return tc
+
+
+def make_no_venv():
+    TestComplexNoVenv.setUpClass()
+    tc = TestComplexNoVenv()
+    tc.setUp()
+    return tc
+
 
 def make_venv():
     TestComplexVenv.setUpClass()
@@ -57,11 +78,30 @@ def make_venv():
 
 
 if __name__ == "__main__":
-    trials = 100
+    trials = 1000
     print(f"num trials: {trials}")
+    print("results are number of seconds to execute total number of trials")
     print("synthetic comparison (directly import and execute extractor)")
-    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=trials))
+    print(
+        timeit.timeit(
+            "tc.test_extract()",
+            setup="from __main__ import make_synthetic; tc=make_synthetic()",
+            number=trials,
+        )
+    )
     print("maco no venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=trials))
+    print(
+        timeit.timeit(
+            "tc.test_extract()",
+            setup="from __main__ import make_no_venv; tc=make_no_venv()",
+            number=trials,
+        )
+    )
     print("maco venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make_venv; tc=make_venv()", number=trials))
+    print(
+        timeit.timeit(
+            "tc.test_extract()",
+            setup="from __main__ import make_venv; tc=make_venv()",
+            number=trials,
+        )
+    )
