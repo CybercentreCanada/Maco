@@ -31,6 +31,9 @@ from typing import Callable, Dict, List, Set, Tuple
 
 from maco.extractor import Extractor
 
+from uv import find_uv_bin
+import uv
+
 logger = logging.getLogger("maco.lib.utils")
 
 VENV_DIRECTORY_NAME = ".venv"
@@ -38,22 +41,11 @@ VENV_DIRECTORY_NAME = ".venv"
 RELATIVE_FROM_RE = re.compile(r"from (\.+)")
 RELATIVE_FROM_IMPORT_RE = re.compile(r"from (\.+) import")
 
-try:
-    # Attempt to use the uv package manager (Recommended)
-    from uv import find_uv_bin
+UV_BIN = find_uv_bin()
 
-    UV_BIN = find_uv_bin()
-
-    PIP_CMD = f"{UV_BIN} pip"
-    VENV_CREATE_CMD = f"{UV_BIN} venv"
-    PACKAGE_MANAGER = "uv"
-except ImportError:
-    # Otherwise default to pip
-    from sys import executable
-
-    PIP_CMD = "pip"
-    VENV_CREATE_CMD = f"{executable} -m venv"
-    PACKAGE_MANAGER = "pip"
+PIP_CMD = f"{UV_BIN} pip"
+VENV_CREATE_CMD = f"{UV_BIN} venv"
+PACKAGE_MANAGER = "uv"
 
 
 class Base64Decoder(json.JSONDecoder):
@@ -209,6 +201,62 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
 
     return extractor_dirs, extractor_files
 
+def _install_required_packages(directories: List[str], logger: Logger):
+    """Install required packages into current environment."""
+    logger.info("Creating virtual environment(s)..")
+    env = deepcopy(os.environ)
+    stop_directory = os.path.dirname(sorted(directories)[0])
+    # Track directories that we've already visited
+    visited_dirs = []
+    for dir in directories:
+        # Recurse backwards through the directory structure to look for package requirements
+        while dir != stop_directory and dir not in visited_dirs:
+            req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(os.listdir(dir))))
+            if req_files:
+                # Install/Update the packages in the environment
+                install_command = PIP_CMD.split(" ") + ["install", "-U"]
+                # Update the pip install command depending on where the dependencies are coming from
+                if "requirements.txt" in req_files:
+                    # Perform a pip install using the requirements flag
+                    install_command.extend(["-r", "requirements.txt"])
+                elif "pyproject.toml" in req_files:
+                    # Assume we're dealing with a project directory
+                    pyproject_command = ["-e", "."]
+
+                    # Check to see if there are optional dependencies required
+                    with open(os.path.join(dir, "pyproject.toml"), "rb") as f:
+                        parsed_toml_project = tomllib.load(f).get("project", {})
+                        for dep_name, dependencies in parsed_toml_project.get("optional-dependencies", {}).items():
+                            # Look for the dependency that hints at use of MACO for the extractors
+                            if "maco" in " ".join(dependencies):
+                                pyproject_command = [f".[{dep_name}]"]
+                                break
+
+                    install_command.extend(pyproject_command)
+
+                logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
+                p = subprocess.run(
+                    install_command,
+                    cwd=dir,
+                    capture_output=True,
+                    env=env,
+                )
+                if p.returncode != 0:
+                    if b"is being installed using the legacy" in p.stderr:
+                        # Ignore these types of errors
+                        continue
+                    logger.error(f"Error installing:\n{p.stdout.decode()}\n{p.stderr.decode()}")
+                else:
+                    logger.debug(f"Installed dependencies:\n{p.stdout.decode()}\n{p.stderr.decode()}")
+
+                # Cleanup any build directories that are the product of package installation
+                expected_build_path = os.path.join(dir, "build")
+                if os.path.exists(expected_build_path):
+                    shutil.rmtree(expected_build_path)
+
+            # Add directories to our visited list and check the parent of this directory on the next loop
+            visited_dirs.append(dir)
+            dir = os.path.dirname(dir)
 
 def create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
     venvs = []
@@ -408,6 +456,7 @@ def import_extractors(
     root_directory: str,
     scanner: yara.Rules,
     create_venv: bool = False,
+    use_venv: bool = False,
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
     logger: Logger,
 ):
@@ -417,7 +466,10 @@ def import_extractors(
     logger.debug(extractor_files)
 
     venvs = []
-    if create_venv:
+    if not use_venv:
+        # install packages into current environment
+        _install_required_packages(extractor_dirs, logger)
+    elif create_venv:
         venvs = create_virtual_environments(extractor_dirs, python_version, logger)
     else:
         # Look for pre-existing virtual environments, if any
