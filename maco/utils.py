@@ -214,7 +214,8 @@ def _install_required_packages(directories: List[str], logger: Logger):
             req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(os.listdir(dir))))
             if req_files:
                 # Install/Update the packages in the environment
-                install_command = PIP_CMD.split(" ") + ["install", "-U"]
+                # Due to issues installing latest maco during development, does not install latest packages
+                install_command = PIP_CMD.split(" ") + ["install"]
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:
                     # Perform a pip install using the requirements flag
@@ -280,7 +281,8 @@ def _create_virtual_environments(directories: List[str], python_version: str, lo
                     subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
-                install_command = PIP_CMD.split(" ") + ["install", "-U"]
+                # Due to issues installing latest maco during development, does not install latest packages
+                install_command = PIP_CMD.split(" ") + ["install"]
 
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:

@@ -48,9 +48,16 @@ def make():
     tc.setUp()
     return tc
 
+def make_venv():
+    tc = TestComplexVenv()
+    tc.setUp()
+    return tc
+
 
 if __name__ == "__main__":
-    print("maco hot loading and venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=1000))
-    print("bypass hack")
+    print("bypass hack - synthetic comparison (directly import and execute extractor)")
     print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=1000))
+    print("maco no venv isolation")
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=1000))
+    print("maco venv isolation")
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make_venv()", number=1000))
