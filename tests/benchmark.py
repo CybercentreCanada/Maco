@@ -44,11 +44,13 @@ class TestComplexVenv(base_test.BaseTest):
         self.assertEqual(ret["version"], "5")
 
 def make():
+    TestComplex.setUpClass()
     tc = TestComplex()
     tc.setUp()
     return tc
 
 def make_venv():
+    TestComplexVenv.setUpClass()
     tc = TestComplexVenv()
     tc.setUp()
     return tc
@@ -56,8 +58,8 @@ def make_venv():
 
 if __name__ == "__main__":
     print("bypass hack - synthetic comparison (directly import and execute extractor)")
-    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=1000))
+    print(timeit.timeit("tc.test_manual_extract()", setup="from __main__ import make; tc=make()", number=10))
     print("maco no venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=1000))
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make()", number=10))
     print("maco venv isolation")
-    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make; tc=make_venv()", number=1000))
+    print(timeit.timeit("tc.test_auto_extract()", setup="from __main__ import make_venv; tc=make_venv()", number=10))
