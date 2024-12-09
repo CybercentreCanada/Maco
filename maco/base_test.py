@@ -32,14 +32,19 @@ class BaseTest(unittest.TestCase):
     # I recommend something like os.path.join(__file__, "../../extractors")
     # if your extractors are in a folder 'extractors' next to a folder of tests
     path: str = None
+    create_venv: bool=False
 
-    def setUp(self) -> None:
-        if not self.name or not self.path:
+    @classmethod
+    def setUpClass(cls) -> None:
+        if not cls.name or not cls.path:
             raise Exception("name and path must be set")
-        self.c = collector.Collector(self.path, include=[self.name])
+        cls.c = collector.Collector(cls.path, include=[cls.name], create_venv=cls.create_venv)
+        return super().setUpClass()
+
+    def test_metadata(self):
+        """Require extractor to be loadable and valid."""
         self.assertIn(self.name, self.c.extractors)
         self.assertEqual(len(self.c.extractors), 1)
-        return super().setUp()
 
     def extract(self, stream):
         """Return results for running extractor over stream, including yara check."""

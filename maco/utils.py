@@ -483,7 +483,8 @@ def import_extractors(
     register_extractors(root_directory, venvs, extractor_files, extractor_module_callback, logger)
 
 
-# loaded_extractors: Dict[str, ]
+# holds cached extractors when not running in venv mode
+_loaded_extractors: Dict[str, Extractor] = {}
 
 def run_extractor(
     sample_path,
@@ -494,15 +495,22 @@ def run_extractor(
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
 ) -> Union[Dict[str, dict], model.ExtractorModel]:
+    """Runs the maco extractor against sample either in current process or child process."""
     if not venv:
-        # run the maco extractor in current process (fast)
-        mod = importlib.import_module(module_name)
-        extractor_cls = mod.__getattribute__(extractor_class)
-        extractor = extractor_cls()
+        # dynamic import and execute of the extractor
+        key = f"{module_name}_{extractor_class}"
+        if key not in _loaded_extractors:
+            # run the maco extractor in current process (fast)
+            mod = importlib.import_module(module_name)
+            extractor_cls = mod.__getattribute__(extractor_class)
+            extractor = extractor_cls()
+        else:
+            extractor = _loaded_extractors[key]
         if extractor.yara_compiled:
             matches = extractor.yara_compiled.match(sample_path)
         loaded = extractor.run(open(sample_path, 'rb'), matches=matches)
     else:
+        # execute extractor in child process with separate virtual environment
         # Write temporary script in the same directory as extractor to resolve relative imports
         python_exe = sys.executable
         # If there is a linked virtual environment, execute within that environment
