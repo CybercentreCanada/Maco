@@ -442,8 +442,6 @@ def run_extractor(
     else:
         # execute extractor in child process with separate virtual environment
         # Write temporary script in the same directory as extractor to resolve relative imports
-        python_exe = sys.executable
-        # If there is a linked virtual environment, execute within that environment
         python_exe = os.path.join(venv, "bin", "python")
         dirname = os.path.dirname(module_path)
         with tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script:
