@@ -222,7 +222,12 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
                         subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
-                install_command = PIP_CMD.split(" ") + ["install", "-U"]
+                install_command = PIP_CMD.split(" ") + ["install"]
+                # When running locally, only install packages to required spec.
+                # This prevents issues during maco development and building extractors against local libraries.
+                if create_venv:
+                    # when running in custom virtual environment, always upgrade packages.
+                    install_command.append("-U")
 
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:
