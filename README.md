@@ -1,6 +1,6 @@
 # Maco - Malware config extractor framework
 
-## Maco is a framework for ***ma***lware ***co***nfig extractors.
+## Maco is a framework for **_ma_**lware **_co_**nfig extractors.
 
 It aims to solve two problems:
 
@@ -234,3 +234,15 @@ run Complex extractor from rules ['ComplexAlt']
 The demo extractors are designed to trigger when run over the '`demo_extractors`' folder.
 
 e.g. `maco demo_extractors demo_extractors`
+
+# Contributions
+
+Please use ruff to format and lint PRs. This may be the cause of PR test failures.
+
+Ruff will attempt to fix most issues, but some may require manual resolution.
+
+```
+pip install ruff
+ruff format
+ruff check --fix
+```
