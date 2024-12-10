@@ -129,6 +129,8 @@ def test_module_confusion():
 
     import git
 
+    assert git.__name__
+
     # Directories that have the same name as the Python module, shouldn't cause confusion on loading the right module
     collector = Collector(os.path.join(__file__, "../extractors/bob"))
     assert collector.extractors["Bob"]

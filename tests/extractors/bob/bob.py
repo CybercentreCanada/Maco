@@ -1,7 +1,5 @@
-from io import BytesIO
-from typing import List, Optional
 
-from maco import extractor, model, yara
+from maco import extractor
 
 
 class Bob(extractor.Extractor):
