@@ -1,6 +1,6 @@
 # Maco - Malware config extractor framework
 
-## Maco is a framework for **_ma_**lware **_co_**nfig extractors.
+## Maco is a framework for <ins>ma</ins>lware <ins>co</ins>nfig extractors.
 
 It aims to solve two problems:
 
