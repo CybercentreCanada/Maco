@@ -7,6 +7,27 @@ pool:
   vmImage: "ubuntu-22.04"
 
 jobs:
+  - job: style_test
+    strategy:
+      matrix:
+        Python3_12:
+          python.version: "3.12"
+    timeoutInMinutes: 10
+
+    steps:
+      - task: UsePythonVersion@0
+        displayName: Set python version
+        inputs:
+          versionSpec: "$(python.version)"
+
+      - script: |
+          python -m pip install -U tox
+        displayName: Install tox
+
+      - script: |
+          python -m tox -e style
+        displayName: "Run style tests"
+
   - job: run_test
     strategy:
       matrix:

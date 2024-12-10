@@ -179,10 +179,12 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
                         for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
                             for match in pattern.findall(data):
                                 depth = match.count(".")
+                                abspath='.'.join(split[depth - 1 : split.index(package) + 1][::-1])
+                                abspath+='.' if pattern == RELATIVE_FROM_RE else ''
                                 data = data.replace(
                                     f"from {match}",
-                                    f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
-                                    1,
+                                    f"from {abspath}",
+                                    1
                                 )
                         f.write(data)
 
