@@ -45,8 +45,6 @@ UV_BIN = find_uv_bin()
 
 PIP_CMD = f"{UV_BIN} pip"
 VENV_CREATE_CMD = f"{UV_BIN} venv"
-PACKAGE_MANAGER = "uv"
-
 
 class Base64Decoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
@@ -220,9 +218,7 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
                     env.update({"VIRTUAL_ENV": venv_path})
                     # Create a virtual environment for the directory
                     if not os.path.exists(venv_path):
-                        cmd = VENV_CREATE_CMD
-                        if PACKAGE_MANAGER == "uv":
-                            cmd += f" --python {python_version}"
+                        cmd = f"{VENV_CREATE_CMD} --python {python_version}"
                         subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
