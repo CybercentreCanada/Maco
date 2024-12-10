@@ -405,19 +405,8 @@ def import_extractors(
     logger.info(f"Extractor files found based on scanner ({len(extractor_files)}).")
     logger.debug(extractor_files)
 
-    venvs = []
-    if not create_venv:
-        # install packages into current environment
-        _install_required_packages(False, extractor_dirs, None, logger)
-    else:
-        venvs = _install_required_packages(True,extractor_dirs, python_version, logger)
-        # Look for pre-existing virtual environments, if any
-        logger.info("Checking for pre-existing virtual environment(s)..")
-        venvs = [
-            os.path.join(root, VENV_DIRECTORY_NAME)
-            for root, dirs, _ in os.walk(root_directory)
-            if VENV_DIRECTORY_NAME in dirs
-        ]
+    # Install packages into the current environment or dynamically created virtual environments
+    venvs = _install_required_packages(create_venv, extractor_dirs, python_version, logger)
 
     # With the environment prepared, we can now hunt for the extractors and register them
     logger.info("Registering extractors..")
