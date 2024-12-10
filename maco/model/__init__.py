@@ -1,1 +1,1 @@
-from maco.model.model import *
+from maco.model.model import * # noqa: F403

@@ -165,7 +165,8 @@ def main():
     parser.add_argument(
         "--base64",
         action="store_true",
-        help="Include base64 encoded binary data in output (can be large, consider printing to file rather than console)",
+        help="Include base64 encoded binary data in output "
+        "(can be large, consider printing to file rather than console)",
     )
     parser.add_argument("--logfile", type=str, help="file to log output")
     parser.add_argument("--include", type=str, help="comma separated extractors to run")
@@ -179,7 +180,9 @@ def main():
     parser.add_argument(
         "--create_venv",
         action="store_true",
-        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory). This runs much slower than the alternative but may be necessary when there are many extractors with conflicting dependencies.",
+        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory). "
+        "This runs much slower than the alternative but may be necessary "
+        "when there are many extractors with conflicting dependencies.",
     )
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []
