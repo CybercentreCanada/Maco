@@ -129,6 +129,7 @@ def test_module_confusion():
 
     import git
 
+    # ensure that the git import is kept
     assert git.__name__
 
     # Directories that have the same name as the Python module, shouldn't cause confusion on loading the right module
