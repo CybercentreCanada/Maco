@@ -1,4 +1,5 @@
 """CLI example of how extractors can be executed."""
+
 import argparse
 import base64
 import binascii
@@ -150,6 +151,7 @@ def process_filesystem(
         logger.info(f"{num_analysed} analysed, {num_hits} hits, {num_extracted} extracted")
     return num_analysed, num_hits, num_extracted
 
+
 def main():
     parser = argparse.ArgumentParser(description="Run extractors over samples.")
     parser.add_argument("extractors", type=str, help="path to extractors")
@@ -228,7 +230,7 @@ def main():
         pretty=args.pretty,
         force=args.force,
         include_base64=args.base64,
-        create_venv=args.create_venv
+        create_venv=args.create_venv,
     )
 
 

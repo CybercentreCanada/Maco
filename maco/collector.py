@@ -89,7 +89,7 @@ class Collector:
 
             # multiprocess logging is awkward - set up a queue to ensure we can log
             logging_queue = Queue()
-            queue_handler = logging.handlers.QueueListener(logging_queue,*logging.getLogger().handlers)
+            queue_handler = logging.handlers.QueueListener(logging_queue, *logging.getLogger().handlers)
             queue_handler.start()
 
             # Find the extractors within the given directory

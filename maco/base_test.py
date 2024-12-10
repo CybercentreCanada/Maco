@@ -32,7 +32,7 @@ class BaseTest(unittest.TestCase):
     # I recommend something like os.path.join(__file__, "../../extractors")
     # if your extractors are in a folder 'extractors' next to a folder of tests
     path: str = None
-    create_venv: bool=False
+    create_venv: bool = False
 
     @classmethod
     def setUpClass(cls) -> None:
