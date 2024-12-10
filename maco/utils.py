@@ -4,14 +4,14 @@ import importlib.machinery
 import importlib.util
 import inspect
 import json
+import logging
 import logging.handlers
+import multiprocessing
 import os
 import re
 import shutil
 import subprocess
 import sys
-import multiprocessing
-import logging
 import tempfile
 
 from maco import yara
@@ -27,8 +27,11 @@ from glob import glob
 from logging import Logger
 from pkgutil import walk_packages
 from types import ModuleType
-from typing import Callable, Dict, List, Set, Tuple
+from typing import Callable, Dict, List, Set, Tuple, Union
 
+from uv import find_uv_bin
+
+from maco import model
 from maco.extractor import Extractor
 
 logger = logging.getLogger("maco.lib.utils")
@@ -38,23 +41,10 @@ VENV_DIRECTORY_NAME = ".venv"
 RELATIVE_FROM_RE = re.compile(r"from (\.+)")
 RELATIVE_FROM_IMPORT_RE = re.compile(r"from (\.+) import")
 
-try:
-    # Attempt to use the uv package manager (Recommended)
-    from uv import find_uv_bin
+UV_BIN = find_uv_bin()
 
-    UV_BIN = find_uv_bin()
-
-    PIP_CMD = f"{UV_BIN} pip"
-    VENV_CREATE_CMD = f"{UV_BIN} venv"
-    PACKAGE_MANAGER = "uv"
-except ImportError:
-    # Otherwise default to pip
-    from sys import executable
-
-    PIP_CMD = "pip"
-    VENV_CREATE_CMD = f"{executable} -m venv"
-    PACKAGE_MANAGER = "pip"
-
+PIP_CMD = f"{UV_BIN} pip"
+VENV_CREATE_CMD = f"{UV_BIN} venv"
 
 class Base64Decoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
@@ -210,9 +200,8 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
     return extractor_dirs, extractor_files
 
 
-def create_virtual_environments(directories: List[str], python_version: str, logger: Logger):
+def _install_required_packages(create_venv: bool, directories: List[str], python_version: str, logger: Logger):
     venvs = []
-    logger.info("Creating virtual environment(s)..")
     env = deepcopy(os.environ)
     stop_directory = os.path.dirname(sorted(directories)[0])
     # Track directories that we've already visited
@@ -222,14 +211,15 @@ def create_virtual_environments(directories: List[str], python_version: str, log
         while dir != stop_directory and dir not in visited_dirs:
             req_files = list({"requirements.txt", "pyproject.toml"}.intersection(set(os.listdir(dir))))
             if req_files:
-                venv_path = os.path.join(dir, VENV_DIRECTORY_NAME)
-                env.update({"VIRTUAL_ENV": venv_path})
-                # Create a virtual environment for the directory
-                if not os.path.exists(venv_path):
-                    cmd = VENV_CREATE_CMD
-                    if PACKAGE_MANAGER == "uv":
-                        cmd += f" --python {python_version}"
-                    subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
+                # create a virtual environment, otherwise directly install into current env
+                if create_venv:
+                    venv_path = os.path.join(dir, VENV_DIRECTORY_NAME)
+                    logger.info(f"Updating virtual environment {venv_path}")
+                    env.update({"VIRTUAL_ENV": venv_path})
+                    # Create a virtual environment for the directory
+                    if not os.path.exists(venv_path):
+                        cmd = f"{VENV_CREATE_CMD} --python {python_version}"
+                        subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
                 install_command = PIP_CMD.split(" ") + ["install", "-U"]
@@ -253,7 +243,10 @@ def create_virtual_environments(directories: List[str], python_version: str, log
 
                     install_command.extend(pyproject_command)
 
+                # always require maco to be installed
+                install_command.append("maco")
                 logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
+                # this uses VIRTUAL_ENV to control usage of a virtual environment
                 p = subprocess.run(
                     install_command,
                     cwd=dir,
@@ -264,10 +257,11 @@ def create_virtual_environments(directories: List[str], python_version: str, log
                     if b"is being installed using the legacy" in p.stderr:
                         # Ignore these types of errors
                         continue
-                    logger.error(f"Error installing into venv:\n{p.stderr.decode()}")
+                    logger.error(f"Error installing into venv:\n{p.stdout.decode()}\n{p.stderr.decode()}")
                 else:
-                    logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}")
-                    venvs.append(venv_path)
+                    logger.debug(f"Installed dependencies into venv:\n{p.stdout.decode()}\n{p.stderr.decode()}")
+                    if create_venv:
+                        venvs.append(venv_path)
 
                 # Cleanup any build directories that are the product of package installation
                 expected_build_path = os.path.join(dir, "build")
@@ -311,7 +305,7 @@ def register_extractors(
 ):
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
-    if package_name in sys.modules:
+    if venvs and package_name in sys.modules:
         # this may happen as part of testing if some part of the extractor code was directly imported
         logger.warning(f"Looks like {package_name} is already loaded. "
                        "If your maco extractor overlaps an existing package name this could cause problems.")
@@ -402,31 +396,25 @@ def import_extractors(
     *,
     root_directory: str,
     scanner: yara.Rules,
-    create_venv: bool = False,
-    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    create_venv: bool,
     logger: Logger,
+    python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
 ):
     extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
 
     logger.info(f"Extractor files found based on scanner ({len(extractor_files)}).")
     logger.debug(extractor_files)
 
-    venvs = []
-    if create_venv:
-        venvs = create_virtual_environments(extractor_dirs, python_version, logger)
-    else:
-        # Look for pre-existing virtual environments, if any
-        logger.info("Checking for pre-existing virtual environment(s)..")
-        venvs = [
-            os.path.join(root, VENV_DIRECTORY_NAME)
-            for root, dirs, _ in os.walk(root_directory)
-            if VENV_DIRECTORY_NAME in dirs
-        ]
+    # Install packages into the current environment or dynamically created virtual environments
+    venvs = _install_required_packages(create_venv, extractor_dirs, python_version, logger)
 
     # With the environment prepared, we can now hunt for the extractors and register them
     logger.info("Registering extractors..")
     register_extractors(root_directory, venvs, extractor_files, extractor_module_callback, logger)
 
+
+# holds cached extractors when not running in venv mode
+_loaded_extractors: Dict[str, Extractor] = {}
 
 def run_extractor(
     sample_path,
@@ -436,55 +424,69 @@ def run_extractor(
     venv,
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
-) -> Dict[str, dict]:
-    # Write temporary script in the same directory as extractor to resolve relative imports
-    python_exe = sys.executable
-    if venv:
-        # If there is a linked virtual environment, execute within that environment
+) -> Union[Dict[str, dict], model.ExtractorModel]:
+    """Runs the maco extractor against sample either in current process or child process."""
+    if not venv:
+        key = f"{module_name}_{extractor_class}"
+        if key not in _loaded_extractors:
+            # dynamic import of extractor
+            mod = importlib.import_module(module_name)
+            extractor_cls = mod.__getattribute__(extractor_class)
+            extractor = extractor_cls()
+        else:
+            # retrieve cached extractor
+            extractor = _loaded_extractors[key]
+        if extractor.yara_compiled:
+            matches = extractor.yara_compiled.match(sample_path)
+        loaded = extractor.run(open(sample_path, 'rb'), matches=matches)
+    else:
+        # execute extractor in child process with separate virtual environment
+        # Write temporary script in the same directory as extractor to resolve relative imports
         python_exe = os.path.join(venv, "bin", "python")
-    dirname = os.path.dirname(module_path)
-    with tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script:
-        with tempfile.NamedTemporaryFile() as output:
-            parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
-            root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
+        dirname = os.path.dirname(module_path)
+        with tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script:
+            with tempfile.NamedTemporaryFile() as output:
+                parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
+                root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
 
-            script.write(
-                venv_script.format(
-                    parent_package_path=parent_package_path,
-                    module_name=module_name,
-                    module_class=extractor_class,
-                    sample_path=sample_path,
-                    output_path=output.name,
+                script.write(
+                    venv_script.format(
+                        parent_package_path=parent_package_path,
+                        module_name=module_name,
+                        module_class=extractor_class,
+                        sample_path=sample_path,
+                        output_path=output.name,
+                    )
                 )
-            )
-            script.flush()
-            cwd = root_directory
-            custom_module = script.name[:-3].replace(root_directory, "").replace("/", ".")
+                script.flush()
+                cwd = root_directory
+                custom_module = script.name[:-3].replace(root_directory, "").replace("/", ".")
 
-            if custom_module.startswith("src."):
-                # src layout found, which means the actual module content is within 'src' directory
-                custom_module = custom_module[4:]
-                cwd = os.path.join(cwd, "src")
+                if custom_module.startswith("src."):
+                    # src layout found, which means the actual module content is within 'src' directory
+                    custom_module = custom_module[4:]
+                    cwd = os.path.join(cwd, "src")
 
-            proc = subprocess.run(
-                [python_exe, "-m", custom_module],
-                cwd=cwd,
-                capture_output=True,
-            )
-            stderr = proc.stderr.decode()
-            try:
-                # Load results and return them
-                output.seek(0)
-                loaded =  json.load(output, cls=json_decoder)
-            except Exception as e:
-                # If there was an error raised during runtime, then propagate
-                delim = f'File "{module_path}"'
-                exception = stderr
-                if delim in exception:
-                    exception = f"{delim}{exception.split(delim, 1)[1]}"
-                # print extractor logging at error level
-                logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
-                raise Exception(exception) from e
-            # ensure that extractor logging is available
-            logger.info(f"maco extractor stderr:\n{stderr}")
-            return loaded
+                # run the maco extractor in full venv process isolation (slow)
+                proc = subprocess.run(
+                    [python_exe, "-m", custom_module],
+                    cwd=cwd,
+                    capture_output=True,
+                )
+                stderr = proc.stderr.decode()
+                try:
+                    # Load results and return them
+                    output.seek(0)
+                    loaded =  json.load(output, cls=json_decoder)
+                except Exception as e:
+                    # If there was an error raised during runtime, then propagate
+                    delim = f'File "{module_path}"'
+                    exception = stderr
+                    if delim in exception:
+                        exception = f"{delim}{exception.split(delim, 1)[1]}"
+                    # print extractor logging at error level
+                    logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
+                    raise Exception(exception) from e
+                # ensure that extractor logging is available
+                logger.info(f"maco extractor stderr:\n{stderr}")
+    return loaded

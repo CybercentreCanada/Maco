@@ -179,7 +179,7 @@ def main():
     parser.add_argument(
         "--create_venv",
         action="store_true",
-        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory)",
+        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory). This runs much slower than the alternative but may be necessary when there are many extractors with conflicting dependencies.",
     )
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []
