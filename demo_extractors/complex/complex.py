@@ -1,9 +1,8 @@
 from io import BytesIO
 from typing import List, Optional
 
-from maco import extractor, model, yara
-
 from demo_extractors.complex import complex_utils
+from maco import extractor, model, yara
 
 
 class Complex(extractor.Extractor):

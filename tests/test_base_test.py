@@ -19,9 +19,12 @@ class TestLimitOther(base_test.BaseTest):
         self.assertEqual(ret["family"], "specify_other")
         self.assertEqual(ret["campaign_id"], ["12345"])
 
+
 class TestComplex(base_test.BaseTest):
+    """Test that complex extractor can be used in base environment."""
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = False
 
     def test_extract(self):
         """Tests that we can run an extractor through maco."""
@@ -43,3 +46,15 @@ class TestComplex(base_test.BaseTest):
         data = io.BytesIO(b"my malwarez")
         result = instance.run(data, [])
         self.assertEqual(result.family, "complex")
+
+class TestComplexVenv(base_test.BaseTest):
+    """Test that complex extractor can be used in full venv isolation."""
+    name = "Complex"
+    path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = True
+
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+        self.assertEqual(ret["family"], "complex")
+        self.assertEqual(ret["version"], "5")

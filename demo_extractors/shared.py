@@ -1,4 +1,5 @@
 from typing import Optional
+
 import pydantic
 
 from maco import model

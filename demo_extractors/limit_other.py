@@ -1,9 +1,8 @@
 from io import BytesIO
 from typing import Dict, List, Optional
 
-from maco import extractor, model, yara
-
 from demo_extractors import shared
+from maco import extractor, model, yara
 
 
 class LimitOther(extractor.Extractor):
@@ -24,6 +23,10 @@ class LimitOther(extractor.Extractor):
         """
 
     def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+        # import httpx at runtime so we can test that requirements.txt is installed dynamically without breaking
+        # the tests that do direct importing
+        import httpx
+
         # use a custom model that inherits from ExtractorModel
         # this model defines what can go in the 'other' dict
         tmp = shared.MyCustomModel(family="specify_other")
