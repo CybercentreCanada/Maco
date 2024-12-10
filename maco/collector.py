@@ -87,43 +87,32 @@ class Collector:
                     )
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
-            if not create_venv:
-                # Install packages and scan for extractors using current python interpreter.
-                # All extractors must have compatible library requirements.
-                utils.import_extractors(
+            # multiprocess logging is awkward - set up a queue to ensure we can log
+            logging_queue = Queue()
+            queue_handler = logging.handlers.QueueListener(logging_queue,*logging.getLogger().handlers)
+            queue_handler.start()
+
+            # Find the extractors within the given directory
+            # Execute within a child process to ensure main process interpreter is kept clean
+            p = Process(
+                target=utils.proxy_logging,
+                args=(
+                    logging_queue,
+                    utils.import_extractors,
                     extractor_module_callback,
+                ),
+                kwargs=dict(
                     root_directory=path_extractors,
                     scanner=yara.compile(source=utils.MACO_YARA_RULE),
-                    create_venv=create_venv,
-                    logger=logger,
-                )
-            else:
-                # multiprocess logging is awkward - set up a queue to ensure we can log
-                logging_queue = Queue()
-                queue_handler = logging.handlers.QueueListener(logging_queue,*logging.getLogger().handlers)
-                queue_handler.start()
+                    create_venv=create_venv and os.path.isdir(path_extractors),
+                ),
+            )
+            p.start()
+            p.join()
 
-                # Find the extractors within the given directory
-                # Execute within a child process to ensure main process interpreter is kept clean
-                p = Process(
-                    target=utils.proxy_logging,
-                    args=(
-                        logging_queue,
-                        utils.import_extractors,
-                        extractor_module_callback,
-                    ),
-                    kwargs=dict(
-                        root_directory=path_extractors,
-                        scanner=yara.compile(source=utils.MACO_YARA_RULE),
-                        create_venv=create_venv and os.path.isdir(path_extractors),
-                    ),
-                )
-                p.start()
-                p.join()
-
-                # stop multiprocess logging
-                queue_handler.stop()
-                logging_queue.close()
+            # stop multiprocess logging
+            queue_handler.stop()
+            logging_queue.close()
 
             self.extractors = dict(extractors)
             if not self.extractors:
