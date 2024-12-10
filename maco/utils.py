@@ -226,8 +226,7 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
                         subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
-                # Due to issues installing latest maco during development, does not install latest packages
-                install_command = PIP_CMD.split(" ") + ["install"]
+                install_command = PIP_CMD.split(" ") + ["install", "-U"]
 
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:
