@@ -3,7 +3,6 @@ from collections import namedtuple
 from itertools import cycle
 from typing import Dict
 
-import yara
 import yara_x
 
 RULE_ID_RE = re.compile("(\w+)? ?rule (\w+)")

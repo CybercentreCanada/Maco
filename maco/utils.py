@@ -46,6 +46,7 @@ UV_BIN = find_uv_bin()
 PIP_CMD = f"{UV_BIN} pip"
 VENV_CREATE_CMD = f"{UV_BIN} venv"
 
+
 class Base64Decoder(json.JSONDecoder):
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
@@ -179,11 +180,9 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
                         for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
                             for match in pattern.findall(data):
                                 depth = match.count(".")
-                                data = data.replace(
-                                    f"from {match}",
-                                    f"from {'.'.join(split[depth - 1 : split.index(package) + 1][::-1])}{'.' if pattern == RELATIVE_FROM_RE else ''}",
-                                    1,
-                                )
+                                abspath = ".".join(split[depth - 1 : split.index(package) + 1][::-1])
+                                abspath += "." if pattern == RELATIVE_FROM_RE else ""
+                                data = data.replace(f"from {match}", f"from {abspath}", 1)
                         f.write(data)
 
                 if scanner.match(path):
@@ -222,7 +221,12 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
                         subprocess.run(cmd.split(" ") + [venv_path], capture_output=True, env=env)
 
                 # Install/Update the packages in the environment
-                install_command = PIP_CMD.split(" ") + ["install", "-U"]
+                install_command = PIP_CMD.split(" ") + ["install"]
+                # When running locally, only install packages to required spec.
+                # This prevents issues during maco development and building extractors against local libraries.
+                if create_venv:
+                    # when running in custom virtual environment, always upgrade packages.
+                    install_command.append("-U")
 
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:
@@ -307,8 +311,10 @@ def register_extractors(
     parent_directory = os.path.dirname(current_directory)
     if venvs and package_name in sys.modules:
         # this may happen as part of testing if some part of the extractor code was directly imported
-        logger.warning(f"Looks like {package_name} is already loaded. "
-                       "If your maco extractor overlaps an existing package name this could cause problems.")
+        logger.warning(
+            f"Looks like {package_name} is already loaded. "
+            "If your maco extractor overlaps an existing package name this could cause problems."
+        )
 
     try:
         # Modify the PATH so we can recognize this new package on import
@@ -383,6 +389,7 @@ def register_extractors(
                 # We were able to find all the extractor files
                 break
 
+
 def proxy_logging(queue: multiprocessing.Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
     """Ensures logging is set up correctly for a child process and then executes the callback."""
     logger = logging.getLogger()
@@ -390,6 +397,7 @@ def proxy_logging(queue: multiprocessing.Queue, callback: Callable[[ModuleType, 
     qh.setLevel(logging.DEBUG)
     logger.addHandler(qh)
     callback(*args, **kwargs, logger=logger)
+
 
 def import_extractors(
     extractor_module_callback: Callable[[ModuleType, str], bool],
@@ -416,6 +424,7 @@ def import_extractors(
 # holds cached extractors when not running in venv mode
 _loaded_extractors: Dict[str, Extractor] = {}
 
+
 def run_extractor(
     sample_path,
     module_name,
@@ -438,7 +447,7 @@ def run_extractor(
             extractor = _loaded_extractors[key]
         if extractor.yara_compiled:
             matches = extractor.yara_compiled.match(sample_path)
-        loaded = extractor.run(open(sample_path, 'rb'), matches=matches)
+        loaded = extractor.run(open(sample_path, "rb"), matches=matches)
     else:
         # execute extractor in child process with separate virtual environment
         # Write temporary script in the same directory as extractor to resolve relative imports
@@ -477,7 +486,7 @@ def run_extractor(
                 try:
                     # Load results and return them
                     output.seek(0)
-                    loaded =  json.load(output, cls=json_decoder)
+                    loaded = json.load(output, cls=json_decoder)
                 except Exception as e:
                     # If there was an error raised during runtime, then propagate
                     delim = f'File "{module_path}"'

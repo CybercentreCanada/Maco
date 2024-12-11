@@ -1,4 +1,5 @@
 """CLI example of how extractors can be executed."""
+
 import argparse
 import base64
 import binascii
@@ -150,6 +151,7 @@ def process_filesystem(
         logger.info(f"{num_analysed} analysed, {num_hits} hits, {num_extracted} extracted")
     return num_analysed, num_hits, num_extracted
 
+
 def main():
     parser = argparse.ArgumentParser(description="Run extractors over samples.")
     parser.add_argument("extractors", type=str, help="path to extractors")
@@ -165,7 +167,8 @@ def main():
     parser.add_argument(
         "--base64",
         action="store_true",
-        help="Include base64 encoded binary data in output (can be large, consider printing to file rather than console)",
+        help="Include base64 encoded binary data in output "
+        "(can be large, consider printing to file rather than console)",
     )
     parser.add_argument("--logfile", type=str, help="file to log output")
     parser.add_argument("--include", type=str, help="comma separated extractors to run")
@@ -179,7 +182,9 @@ def main():
     parser.add_argument(
         "--create_venv",
         action="store_true",
-        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory). This runs much slower than the alternative but may be necessary when there are many extractors with conflicting dependencies.",
+        help="Creates venvs for every requirements.txt found (only applies when extractor path is a directory). "
+        "This runs much slower than the alternative but may be necessary "
+        "when there are many extractors with conflicting dependencies.",
     )
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []
@@ -225,7 +230,7 @@ def main():
         pretty=args.pretty,
         force=args.force,
         include_base64=args.base64,
-        create_venv=args.create_venv
+        create_venv=args.create_venv,
     )
 
 

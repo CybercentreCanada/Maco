@@ -4,6 +4,7 @@ import inspect
 import logging
 import logging.handlers
 import os
+import sys
 from multiprocessing import Manager, Process, Queue
 from tempfile import NamedTemporaryFile
 from types import ModuleType
@@ -48,6 +49,15 @@ class Collector:
         create_venv: bool = False,
     ):
         """Discover and load extractors from file system."""
+        # maco requires the extractor to be imported directly, so ensure they are available on the path
+        full_path_extractors = os.path.abspath(path_extractors)
+        full_path_above_extractors = os.path.dirname(full_path_extractors)
+        # Modify the PATH so we can recognize this new package on import
+        if full_path_extractors not in sys.path:
+            sys.path.insert(1, full_path_extractors)
+        if full_path_above_extractors not in sys.path:
+            sys.path.insert(1, full_path_above_extractors)
+
         path_extractors = os.path.realpath(path_extractors)
         self.path: str = path_extractors
         self.extractors: Dict[str, Dict[str, str]] = {}
@@ -89,7 +99,7 @@ class Collector:
 
             # multiprocess logging is awkward - set up a queue to ensure we can log
             logging_queue = Queue()
-            queue_handler = logging.handlers.QueueListener(logging_queue,*logging.getLogger().handlers)
+            queue_handler = logging.handlers.QueueListener(logging_queue, *logging.getLogger().handlers)
             queue_handler.start()
 
             # Find the extractors within the given directory

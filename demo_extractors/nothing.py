@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from maco import extractor, model, yara
 

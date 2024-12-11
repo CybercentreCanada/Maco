@@ -7,9 +7,7 @@ from maco.collector import Collector
 
 class TestDemoExtractors(unittest.TestCase):
     def test_complex(self):
-        path_file = os.path.normpath(
-            os.path.join(__file__, "../data/trigger_complex.txt")
-        )
+        path_file = os.path.normpath(os.path.join(__file__, "../data/trigger_complex.txt"))
         collector = Collector(os.path.join(__file__, "../../demo_extractors"))
         self.assertEqual(
             set(collector.extractors.keys()),

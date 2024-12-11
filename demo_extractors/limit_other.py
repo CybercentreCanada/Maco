@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from demo_extractors import shared
 from maco import extractor, model, yara
@@ -26,6 +26,10 @@ class LimitOther(extractor.Extractor):
         # import httpx at runtime so we can test that requirements.txt is installed dynamically without breaking
         # the tests that do direct importing
         import httpx
+
+        # use httpx so it doesn't get deleted by auto linter
+        if not httpx.__name__:
+            raise Exception("wow I really want to use this library in a useful way")
 
         # use a custom model that inherits from ExtractorModel
         # this model defines what can go in the 'other' dict

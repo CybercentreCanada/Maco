@@ -22,6 +22,7 @@ class TestLimitOther(base_test.BaseTest):
 
 class TestComplex(base_test.BaseTest):
     """Test that complex extractor can be used in base environment."""
+
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
     create_venv = False
@@ -47,8 +48,10 @@ class TestComplex(base_test.BaseTest):
         result = instance.run(data, [])
         self.assertEqual(result.family, "complex")
 
+
 class TestComplexVenv(base_test.BaseTest):
     """Test that complex extractor can be used in full venv isolation."""
+
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
     create_venv = True
