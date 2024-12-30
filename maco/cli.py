@@ -124,26 +124,26 @@ def process_filesystem(
         exit(2)
     try:
         for path, dirs, files in walker:
-    for file in files:
-        num_analysed += 1
-        path_file = os.path.join(path, file)
-
-        path_file = os.path.abspath(path_file)
-        base_directory = os.path.abspath(path_samples)
-        if not path_file.startswith(base_directory):
-            logger.error(f"Attempted path traversal detected: {path_file}")
-            continue
-
-        try:
-            with open(path_file, "rb") as stream:
-                resp = process_file(
-                    collected,
-                    path_file,
-                    stream,
-                    pretty=pretty,
-                    force=force,
-                    include_base64=include_base64,
-                )
+            for file in files:
+                num_analysed += 1
+                path_file = os.path.join(path, file)
+        
+                path_file = os.path.abspath(path_file)
+                base_directory = os.path.abspath(path_samples)
+                if not path_file.startswith(base_directory):
+                    logger.error(f"Attempted path traversal detected: {path_file}")
+                    continue
+        
+                try:
+                    with open(path_file, "rb") as stream:
+                        resp = process_file(
+                            collected,
+                            path_file,
+                            stream,
+                            pretty=pretty,
+                            force=force,
+                            include_base64=include_base64,
+                        )
                         if resp:
                             num_hits += 1
                             if any(x for x in resp.values()):
