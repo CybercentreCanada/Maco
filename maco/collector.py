@@ -5,11 +5,11 @@ import logging
 import logging.handlers
 import os
 import sys
-from multiprocessing import Manager, Process, Queue
 from tempfile import NamedTemporaryFile
 from types import ModuleType
-from typing import Any, BinaryIO, Dict, List, Union
+from typing import Any, BinaryIO, Dict, List, TypedDict, Union
 
+from multiprocess import Manager, Process, Queue
 from pydantic import BaseModel
 
 from maco import extractor, model, utils, yara
@@ -40,6 +40,26 @@ def _verify_response(resp: Union[BaseModel, dict]) -> Dict:
     return resp.model_dump(exclude_defaults=True)
 
 
+class ExtractorMetadata(TypedDict):
+    """Extractor-supplied metadata."""
+
+    author: str
+    family: str
+    last_modified: str
+    sharing: str
+    description: str
+
+
+class ExtractorRegistration(TypedDict):
+    """Registration collected by the collector for a single extractor."""
+
+    venv: str
+    module_path: str
+    module_name: str
+    extractor_class: str
+    metadata: ExtractorMetadata
+
+
 class Collector:
     def __init__(
         self,
@@ -60,7 +80,7 @@ class Collector:
 
         path_extractors = os.path.realpath(path_extractors)
         self.path: str = path_extractors
-        self.extractors: Dict[str, Dict[str, str]] = {}
+        self.extractors: Dict[str, ExtractorRegistration] = {}
 
         with Manager() as manager:
             extractors = manager.dict()
