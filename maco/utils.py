@@ -6,13 +6,14 @@ import inspect
 import json
 import logging
 import logging.handlers
-import multiprocessing
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+
+from multiprocess import Queue
 
 from maco import yara
 
@@ -390,7 +391,7 @@ def register_extractors(
                 break
 
 
-def proxy_logging(queue: multiprocessing.Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
+def proxy_logging(queue: Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
     """Ensures logging is set up correctly for a child process and then executes the callback."""
     logger = logging.getLogger()
     qh = logging.handlers.QueueHandler(queue)
