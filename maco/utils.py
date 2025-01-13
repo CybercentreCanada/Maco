@@ -39,8 +39,8 @@ logger = logging.getLogger("maco.lib.utils")
 
 VENV_DIRECTORY_NAME = ".venv"
 
-RELATIVE_FROM_RE = re.compile(r"from (\.+)")
-RELATIVE_FROM_IMPORT_RE = re.compile(r"from (\.+) import")
+RELATIVE_FROM_RE = re.compile(rb"from (\.+)")
+RELATIVE_FROM_IMPORT_RE = re.compile(rb"from (\.+) import")
 
 UV_BIN = find_uv_bin()
 
@@ -171,19 +171,19 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
                 # Scan Python file for potential extractors
                 if package:
                     # Inspect the contents and look for any relative import issues
-                    with open(path, "r") as f:
+                    with open(path, "rb") as f:
                         data = f.read()
 
-                    with open(path, "w") as f:
+                    with open(path, "wb") as f:
                         # Replace any relative importing with absolute
                         curr_dir = os.path.dirname(path)
                         split = curr_dir.split("/")[::-1]
                         for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
                             for match in pattern.findall(data):
-                                depth = match.count(".")
+                                depth = match.count(b".")
                                 abspath = ".".join(split[depth - 1 : split.index(package) + 1][::-1])
                                 abspath += "." if pattern == RELATIVE_FROM_RE else ""
-                                data = data.replace(f"from {match}", f"from {abspath}", 1)
+                                data = data.replace(f"from {match.decode()}".encode(), f"from {abspath}".encode(), 1)
                         f.write(data)
 
                 if scanner.match(path):
