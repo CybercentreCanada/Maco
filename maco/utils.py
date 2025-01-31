@@ -450,9 +450,19 @@ def run_extractor(
         key = f"{module_name}_{extractor_class}"
         if key not in _loaded_extractors:
             # dynamic import of extractor
-            mod = importlib.import_module(module_name)
-            extractor_cls = mod.__getattribute__(extractor_class)
-            extractor = extractor_cls()
+            try:
+                # Add the correct directory to the PATH before attempting to load the extractor
+                import_path = module_path[: -4 - len(module_name)]
+                sys.path.insert(1, import_path)
+                mod = importlib.import_module(module_name)
+                extractor_cls = mod.__getattribute__(extractor_class)
+                extractor = extractor_cls()
+
+                # Add to cache
+                _loaded_extractors[key] = extractor
+            finally:
+                sys.path.pop(1)
+
         else:
             # retrieve cached extractor
             extractor = _loaded_extractors[key]

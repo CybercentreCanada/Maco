@@ -92,6 +92,7 @@ def process_filesystem(
     force: bool,
     include_base64: bool,
     create_venv: bool = False,
+    skip_install: bool = False,
 ) -> Tuple[int, int, int]:
     """Process filesystem with extractors and print results of extraction.
 
@@ -99,7 +100,9 @@ def process_filesystem(
     """
     if force:
         logger.warning("force execute will cause errors if an extractor requires a yara rule hit during execution")
-    collected = collector.Collector(path_extractors, include=include, exclude=exclude, create_venv=create_venv)
+    collected = collector.Collector(
+        path_extractors, include=include, exclude=exclude, create_venv=create_venv, skip_install=skip_install
+    )
 
     logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
     for _, extractor in collected.extractors.items():
@@ -191,6 +194,11 @@ def main():
         "This runs much slower than the alternative but may be necessary "
         "when there are many extractors with conflicting dependencies.",
     )
+    parser.add_argument(
+        "--force_install",
+        action="store_true",
+        help="Force installation of Python dependencies for extractors (in both host and virtual environments).",
+    )
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []
     exc = args.exclude.split(",") if args.exclude else []
@@ -236,6 +244,7 @@ def main():
         force=args.force,
         include_base64=args.base64,
         create_venv=args.create_venv,
+        skip_install=not args.force_install,
     )
 
 

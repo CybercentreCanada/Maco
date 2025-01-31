@@ -67,6 +67,7 @@ class Collector:
         include: List[str] = None,
         exclude: List[str] = None,
         create_venv: bool = False,
+        skip_install: bool = False,
     ):
         """Discover and load extractors from file system."""
         # maco requires the extractor to be imported directly, so ensure they are available on the path
@@ -135,6 +136,7 @@ class Collector:
                     root_directory=path_extractors,
                     scanner=yara.compile(source=utils.MACO_YARA_RULE),
                     create_venv=create_venv and os.path.isdir(path_extractors),
+                    skip_install=skip_install,
                 ),
             )
             p.start()
