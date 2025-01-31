@@ -452,7 +452,7 @@ def run_extractor(
             # dynamic import of extractor
             try:
                 # Add the correct directory to the PATH before attempting to load the extractor
-                import_path = module_path[:-4-len(module_name)]
+                import_path = module_path[: -4 - len(module_name)]
                 sys.path.insert(1, import_path)
                 mod = importlib.import_module(module_name)
                 extractor_cls = mod.__getattribute__(extractor_class)
