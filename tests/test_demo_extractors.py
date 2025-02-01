@@ -11,12 +11,7 @@ class TestDemoExtractors(unittest.TestCase):
         collector = Collector(os.path.join(__file__, "../../demo_extractors"))
         self.assertEqual(
             set(collector.extractors.keys()),
-            {
-                "Elfy",
-                "Nothing",
-                "Complex",
-                "LimitOther",
-            },
+            {"Elfy", "Nothing", "Complex", "LimitOther", "Terminator"},
         )
 
         with open(path_file, "rb") as stream:
