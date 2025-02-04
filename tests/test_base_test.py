@@ -61,3 +61,29 @@ class TestComplexVenv(base_test.BaseTest):
         ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
         self.assertEqual(ret["family"], "complex")
         self.assertEqual(ret["version"], "5")
+
+
+class TestTerminator(base_test.BaseTest):
+    """Test that terminator extractor can be used in base environment."""
+
+    name = "Terminator"
+    path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = False
+
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+        self.assertEqual(ret, None)
+
+
+class TestTerminatorVenv(base_test.BaseTest):
+    """Test that terminator extractor can be used in base environment."""
+
+    name = "Terminator"
+    path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = True
+
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+        self.assertEqual(ret, None)

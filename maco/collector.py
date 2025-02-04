@@ -13,6 +13,7 @@ from multiprocess import Manager, Process, Queue
 from pydantic import BaseModel
 
 from maco import extractor, model, utils, yara
+from maco.exceptions import AnalysisAbortedException
 
 
 class ExtractorLoadError(Exception):
@@ -191,6 +192,9 @@ class Collector:
                         venv=extractor["venv"],
                     )
                 )
+        except AnalysisAbortedException:
+            # Extractor voluntarily aborted analysis of sample
+            return
         except Exception:
             # caller can deal with the exception
             raise

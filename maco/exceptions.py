@@ -1,0 +1,3 @@
+# Can be raised by extractors to abort analysis of a sample
+# ie. Can abort if preliminary checks at start of run indicate the file shouldn't be analyzed by extractor
+class AnalysisAbortedException(Exception): ...

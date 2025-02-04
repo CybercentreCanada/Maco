@@ -3,17 +3,19 @@
 import argparse
 import base64
 import binascii
+import cart
 import hashlib
 import io
 import json
 import logging
 import os
 import sys
+
+from importlib.metadata import version
 from typing import BinaryIO, List, Tuple
 
-import cart
-
 from maco import collector
+
 
 logger = logging.getLogger("maco.lib.cli")
 
@@ -199,6 +201,13 @@ def main():
         action="store_true",
         help="Force installation of Python dependencies for extractors (in both host and virtual environments).",
     )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"version: {version('maco')}",
+        help="Show version of MACO",
+    )
+
     args = parser.parse_args()
     inc = args.include.split(",") if args.include else []
     exc = args.exclude.split(",") if args.exclude else []

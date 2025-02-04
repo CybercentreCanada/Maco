@@ -34,6 +34,7 @@ from uv import find_uv_bin
 
 from maco import model
 from maco.extractor import Extractor
+from maco.exceptions import AnalysisAbortedException
 
 logger = logging.getLogger("maco.lib.utils")
 
@@ -514,9 +515,15 @@ def run_extractor(
                     exception = stderr
                     if delim in exception:
                         exception = f"{delim}{exception.split(delim, 1)[1]}"
-                    # print extractor logging at error level
-                    logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
-                    raise Exception(exception) from e
+                    if "maco.exceptions.AnalysisAbortedException" in exception:
+                        # Extractor voluntarily terminated, re-raise exception to be handled by collector
+                        raise AnalysisAbortedException(
+                            exception.split("maco.exceptions.AnalysisAbortedException: ")[-1]
+                        )
+                    else:
+                        # print extractor logging at error level
+                        logger.error(f"maco extractor raised exception, stderr:\n{stderr}")
+                        raise Exception(exception) from e
                 # ensure that extractor logging is available
                 logger.info(f"maco extractor stderr:\n{stderr}")
     return loaded
