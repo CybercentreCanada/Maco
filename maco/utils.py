@@ -70,9 +70,11 @@ import sys
 import logging
 
 try:
-    from maco import yara
-except:
+    # Respect cases where the extractor is tied to certain version of yara-python for processing
     import yara
+except:
+    # Otherwise fallback to MACO's interface for yara-python==4.5.x
+    from maco import yara
 
 from base64 import b64encode
 
