@@ -1,3 +1,5 @@
+"""Test demo extractors."""
+
 import os
 import unittest
 
@@ -6,7 +8,10 @@ from maco.collector import Collector
 
 
 class TestDemoExtractors(unittest.TestCase):
+    """Test demo extractors."""
+
     def test_complex(self):
+        """Test complex extractor."""
         path_file = os.path.normpath(os.path.join(__file__, "../data/trigger_complex.txt"))
         collector = Collector(os.path.join(__file__, "../../demo_extractors"))
         self.assertEqual(

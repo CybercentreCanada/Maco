@@ -13,18 +13,20 @@ from multiprocess import Manager, Process, Queue
 from pydantic import BaseModel
 
 from maco import extractor, model, utils, yara
-from maco.exceptions import AnalysisAbortedException
-
-
-class ExtractorLoadError(Exception):
-    pass
-
+from maco.exceptions import AnalysisAbortedException, ExtractorLoadError
 
 logger = logging.getLogger("maco.lib.helpers")
 
 
 def _verify_response(resp: Union[BaseModel, dict]) -> Dict:
-    """Enforce types and verify properties, and remove defaults."""
+    """Enforce types and verify properties, and remove defaults.
+
+    Args:
+        resp (Union[BaseModel, dict])): results from extractor
+
+    Returns:
+        (Dict): results from extractor after verification
+    """
     if not resp:
         return None
     # check the response is valid for its own model
@@ -62,6 +64,8 @@ class ExtractorRegistration(TypedDict):
 
 
 class Collector:
+    """Discover and load extractors from file system."""
+
     def __init__(
         self,
         path_extractors: str,
@@ -70,7 +74,11 @@ class Collector:
         create_venv: bool = False,
         skip_install: bool = False,
     ):
-        """Discover and load extractors from file system."""
+        """Discover and load extractors from file system.
+
+        Raises:
+            ExtractorLoadError: when no extractors are found
+        """
         # maco requires the extractor to be imported directly, so ensure they are available on the path
         full_path_extractors = os.path.abspath(path_extractors)
         full_path_above_extractors = os.path.dirname(full_path_extractors)
@@ -175,7 +183,15 @@ class Collector:
         stream: BinaryIO,
         extractor_name: str,
     ) -> Dict[str, Any]:
-        """Run extractor with stream and verify output matches the model."""
+        """Run extractor with stream and verify output matches the model.
+
+        Args:
+            stream (BinaryIO): Binary stream to analyze
+            extractor_name (str): Name of extractor to analyze stream
+
+        Returns:
+            (Dict[str, Any]): Results from extractor
+        """
         extractor = self.extractors[extractor_name]
         try:
             # Run extractor on a copy of the sample

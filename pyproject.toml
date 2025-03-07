@@ -43,10 +43,18 @@ where = ["."]
 exclude = ["test", "tests", "extractors", "model_setup"]
 
 [tool.ruff]
-line-length = 119
+line-length = 120
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.ruff.lint]
 # Add the `line-too-long` rule to the enforced rule set. By default, Ruff omits rules that
 # overlap with the use of a formatter, like Black, but we can override this behavior by
 # explicitly adding the rule.
-extend-select = ["E501"]
+extend-select = ["E501", "D", "DOC"]
+ignore = ["D104"]
+preview = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

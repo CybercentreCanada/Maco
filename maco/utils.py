@@ -1,4 +1,5 @@
-# Common utilities shared between the MACO collector and configextractor-py
+"""Common utilities shared between the MACO collector and configextractor-py."""
+
 import importlib
 import importlib.machinery
 import importlib.util
@@ -33,8 +34,8 @@ from typing import Callable, Dict, List, Set, Tuple, Union
 from uv import find_uv_bin
 
 from maco import model
-from maco.extractor import Extractor
 from maco.exceptions import AnalysisAbortedException
+from maco.extractor import Extractor
 
 logger = logging.getLogger("maco.lib.utils")
 
@@ -50,10 +51,14 @@ VENV_CREATE_CMD = f"{UV_BIN} venv"
 
 
 class Base64Decoder(json.JSONDecoder):
+    """JSON decoder that also base64 encodes binary data."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the decoder."""
         json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
+        """Hook to decode base64 encoded binary data."""  # noqa: DOC201
         if "__class__" not in obj:
             return obj
         type = obj["__class__"]
@@ -131,17 +136,38 @@ rule MACO {
 
 
 def maco_extractor_validation(module: ModuleType) -> bool:
+    """Validation function for extractors.
+
+    Returns:
+        (bool): True if extractor belongs to MACO, False otherwise.
+    """
     if inspect.isclass(module):
         # 'author' has to be implemented otherwise will raise an exception according to MACO
         return hasattr(module, "author") and module.author
     return False
 
 
-def maco_extract_rules(module: Extractor) -> bool:
+def maco_extract_rules(module: Extractor) -> str:
+    """Extracts YARA rules from extractor.
+
+    Returns:
+     (str): YARA rules
+    """
     return module.yara_rule
 
 
 def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger) -> Tuple[List[str], List[str]]:
+    """Looks for extractors using YARA rules.
+
+    Args:
+        root_directory (str): Root directory containing extractors
+        scanner (yara.Rules): Scanner to look for extractors using YARA rules
+        logger (Logger): Logger to use
+
+    Returns:
+        Tuple[List[str], List[str]]: Returns a list of extractor directories and extractor files
+
+    """
     extractor_dirs = set([root_directory])
     extractor_files = []
 
@@ -282,7 +308,16 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
     return venvs
 
 
-def find_and_insert_venv(path: str, venvs: List[str]):
+def find_and_insert_venv(path: str, venvs: List[str]) -> Tuple[str, str]:
+    """Finds the closest virtual environment to the extractor and inserts it into the PATH.
+
+    Args:
+        path (str): Path of extractor
+        venvs (List[str]): List of virtual environments
+
+    Returns:
+        (Tuple[str, str]): Virtual environment and site-packages path that's closest to the extractor
+    """
     venv = None
     for venv in sorted(venvs, reverse=True):
         venv_parent = os.path.dirname(venv)
@@ -311,6 +346,16 @@ def register_extractors(
     logger: Logger,
     default_loaded_modules: Set[str] = set(sys.modules.keys()),
 ):
+    """Register extractors with in the current directory.
+
+    Args:
+        current_directory (str): Current directory to register extractors found
+        venvs (List[str]): List of virtual environments
+        extractor_files (List[str]): List of extractor files found
+        extractor_module_callback (Callable[[ModuleType, str], None]): Callback used to register extractors
+        logger (Logger): Logger to use
+        default_loaded_modules (Set[str]): Set of default loaded modules
+    """
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
     if venvs and package_name in sys.modules:
@@ -413,6 +458,17 @@ def import_extractors(
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
     skip_install: bool = False,
 ):
+    """Import extractors in a given directory.
+
+    Args:
+        extractor_module_callback (Callable[[ModuleType, str], bool]): Callback used to register extractors
+        root_directory (str): Root directory to look for extractors
+        scanner (yara.Rules): Scanner to look for extractors that match YARA rule
+        create_venv (bool): Create/Use virtual environments
+        logger (Logger): Logger to use
+        python_version (str): Version of python to use when creating virtual environments
+        skip_install (bool): Skip installation of Python dependencies for extractors
+    """
     extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
 
     logger.info(f"Extractor files found based on scanner ({len(extractor_files)}).")
@@ -448,7 +504,24 @@ def run_extractor(
     venv_script=VENV_SCRIPT,
     json_decoder=Base64Decoder,
 ) -> Union[Dict[str, dict], model.ExtractorModel]:
-    """Runs the maco extractor against sample either in current process or child process."""
+    """Runs the maco extractor against sample either in current process or child process.
+
+    Args:
+        sample_path (str): Path to sample
+        module_name (str): Name of extractor module
+        extractor_class (str): Name of extractor class in module
+        module_path (str): Path to Python module containing extractor
+        venv (str): Path to virtual environment associated to extractor
+        venv_script (str): Script to run extractor in a virtual environment
+        json_decoder (Base64Decoder): Decoder used for JSON
+
+    Raises:
+        AnalysisAbortedException: Raised when extractor voluntarily terminates execution
+        Exception: Raised when extractor raises an exception
+
+    Returns:
+        Union[Dict[str, dict], model.ExtractorModel]: Results from extractor
+    """
     if not venv:
         key = f"{module_name}_{extractor_class}"
         if key not in _loaded_extractors:

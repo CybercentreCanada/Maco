@@ -1,3 +1,5 @@
+"""Base testing."""
+
 import io
 import os
 
@@ -6,10 +8,13 @@ from maco import base_test
 
 
 class TestLimitOther(base_test.BaseTest):
+    """Test that limit_other extractor can be used in base environment."""
+
     name = "LimitOther"
     path = os.path.join(__file__, "../../demo_extractors")
 
     def test_load_cart(self):
+        """Test loading a cart file."""
         data = self.load_cart("data/example.txt.cart").read()
         self.assertEqual(data, b"LimitOther\n")
 

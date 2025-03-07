@@ -1,3 +1,5 @@
+"""Test helper functions."""
+
 import io
 import os
 import unittest
@@ -8,7 +10,10 @@ path_extractors = "../../demo_extractors"
 
 
 class TestHelpersFindExtractors(unittest.TestCase):
+    """Test finding extractors."""
+
     def test_find_extractors(self):
+        """Test finding extractors."""
         target = os.path.join(__file__, path_extractors)
         m = collector.Collector(target)
         # extractors = helpers.find_extractors(target)
@@ -20,7 +25,10 @@ class TestHelpersFindExtractors(unittest.TestCase):
 
 
 class TestHelpersCompileYara(unittest.TestCase):
+    """Test YARA rule compilation."""
+
     def test_compile_yara(self):
+        """Test YARA rule compilation."""
         target = os.path.join(__file__, path_extractors)
         m = collector.Collector(target)
         self.assertEqual(
@@ -30,11 +38,15 @@ class TestHelpersCompileYara(unittest.TestCase):
 
 
 class TestHelpersAnalyseStream(unittest.TestCase):
+    """Test analyzing a stream."""
+
     def setUp(self):
+        """Setup."""
         target = os.path.join(__file__, path_extractors)
         self.m = collector.Collector(target)
 
     def test_analyse_stream(self):
+        """Test analyzing a stream."""
         data = b""
         resp = self.m.extract(io.BytesIO(data), "Complex")
         self.assertEqual(resp, None)

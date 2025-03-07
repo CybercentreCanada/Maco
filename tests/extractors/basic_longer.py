@@ -1,5 +1,7 @@
+"""Basic longer extractor."""
+
 from io import BytesIO
-from typing import List, Optional
+from typing import List
 
 from maco import extractor, model, yara
 
@@ -21,7 +23,12 @@ class BasicLonger(extractor.Extractor):
         }
         """
 
-    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: List[yara.Match]) -> model.ExtractorModel:
+        """Run the extractor.
+
+        Returns:
+            (model.ExtractorModel): Results from extractor
+        """
         # use a custom model that inherits from ExtractorModel
         # this model defines what can go in the 'other' dict
         tmp = model.ExtractorModel(family="basic_longer")

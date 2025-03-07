@@ -1,3 +1,5 @@
+"""Test detection of extractors."""
+
 import os
 import sys
 
@@ -103,6 +105,7 @@ CAPE_EXTRACTORS = [
     ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "CAPESandbox/community"),
 )
 def test_public_projects(repository_url: str, extractors: list, python_minor: int, branch: str):
+    """Test compatibility with public projects."""
     # Ensure that any changes we make doesn't break usage of public projects
     # which can affect downstream systems using like library (ie. Assemblyline)
     import sys
@@ -124,6 +127,7 @@ def test_public_projects(repository_url: str, extractors: list, python_minor: in
 
 
 def test_module_confusion():
+    """Test module confusion."""
     import shutil
     from tempfile import TemporaryDirectory
 

@@ -3,19 +3,18 @@
 import argparse
 import base64
 import binascii
-import cart
 import hashlib
 import io
 import json
 import logging
 import os
 import sys
-
 from importlib.metadata import version
 from typing import BinaryIO, List, Tuple
 
-from maco import collector
+import cart
 
+from maco import collector
 
 logger = logging.getLogger("maco.lib.cli")
 
@@ -29,7 +28,20 @@ def process_file(
     force: bool,
     include_base64: bool,
 ):
-    """Process a filestream with the extractors and rules."""
+    """Process a filestream with the extractors and rules.
+
+    Args:
+        collected (collector.Collector): a Collector instance
+        path_file (str): path to sample to be analyzed
+        stream (BinaryIO): binary stream to be analyzed
+        pretty (bool): Pretty print the JSON output
+        force (bool): Run all extractors regardless of YARA rule match
+        include_base64 (bool): include base64'd data in output
+
+    Returns:
+        (dict): The output from the extractors analyzing the sample
+
+    """
     unneutered = io.BytesIO()
     try:
         cart.unpack_stream(stream, unneutered)
@@ -98,7 +110,8 @@ def process_filesystem(
 ) -> Tuple[int, int, int]:
     """Process filesystem with extractors and print results of extraction.
 
-    Returns total number of analysed files, yara hits and successful maco extractions.
+    Returns:
+        (Tuple[int, int, int]): Total number of analysed files, yara hits and successful maco extractions.
     """
     if force:
         logger.warning("force execute will cause errors if an extractor requires a yara rule hit during execution")
@@ -163,6 +176,7 @@ def process_filesystem(
 
 
 def main():
+    """Main block for CLI."""
     parser = argparse.ArgumentParser(description="Run extractors over samples.")
     parser.add_argument("extractors", type=str, help="path to extractors")
     parser.add_argument("samples", type=str, help="path to samples")

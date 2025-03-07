@@ -1,3 +1,5 @@
+"""Demo extractor that targets ELF files."""
+
 from io import BytesIO
 from typing import List, Optional
 
@@ -21,6 +23,16 @@ class Elfy(extractor.Extractor):
         """
 
     def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+        """Run the analysis process.
+
+        Args:
+            stream (BytesIO): file object from disk/network/memory.
+            matches (List[yara.Match]): yara rule matches
+
+        Returns:
+            (Optional[model.ExtractorModel]): model of results
+
+        """
         # return config model formatted results
         ret = model.ExtractorModel(family=self.family)
         # the list for campaign_id already exists and is empty, so we just add an item

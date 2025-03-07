@@ -1,3 +1,5 @@
+"""Benchmarking tests."""
+
 import os
 import timeit
 
@@ -9,12 +11,15 @@ instance = complex.Complex()
 
 
 class LocalBaseTest(base_test.BaseTest):
+    """Local base test."""
+
     name = "Complex"
     path = os.path.join(__file__, "../../demo_extractors")
     create_venv = False
 
     @classmethod
     def setUpClass(cls) -> None:
+        """Setup class."""
         super().setUpClass()
         cls.input_file = cls.load_cart("data/trigger_complex.txt.cart")
         cls.input_file.seek(0)
@@ -24,6 +29,7 @@ class TestComplexSynthetic(LocalBaseTest):
     """Test extractors work bypassing maco."""
 
     def test_extract(self):
+        """Test extraction."""
         self.input_file.seek(0)
         raw = self.input_file.read()
         self.input_file.seek(0)
@@ -38,6 +44,7 @@ class TestComplexNoVenv(LocalBaseTest):
     """Test extractors work without full venv isolation."""
 
     def test_extract(self):
+        """Test extraction without a virtual environment."""
         self.input_file.seek(0)
         ret = self.extract(self.input_file)
         self.assertEqual(ret["family"], "complex")
@@ -50,6 +57,7 @@ class TestComplexVenv(LocalBaseTest):
     create_venv = True
 
     def test_extract(self):
+        """Test extraction with a virtual environment."""
         self.input_file.seek(0)
         ret = self.extract(self.input_file)
         self.assertEqual(ret["family"], "complex")
@@ -57,6 +65,11 @@ class TestComplexVenv(LocalBaseTest):
 
 
 def make_synthetic():
+    """Make synthetic test.
+
+    Returns:
+        SyntheticTest
+    """
     TestComplexSynthetic.setUpClass()
     tc = TestComplexSynthetic()
     tc.setUp()
@@ -64,6 +77,11 @@ def make_synthetic():
 
 
 def make_no_venv():
+    """Make no venv test.
+
+    Returns:
+        Test without virtual environment isolation
+    """
     TestComplexNoVenv.setUpClass()
     tc = TestComplexNoVenv()
     tc.setUp()
@@ -71,6 +89,11 @@ def make_no_venv():
 
 
 def make_venv():
+    """Make venv test.
+
+    Returns:
+        Test with virtual environment isolation
+    """
     TestComplexVenv.setUpClass()
     tc = TestComplexVenv()
     tc.setUp()

@@ -1,7 +1,6 @@
 """Foundation for unit testing an extractor.
 
 Example:
-
 from maco import base_test
 class TestExample(base_test.BaseTest):
     name = "Example"
@@ -20,13 +19,12 @@ import unittest
 import cart
 
 from maco import collector
-
-
-class NoHitException(Exception):
-    pass
+from maco.exceptions import NoHitException
 
 
 class BaseTest(unittest.TestCase):
+    """Base test class."""
+
     name: str = None  # name of the extractor
     # folder and/or file where extractor is.
     # I recommend something like os.path.join(__file__, "../../extractors")
@@ -36,6 +34,11 @@ class BaseTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        """Initialization of class.
+
+        Raises:
+            Exception: when name or path is not set.
+        """
         if not cls.name or not cls.path:
             raise Exception("name and path must be set")
         cls.c = collector.Collector(cls.path, include=[cls.name], create_venv=cls.create_venv)
@@ -47,7 +50,11 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(len(self.c.extractors), 1)
 
     def extract(self, stream):
-        """Return results for running extractor over stream, including yara check."""
+        """Return results for running extractor over stream, including yara check.
+
+        Raises:
+            NoHitException: when yara rule doesn't hit.
+        """
         runs = self.c.match(stream)
         if not runs:
             raise NoHitException("no yara rule hit")
@@ -65,7 +72,17 @@ class BaseTest(unittest.TestCase):
 
     @classmethod
     def load_cart(cls, filepath: str) -> io.BytesIO:
-        """Load and unneuter a test file (likely malware) into memory for processing."""
+        """Load and unneuter a test file (likely malware) into memory for processing.
+
+        Args:
+            filepath (str): Path to carted sample
+
+        Returns:
+            (io.BytesIO): Buffered stream containing the un-carted sample
+
+        Raises:
+            FileNotFoundError: if the path to the sample doesn't exist
+        """
         # it is nice if we can load files relative to whatever is implementing base_test
         dirpath = os.path.split(cls._get_location())[0]
         # either filepath is absolute, or should be loaded relative to child of base_test

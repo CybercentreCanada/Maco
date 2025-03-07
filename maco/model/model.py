@@ -29,6 +29,8 @@ class Encryption(ForbidModel):
     """Encryption usage."""
 
     class UsageEnum(str, Enum):
+        """Purpose of the encryption."""
+
         config = "config"
         communication = "communication"
         binary = "binary"
@@ -52,6 +54,8 @@ class Encryption(ForbidModel):
 
 
 class CategoryEnum(str, Enum):
+    """Category of the malware."""
+
     # Software that shows you extra promotions that you cannot control as you use your PC.
     # You wouldn't see the extra ads if you didn't have adware installed.
     adware = "adware"
@@ -274,6 +278,8 @@ class ExtractorModel(ForbidModel):
         """Binary data extracted by decoder."""
 
         class TypeEnum(str, Enum):
+            """Type of binary data."""
+
             payload = "payload"  # contained within the original file
             config = "config"  # sometimes malware uses json/formatted text for config
             other = "other"
@@ -289,6 +295,8 @@ class ExtractorModel(ForbidModel):
         # convenience for ret.encryption.append(ret.Encryption(*properties))
         # Define as class as only way to allow for this to be accessed and not have pydantic try to parse it.
         class Encryption(Encryption):
+            """Encryption usage."""
+
             pass
 
         encryption: Union[List[Encryption], Encryption, None] = None  # encryption information for the binary
@@ -436,6 +444,8 @@ class ExtractorModel(ForbidModel):
         """Direct usage of DNS."""
 
         class RecordTypeEnum(str, Enum):
+            """DNS record types."""
+
             A = "A"
             AAAA = "AAAA"
             AFSDB = "AFSDB"
@@ -512,6 +522,8 @@ class ExtractorModel(ForbidModel):
     # convenience for ret.encryption.append(ret.Encryption(*properties))
     # Define as class as only way to allow for this to be accessed and not have pydantic try to parse it.
     class Encryption(Encryption):
+        """Encryption usage."""
+
         pass
 
     encryption: List[Encryption] = []
@@ -530,6 +542,8 @@ class ExtractorModel(ForbidModel):
         """Cryptocoin usage (ransomware/miner)."""
 
         class UsageEnum(str, Enum):
+            """Cryptocoin usage."""
+
             ransomware = "ransomware"  # request money to unlock
             miner = "miner"  # use gpu/cpu to mint coins
             other = "other"
@@ -543,7 +557,11 @@ class ExtractorModel(ForbidModel):
     cryptocurrency: List[Cryptocurrency] = []
 
     class Path(ForbidModel):
+        """Path used by malware."""
+
         class UsageEnum(str, Enum):
+            """Purpose of the path."""
+
             c2 = "c2"  # file/folder issues commands to malware
             config = "config"  # config is loaded from this path
             install = "install"  # install directory/filename for malware
@@ -559,7 +577,11 @@ class ExtractorModel(ForbidModel):
     paths: List[Path] = []  # files/directories used by malware
 
     class Registry(ForbidModel):
+        """Registry usage by malware."""
+
         class UsageEnum(str, Enum):
+            """Registry usage."""
+
             persistence = "persistence"  # stay alive
             store_data = "store_data"  # generated encryption keys or config
             store_payload = "store_payload"  # malware hidden in registry key

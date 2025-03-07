@@ -1,3 +1,5 @@
+"""Test basic extractors."""
+
 import io
 import os
 
@@ -11,6 +13,7 @@ class TestBasicLonger(base_test.BaseTest):
     path = os.path.join(__file__, "..")
 
     def test_run(self):
+        """Test run."""
         ret = self.extract(io.BytesIO(b"BasicLonger"))
         self.assertEqual(ret["family"], "basic_longer")
 
@@ -22,5 +25,6 @@ class TestBasic(base_test.BaseTest):
     path = os.path.join(__file__, "..")
 
     def test_run(self):
+        """Test run."""
         ret = self.extract(io.BytesIO(b"Basic"))
         self.assertEqual(ret["family"], "basic")

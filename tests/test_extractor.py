@@ -1,10 +1,16 @@
+"""Extractor testing."""
+
 import unittest
 
 from maco import extractor
 
 
 class TestExtractor(unittest.TestCase):
+    """Test extractor."""
+
     def test_bad(self):
+        """Test bad extractor."""
+
         class Tmp(extractor.Extractor):
             family = "smell_ya_later"
             author = "me"

@@ -4,14 +4,8 @@ import logging
 import textwrap
 from typing import BinaryIO, List, Optional, Union
 
-from maco import yara
-
-from . import model
-
-
-class InvalidExtractor(ValueError):
-    pass
-
+from maco import model, yara
+from maco.exceptions import InvalidExtractor
 
 DEFAULT_YARA_RULE = """
 rule {name}
@@ -37,6 +31,11 @@ class Extractor:
     logger: logging.Logger = None  # logger for use when debugging
 
     def __init__(self) -> None:
+        """Initialise the extractor.
+
+        Raises:
+            InvalidExtractor: When the extractor is invalid.
+        """
         self.name = name = type(self).__name__
         self.logger = logging.getLogger(f"maco.extractor.{name}")
         self.logger.debug(f"initialise '{name}'")

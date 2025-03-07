@@ -1,3 +1,5 @@
+"""Model validation testing."""
+
 import unittest
 from typing import Dict
 
@@ -7,9 +9,12 @@ from maco import collector, model
 
 
 class TestModelObject(unittest.TestCase):
+    """Test the model object."""
+
     maxDiff = None
 
     def test_model_invalid(self):
+        """Test invalid model."""
         # family not supplied
         self.assertRaises(ValidationError, model.ExtractorModel)
 
@@ -21,12 +26,14 @@ class TestModelObject(unittest.TestCase):
         self.assertRaises(ValidationError, collector._verify_response, ret)
 
     def test_model_object_1(self):
+        """Test the model object with basic requirements."""
         # object example
         tmp = model.ExtractorModel(family="scuba")
         tmp.campaign_id.append("5467")
         self.verify(tmp, {"family": "scuba", "campaign_id": ["5467"]})
 
     def test_model_object_2(self):
+        """Test the model object with more data."""
         em = model.ExtractorModel
         tmp = model.ExtractorModel(
             family="scuba",
@@ -307,7 +314,10 @@ class TestModelObject(unittest.TestCase):
 
 
 class TestModelDict(unittest.TestCase):
+    """Test verifying dicts against the schema."""
+
     def test_model_1(self):
+        """Test the model object with basic requirements."""
         # dict example
         self.verify(
             {
@@ -325,6 +335,7 @@ class TestModelDict(unittest.TestCase):
         )
 
     def test_model_2(self):
+        """Test the model object with more data."""
         # dict example large
         self.maxDiff = None
 

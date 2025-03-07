@@ -1,3 +1,5 @@
+"""Demo complex extractor."""
+
 from io import BytesIO
 from typing import List, Optional
 
@@ -39,6 +41,16 @@ class Complex(extractor.Extractor):
         """
 
     def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+        """Run the analysis process.
+
+        Args:
+            stream (BytesIO): file object from disk/network/memory.
+            matches (List[yara.Match]): yara rule matches
+
+        Returns:
+            (Optional[model.ExtractorModel]): model of results
+
+        """
         self.logger.info("starting run")
         self.logger.debug(f"{[x.rule for x in matches]=}")
         data = stream.read()

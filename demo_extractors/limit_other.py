@@ -1,3 +1,5 @@
+"""Demo extractor to show the usage of the other field in the model."""
+
 from io import BytesIO
 from typing import List, Optional
 
@@ -23,6 +25,19 @@ class LimitOther(extractor.Extractor):
         """
 
     def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+        """Run the analysis process.
+
+        Args:
+            stream (BytesIO): file object from disk/network/memory.
+            matches (List[yara.Match]): yara rule matches
+
+        Returns:
+            (Optional[model.ExtractorModel]): model of results
+
+        Raises:
+            Exception: if the httpx library is not installed
+
+        """
         # import httpx at runtime so we can test that requirements.txt is installed dynamically without breaking
         # the tests that do direct importing
         import httpx

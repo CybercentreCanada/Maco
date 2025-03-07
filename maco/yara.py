@@ -1,25 +1,34 @@
+"""yara-python facade that uses yara-x."""
+
 import re
 from collections import namedtuple
 from itertools import cycle
-from typing import Dict
+from typing import Dict, List
 
 import yara_x
+
+from maco.exceptions import SyntaxError
 
 RULE_ID_RE = re.compile("(\w+)? ?rule (\w+)")
 
 
-class SyntaxError(Exception): ...
-
-
 # Create interfaces that resembles yara-python (but is running yara-x under the hood)
 class StringMatchInstance:
+    """Instance of a string match."""
+
     def __init__(self, match: yara_x.Match, file_content: bytes):
+        """Initializes StringMatchInstance."""
         self.matched_data = file_content[match.offset : match.offset + match.length]
         self.matched_length = match.length
         self.offset = match.offset
         self.xor_key = match.xor_key
 
     def plaintext(self) -> bytes:
+        """Plaintext of the matched data.
+
+        Returns:
+            (bytes): Plaintext of the matched cipher text
+        """
         if not self.xor_key:
             # No need to XOR the matched data
             return self.matched_data
@@ -28,17 +37,28 @@ class StringMatchInstance:
 
 
 class StringMatch:
+    """String match."""
+
     def __init__(self, pattern: yara_x.Pattern, file_content: bytes):
+        """Initializes StringMatch."""
         self.identifier = pattern.identifier
         self.instances = [StringMatchInstance(match, file_content) for match in pattern.matches]
         self._is_xor = any([match.xor_key for match in pattern.matches])
 
     def is_xor(self):
+        """Checks if string match is xor'd.
+
+        Returns:
+            (bool): True if match is xor'd
+        """
         return self._is_xor
 
 
 class Match:
+    """Match."""
+
     def __init__(self, rule: yara_x.Rule, file_content: bytes):
+        """Initializes Match."""
         self.rule = rule.identifier
         self.namespace = rule.namespace
         self.tags = list(rule.tags) or []
@@ -50,7 +70,14 @@ class Match:
 
 
 class Rules:
+    """Rules."""
+
     def __init__(self, source: str = None, sources: Dict[str, str] = None):
+        """Initializes Rules.
+
+        Raises:
+            SyntaxError: Raised when there's a syntax error in the YARA rule.
+        """
         Rule = namedtuple("Rule", "identifier namespace is_global")
         if source:
             sources = {"default": source}
@@ -69,10 +96,20 @@ class Rules:
             raise SyntaxError(e)
 
     def __iter__(self):
+        """Iterate over rules.
+
+        Yields:
+            YARA rules
+        """
         for rule in self._rules:
             yield rule
 
-    def match(self, filepath: str = None, data: bytes = None):
+    def match(self, filepath: str = None, data: bytes = None) -> List[Match]:
+        """Performs a scan to check for YARA rules matches based on the file, either given by path or buffer.
+
+        Returns:
+            (List[Match]): A list of YARA matches.
+        """
         if filepath:
             with open(filepath, "rb") as fp:
                 data = fp.read()
@@ -81,4 +118,9 @@ class Rules:
 
 
 def compile(source: str = None, sources: Dict[str, str] = None) -> Rules:
+    """Compiles YARA rules from source or from sources.
+
+    Returns:
+        (Rules): a Rules object
+    """
     return Rules(source, sources)
