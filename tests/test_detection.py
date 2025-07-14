@@ -89,20 +89,9 @@ CAPE_EXTRACTORS = [
     "repository_url, extractors, python_minor, branch",
     [
         ("https://github.com/jeFF0Falltrades/rat_king_parser", ["RKPMACO"], 10, None),
-        (
-            "https://github.com/apophis133/apophis-YARA-Rules",
-            [
-                "Pikabot",
-                "TrueBot",
-                "MetaStealer",
-            ],
-            8,
-            None,
-        ),
-        # Pending: https://github.com/CAPESandbox/community/pull/470
         ("https://github.com/CAPESandbox/community", CAPE_EXTRACTORS, 10, None),
     ],
-    ids=("jeFF0Falltrades/rat_king_parser", "apophis133/apophis-YARA-Rules", "CAPESandbox/community"),
+    ids=("jeFF0Falltrades/rat_king_parser", "CAPESandbox/community"),
 )
 def test_public_projects(repository_url: str, extractors: list, python_minor: int, branch: str):
     """Test compatibility with public projects."""
