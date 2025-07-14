@@ -203,17 +203,22 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
                     with open(path, "rb") as f:
                         data = f.read()
 
-                    with open(path, "wb") as f:
-                        # Replace any relative importing with absolute
-                        curr_dir = os.path.dirname(path)
-                        split = curr_dir.split("/")[::-1]
-                        for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
-                            for match in pattern.findall(data):
-                                depth = match.count(b".")
-                                abspath = ".".join(split[depth - 1 : split.index(package) + 1][::-1])
-                                abspath += "." if pattern == RELATIVE_FROM_RE else ""
-                                data = data.replace(f"from {match.decode()}".encode(), f"from {abspath}".encode(), 1)
-                        f.write(data)
+                    # Replace any relative importing with absolute
+                    changed_imports = False
+                    curr_dir = os.path.dirname(path)
+                    split = curr_dir.split("/")[::-1]
+                    for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
+                        for match in pattern.findall(data):
+                            depth = match.count(b".")
+                            abspath = ".".join(split[depth - 1 : split.index(package) + 1][::-1])
+                            abspath += "." if pattern == RELATIVE_FROM_RE else ""
+                            data = data.replace(f"from {match.decode()}".encode(), f"from {abspath}".encode(), 1)
+                            changed_imports = True
+
+                    # only write extractor files if imports were changed
+                    if changed_imports:
+                        with open(path, "wb") as f:
+                            f.write(data)
 
                 if scanner.match(path):
                     # Add directory to list of hits for venv creation
