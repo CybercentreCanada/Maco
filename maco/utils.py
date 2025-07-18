@@ -337,7 +337,7 @@ def find_and_insert_venv(path: str, venvs: List[str]) -> Tuple[str, str]:
         # Insert the venv's site-packages into the PATH temporarily to load the module
         for site_package in glob(os.path.join(venv, "lib/python*/site-packages")):
             if site_package not in sys.path:
-                sys.path.insert(2, site_package)
+                sys.path.insert(1, site_package)
             break
 
     return venv, site_package
@@ -371,12 +371,16 @@ def register_extractors(
         )
 
     try:
+        # Insert any virtual environment necessary to load directory as package
+        package_venv, package_site_packages = find_and_insert_venv(current_directory, venvs)
+
         # Modify the PATH so we can recognize this new package on import
+        if "src" in os.listdir(current_directory):
+            sys.path.insert(1, os.path.join(current_directory, "src"))
+
         sys.path.insert(1, current_directory)
         sys.path.insert(1, parent_directory)
 
-        # Insert any virtual environment necessary to load directory as package
-        package_venv, package_site_packages = find_and_insert_venv(current_directory, venvs)
         package = importlib.import_module(package_name)
 
         # Walk through our new package and find the extractors that YARA identified
