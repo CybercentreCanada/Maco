@@ -391,6 +391,18 @@ class ExtractorModel(ForbidModel):
 
     proxy: List[Proxy] = []
 
+    class ICMP(ForbidModel):
+        """Usage of ICMP."""
+
+        type: Optional[int] = None
+        code: Optional[int] = None
+        header: Optional[str] = None  # Some malware uses non-standard header fields
+        hostname: Optional[str] = None
+
+        usage: Optional[ConnUsageEnum] = None
+
+    icmp: List[ICMP] = []
+
     #
     # inter process communication (IPC)
     #
