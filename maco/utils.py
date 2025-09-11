@@ -1,8 +1,6 @@
 """Common utilities shared between the MACO collector and configextractor-py."""
 
 import importlib
-import importlib.machinery
-import importlib.util
 import inspect
 import json
 import logging
@@ -13,8 +11,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from importlib.machinery import SourceFileLoader
 
-from multiprocess import Queue
+from multiprocess import Process, Queue
 
 from maco import yara
 
@@ -27,9 +26,8 @@ from base64 import b64decode
 from copy import deepcopy
 from glob import glob
 from logging import Logger
-from pkgutil import walk_packages
 from types import ModuleType
-from typing import Callable, Dict, List, Set, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 from uv import find_uv_bin
 
@@ -343,13 +341,43 @@ def find_and_insert_venv(path: str, venvs: List[str]) -> Tuple[str, str]:
     return venv, site_package
 
 
+def register_extractor_module(
+    extractor_source_file: str,
+    module_name: str,
+    venvs: List[str],
+    extractor_module_callback: Callable[[ModuleType, str], None],
+    logger: Logger,
+):
+    """Register the extractor module in isolation.
+
+    Args:
+        extractor_source_file (str): Path to source file of extractor
+        module_name (str): The name of the module relative to the package directory
+        venvs (List[str]): List of virtual environments
+        extractor_module_callback (Callable[[ModuleType, str], None]): Callback used to register extractors
+        logger (Logger): Logger to use
+
+    """
+    try:
+        logger.info(f"Inspecting '{extractor_source_file}' for extractors..")
+        venv, site_packages = find_and_insert_venv(extractor_source_file, venvs)
+        loader = SourceFileLoader(
+            module_name,
+            extractor_source_file,
+        )
+        extractor_module_callback(loader.load_module(), venv)
+    finally:
+        # Cleanup virtual environment that was loaded into PATH
+        if venv and site_packages in sys.path:
+            sys.path.remove(site_packages)
+
+
 def register_extractors(
     current_directory: str,
     venvs: List[str],
     extractor_files: List[str],
     extractor_module_callback: Callable[[ModuleType, str], None],
     logger: Logger,
-    default_loaded_modules: Set[str] = set(sys.modules.keys()),
 ):
     """Register extractors with in the current directory.
 
@@ -359,7 +387,6 @@ def register_extractors(
         extractor_files (List[str]): List of extractor files found
         extractor_module_callback (Callable[[ModuleType, str], None]): Callback used to register extractors
         logger (Logger): Logger to use
-        default_loaded_modules (Set[str]): Set of default loaded modules
     """
     package_name = os.path.basename(current_directory)
     parent_directory = os.path.dirname(current_directory)
@@ -375,73 +402,24 @@ def register_extractors(
         sys.path.insert(1, current_directory)
         sys.path.insert(1, parent_directory)
 
-        # Insert any virtual environment necessary to load directory as package
-        package_venv, package_site_packages = find_and_insert_venv(current_directory, venvs)
-        package = importlib.import_module(package_name)
+        # Load the potential extractors directly from the source file
+        registration_processes = []
+        for extractor_source_file in extractor_files:
+            module_name = extractor_source_file.replace(f"{parent_directory}/", "").replace("/", ".")[:-3]
+            p = Process(
+                target=register_extractor_module,
+                args=(extractor_source_file, module_name, venvs, extractor_module_callback, logger),
+            )
+            p.start()
+            registration_processes.append(p)
 
-        # Walk through our new package and find the extractors that YARA identified
-        for module_path, module_name, ispkg in walk_packages(package.__path__, package.__name__ + "."):
-            if ispkg:
-                # Skip packages
-                continue
+        for p in registration_processes:
+            p.join()
 
-            module_path = os.path.realpath(os.path.join(module_path.path, module_name.rsplit(".", 1)[1]) + ".py")
-            if module_path in extractor_files:
-                # Cross this extractor off the list of extractors to find
-                logger.debug(f"Inspecting '{module_name}' for extractors..")
-                extractor_files.remove(module_path)
-                try:
-                    # This is an extractor we've been looking for, load the module and invoke callback
-                    venv, site_packages = find_and_insert_venv(module_path, venvs)
-                    module = importlib.import_module(module_name)
-                    module.__file__ = os.path.realpath(module.__file__)
-
-                    # Patch the original directory information into the module
-                    original_package_name = os.path.basename(current_directory)
-                    module.__name__ = module.__name__.replace(package_name, original_package_name)
-                    module.__package__ = module.__package__.replace(package_name, original_package_name)
-                    extractor_module_callback(module, venv)
-                finally:
-                    # Cleanup virtual environment that was loaded into PATH
-                    if venv and site_packages in sys.path:
-                        sys.path.remove(site_packages)
-
-            if not extractor_files:
-                return
     finally:
         # Cleanup changes made to PATH
         sys.path.remove(parent_directory)
         sys.path.remove(current_directory)
-
-        if package_venv and package_site_packages in sys.path:
-            sys.path.remove(package_site_packages)
-
-        # Remove any modules that were loaded to deconflict with later modules loads
-        [sys.modules.pop(k) for k in set(sys.modules.keys()) - default_loaded_modules]
-
-    # If there still exists extractor files we haven't found yet, try searching in the available subdirectories
-    if extractor_files:
-        for dir in os.listdir(current_directory):
-            path = os.path.join(current_directory, dir)
-            if dir == "__pycache__":
-                # Ignore the cache created
-                continue
-            elif dir.endswith(".egg-info"):
-                # Ignore these directories
-                continue
-            elif dir.startswith("."):
-                # Ignore hidden directories
-                continue
-
-            if os.path.isdir(path):
-                # Check subdirectory to find the rest of the detected extractors
-                register_extractors(
-                    path, venvs, extractor_files, extractor_module_callback, logger, default_loaded_modules
-                )
-
-            if not extractor_files:
-                # We were able to find all the extractor files
-                break
 
 
 def proxy_logging(queue: Queue, callback: Callable[[ModuleType, str], None], *args, **kwargs):
