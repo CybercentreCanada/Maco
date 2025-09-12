@@ -166,6 +166,15 @@ class TestModelObject(unittest.TestCase):
                     usage="tunnel",
                 )
             ],
+            icmp=[
+                em.ICMP(
+                    type=None,
+                    code=None,
+                    header="DEADBEEF",
+                    hostname="192.168.0.80",
+                    usage="c2",
+                )
+            ],
             dns=[em.DNS(ip="123.21.21.21", port=None, usage="other")],
             tcp=[
                 em.Connection(
@@ -240,6 +249,7 @@ class TestModelObject(unittest.TestCase):
                 "pipe": ["xiod"],
                 "sleep_delay": 45000,
                 "sleep_delay_jitter": 2500,
+                "icmp": [{"header": "DEADBEEF", "hostname": "192.168.0.80", "usage": "c2"}],
                 "inject_exe": ["Teams.exe"],
                 "other": {"misc_data": {"nested": 5}},
                 "binaries": [
