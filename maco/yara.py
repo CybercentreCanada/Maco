@@ -3,7 +3,7 @@
 import re
 from collections import namedtuple
 from itertools import cycle
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import yara_x
 
@@ -51,7 +51,7 @@ class StringMatch:
         Returns:
             (bool): True if match is xor'd
         """
-        return self._is_xor
+        return self._is_xorz
 
 
 class Match:
@@ -66,7 +66,10 @@ class Match:
         # Ensure metadata doesn't get overwritten
         for k, v in rule.metadata:
             self.meta.setdefault(k, []).append(v)
-        self.strings = [StringMatch(pattern, file_content) for pattern in rule.patterns]
+        self.strings = []
+        for match in [StringMatch(pattern, file_content) for pattern in rule.patterns]:
+            for instance in match.instances:
+                self.strings.append((instance.offset, match.identifier, instance.matched_data))
 
 
 class Rules:
@@ -113,6 +116,8 @@ class Rules:
         if filepath:
             with open(filepath, "rb") as fp:
                 data = fp.read()
+
+        data = bytes(data)
 
         return [Match(m, data) for m in self.scanner.scan(data).matching_rules]
 
