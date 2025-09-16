@@ -3,7 +3,7 @@
 import re
 from collections import namedtuple
 from itertools import cycle
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import yara_x
 
