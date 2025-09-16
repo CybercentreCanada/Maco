@@ -3,7 +3,7 @@
 import re
 from collections import namedtuple
 from itertools import cycle
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import yara_x
 
@@ -104,7 +104,7 @@ class Rules:
         for rule in self._rules:
             yield rule
 
-    def match(self, filepath: str = None, data: bytes = None) -> List[Match]:
+    def match(self, filepath: str = None, data: Union[bytes, str] = None) -> List[Match]:
         """Performs a scan to check for YARA rules matches based on the file, either given by path or buffer.
 
         Returns:
@@ -114,7 +114,8 @@ class Rules:
             with open(filepath, "rb") as fp:
                 data = fp.read()
 
-        data = bytes(data)
+        if isinstance(data, str):
+            data = bytes(data)
 
         return [Match(m, data) for m in self.scanner.scan(data).matching_rules]
 
