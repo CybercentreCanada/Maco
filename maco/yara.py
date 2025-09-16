@@ -104,7 +104,7 @@ class Rules:
         for rule in self._rules:
             yield rule
 
-    def match(self, filepath: str = None, data: Union[bytes, str] = None) -> List[Match]:
+    def match(self, filepath: str = None, data: Union[bytes, bytearray] = None) -> List[Match]:
         """Performs a scan to check for YARA rules matches based on the file, either given by path or buffer.
 
         Returns:
@@ -114,7 +114,7 @@ class Rules:
             with open(filepath, "rb") as fp:
                 data = fp.read()
 
-        if isinstance(data, str):
+        if isinstance(data, bytearray):
             data = bytes(data)
 
         return [Match(m, data) for m in self.scanner.scan(data).matching_rules]
