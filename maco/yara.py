@@ -51,7 +51,7 @@ class StringMatch:
         Returns:
             (bool): True if match is xor'd
         """
-        return self._is_xorz
+        return self._is_xor
 
 
 class Match:
