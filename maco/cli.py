@@ -27,6 +27,7 @@ def process_file(
     pretty: bool,
     force: bool,
     include_base64: bool,
+    extracted_dir: str = "",
 ):
     """Process a filestream with the extractors and rules.
 
@@ -37,6 +38,7 @@ def process_file(
         pretty (bool): Pretty print the JSON output
         force (bool): Run all extractors regardless of YARA rule match
         include_base64 (bool): include base64'd data in output
+        extracted_dir (str): directory to write CaRTed binary data to
 
     Returns:
         (dict): The output from the extractors analyzing the sample
@@ -87,6 +89,29 @@ def process_file(
                 if include_base64:
                     # this can be large
                     row["base64"] = base64.b64encode(row["data"]).decode("utf8")
+
+                if extracted_dir:
+                    # only write to already existing directories with permissions
+                    if os.path.isdir(extracted_dir) and os.access(extracted_dir, os.W_OK):
+                        filepath = os.path.join(extracted_dir, f"{row['sha256']}.cart")
+                        # don't overwrite existing files
+                        if os.path.exists(filepath):
+                            logger.debug(f"{filepath} already exists.")
+                        else:
+                            logger.debug(f"Writing binary output to {filepath}.")
+                            # CaRT data before writing to disk
+                            in_stream = io.BytesIO(row["data"])
+                            output_stream = io.BytesIO()
+                            cart.pack_stream(in_stream, output_stream)
+                            output_stream.seek(0)
+                            try:
+                                with open(filepath, "wb") as f:
+                                    f.write(output_stream.getbuffer())
+                            except (FileNotFoundError, PermissionError, OSError):
+                                logger.error(f"Error trying to write binary output to {filepath}")
+                    else:
+                        logger.error(f"Cannot write files to {extracted_dir}")
+
                 # do not print raw bytes to console
                 row.pop("data")
         ret[extractor_name] = resp
@@ -107,6 +132,7 @@ def process_filesystem(
     include_base64: bool,
     create_venv: bool = False,
     skip_install: bool = False,
+    extracted_dir: str = "",
 ) -> Tuple[int, int, int]:
     """Process filesystem with extractors and print results of extraction.
 
@@ -159,6 +185,7 @@ def process_filesystem(
                             pretty=pretty,
                             force=force,
                             include_base64=include_base64,
+                            extracted_dir=extracted_dir,
                         )
                         if resp:
                             num_hits += 1
@@ -194,6 +221,7 @@ def main():
         help="Include base64 encoded binary data in output "
         "(can be large, consider printing to file rather than console)",
     )
+    parser.add_argument("--binarydir", type=str, help="directory to write extracted binary data to")
     parser.add_argument("--logfile", type=str, help="file to log output")
     parser.add_argument("--include", type=str, help="comma separated extractors to run")
     parser.add_argument("--exclude", type=str, help="comma separated extractors to not run")
@@ -268,6 +296,7 @@ def main():
         include_base64=args.base64,
         create_venv=args.create_venv,
         skip_install=not args.force_install,
+        extracted_dir=args.binarydir,
     )
 
 
