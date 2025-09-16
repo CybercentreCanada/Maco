@@ -66,10 +66,7 @@ class Match:
         # Ensure metadata doesn't get overwritten
         for k, v in rule.metadata:
             self.meta.setdefault(k, []).append(v)
-        self.strings = []
-        for match in [StringMatch(pattern, file_content) for pattern in rule.patterns]:
-            for instance in match.instances:
-                self.strings.append((instance.offset, match.identifier, instance.matched_data))
+        self.strings = [StringMatch(pattern, file_content) for pattern in rule.patterns]
 
 
 class Rules:
