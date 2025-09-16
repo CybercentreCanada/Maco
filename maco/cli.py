@@ -90,25 +90,30 @@ def process_file(
                     # this can be large
                     row["base64"] = base64.b64encode(row["data"]).decode("utf8")
 
+                # write binary data to disk if enabled
                 if extracted_dir:
-                    # only write to already existing directories with permissions
+                    # only allow writes to already existing directories with permissions
                     if os.path.isdir(extracted_dir) and os.access(extracted_dir, os.W_OK):
-                        filepath = os.path.join(extracted_dir, f"{row['sha256']}.cart")
+                        filepath = os.path.abspath(os.path.join(extracted_dir, f"{row['sha256']}.cart"))
                         # don't overwrite existing files
                         if os.path.exists(filepath):
                             logger.debug(f"{filepath} already exists.")
                         else:
-                            logger.debug(f"Writing binary output to {filepath}.")
                             # CaRT data before writing to disk
                             in_stream = io.BytesIO(row["data"])
                             output_stream = io.BytesIO()
-                            cart.pack_stream(in_stream, output_stream)
-                            output_stream.seek(0)
                             try:
-                                with open(filepath, "wb") as f:
-                                    f.write(output_stream.getbuffer())
-                            except (FileNotFoundError, PermissionError, OSError):
-                                logger.error(f"Error trying to write binary output to {filepath}")
+                                cart.pack_stream(in_stream, output_stream)
+                            except Exception:
+                                logger.error("Error trying to CaRT binary output. Skipping write to disk.")
+                            else:
+                                output_stream.seek(0)
+                                try:
+                                    with open(filepath, "wb") as f:
+                                        f.write(output_stream.getbuffer())
+                                    logger.debug(f"Wrote binary output to {filepath}.")
+                                except (FileNotFoundError, PermissionError, OSError):
+                                    logger.error(f"Error trying to write binary output to {filepath}")
                     else:
                         logger.error(f"Cannot write files to {extracted_dir}")
 
