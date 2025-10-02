@@ -238,6 +238,7 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
     stop_directory = os.path.dirname(sorted(directories)[0])
     # Track directories that we've already visited
     visited_dirs = []
+    subprocess.run("uv cache clean", capture_output=True)
     for dir in directories:
         # Recurse backwards through the directory structure to look for package requirements
         while dir != stop_directory and dir not in visited_dirs:
