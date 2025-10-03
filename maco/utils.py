@@ -259,15 +259,15 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
                 # This prevents issues during maco development and building extractors against local libraries.
                 if create_venv:
                     # when running in custom virtual environment, always upgrade packages.
-                    install_command.append("-U")
+                    install_command.extend(["--upgrade", "--no-cache"])
 
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:
                     # Perform a pip install using the requirements flag
-                    install_command.extend(["-r", "requirements.txt"])
+                    install_command.extend(["--requirements", "requirements.txt"])
                 elif "pyproject.toml" in req_files:
                     # Assume we're dealing with a project directory
-                    pyproject_command = ["-e", "."]
+                    pyproject_command = ["--editable", "."]
 
                     # Check to see if there are optional dependencies required
                     with open(os.path.join(dir, "pyproject.toml"), "rb") as f:
