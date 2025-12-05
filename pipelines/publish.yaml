@@ -39,7 +39,6 @@ jobs:
 #       python -m tox -e py
 
 - job: build_and_deploy
-  dependsOn: test
   displayName: Build and Deploy
   variables:
   - group: deployment-information
