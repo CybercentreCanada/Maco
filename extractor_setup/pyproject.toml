@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "maco-extractor"
-description = "This package contains the essentials for creating Maco extractors."
+description = "This package contains the essentials for creating Maco extractors and using them at runtime."
 dynamic = ["version"]
 dependencies = ["pydantic>=2.0.0", "yara-x"]
 requires-python = ">=3.8"
@@ -38,4 +38,4 @@ root = ".."
 
 [tool.setuptools]
 packages = ["maco.model"]
-py-modules = ["maco.extractor","maco.yara", "maco.exceptions"]
+py-modules = ["maco.extractor", "maco.yara", "maco.exceptions"]

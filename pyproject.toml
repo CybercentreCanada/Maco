@@ -41,7 +41,7 @@ dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["."]
-exclude = ["test", "tests", "extractors", "model_setup"]
+exclude = ["test", "tests", "extractors", "model_setup", "extractor_setup"]
 
 [tool.ruff]
 line-length = 120
