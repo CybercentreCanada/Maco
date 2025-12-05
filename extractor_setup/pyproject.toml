@@ -3,10 +3,10 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "maco-model"
+name = "maco-extractor"
+description = "This package contains the essentials for creating Maco extractors."
 dynamic = ["version"]
-description = "This package contains only the Pydantic model for Maco."
-dependencies = ["pydantic>=2.0.0"]
+dependencies = ["pydantic>=2.0.0", "yara-x"]
 requires-python = ">=3.8"
 authors = [{ name = "sl-govau" }]
 maintainers = [{ name = "cccs-rs" }]
@@ -38,3 +38,4 @@ root = ".."
 
 [tool.setuptools]
 packages = ["maco.model"]
+py-modules = ["maco.extractor","maco.yara", "maco.exceptions"]

@@ -65,6 +65,13 @@ jobs:
     displayName: Build (Model Only)
 
   - script: |
+      set -x
+      cd extractor_setup
+      python -m build --outdir ../dist
+      ls ../dist
+    displayName: Build (Extractor Essentials)
+
+  - script: |
       set -xv  # Echo commands before they are run
       sudo env "PATH=$PATH" python -m pip install --no-cache-dir twine
       ls dist

@@ -280,8 +280,8 @@ def _install_required_packages(create_venv: bool, directories: List[str], python
 
                     install_command.extend(pyproject_command)
 
-                # always require maco to be installed
-                install_command.append("maco")
+                # Always require maco-extractor to be installed
+                install_command.append("maco-extractor")
                 logger.debug(f"Install command: {' '.join(install_command)} [{dir}]")
                 # this uses VIRTUAL_ENV to control usage of a virtual environment
                 p = subprocess.run(
