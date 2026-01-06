@@ -25,7 +25,7 @@ class Extractor:
     family: Union[str, List[str]] = None  # family or families of malware that is detected by the extractor
     author: str = None  # author of the extractor (name@organisation)
     last_modified: str = None  # last modified date (YYYY-MM-DD)
-    sharing: str = "TLP:WHITE"  # who can this be shared with?
+    sharing: str = "TLP:CLEAR"  # who can this be shared with?
     result_sharing: str = sharing  # who can the results be shared with? (defaults to sharing)
     yara_rule: str = None  # yara rule that we filter inputs with
     reference: str = None  # link to malware report or other reference information
