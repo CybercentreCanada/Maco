@@ -122,6 +122,7 @@ class Collector:
                             "author": member.author,
                             "last_modified": member.last_modified,
                             "sharing": member.sharing,
+                            "result_sharing": member.result_sharing,
                             "description": member.__doc__,
                         },
                     )
