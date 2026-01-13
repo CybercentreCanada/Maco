@@ -105,7 +105,7 @@ def process_file(
                             try:
                                 cart.pack_stream(in_stream, output_stream)
                             except Exception:
-                                logger.error(f"Error trying to CaRT binary output ({row["sha256"]}) from {path_file}.")
+                                logger.error(f"Error trying to CaRT binary output ({row['sha256']}) from {path_file}.")
                             else:
                                 output_stream.seek(0)
                                 try:
