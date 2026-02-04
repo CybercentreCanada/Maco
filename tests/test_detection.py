@@ -10,56 +10,18 @@ from maco.collector import Collector
 INIT_MODULES = list(sys.modules.keys())
 TESTS_DIR = os.path.dirname(__file__)
 
-CAPE_EXTRACTORS = [
-    "AgentTesla",
-    "AsyncRAT",
-    "AuroraStealer",
-    "Azorult",
-    "BitPaymer",
-    "BlackDropper",
-    "Blister",
-    "BruteRatel",
-    "BumbleBee",
-    "Carbanak",
-    "CobaltStrikeBeacon",
-    "CobaltStrikeStager",
-    "DCRat",
-    "DarkGate",
-    "DoppelPaymer",
-    "DridexLoader",
-    "Fareit",
-    "Formbook",
-    "GuLoader",
-    "IcedID",
-    "IcedIDLoader",
-    "KoiLoader",
-    "Latrodectus",
-    "LokiBot",
-    "Lumma",
-    "NanoCore",
-    "Nighthawk",
+SEKOIA_EXTRACTORS = [
+    "ConnectBack",
+    "Ddostf",
+    "Gafgyt",
+    "SNOWLIGHT",
+    "TShVariant",
+    "Kaiji",
+    # Extractors requiring libmono
     "Njrat",
-    "Oyster",
-    "PhemedroneStealer",
-    "PikaBot",
-    "PlugX",
-    "QakBot",
     "QuasarRAT",
-    "Quickbind",
-    "RedLine",
-    "Remcos",
-    "Rhadamanthys",
-    "SmokeLoader",
-    "Socks5Systemz",
-    "SparkRAT",
-    "SquirrelWaffle",
-    "Stealc",
-    "Strrat",
-    "VenomRAT",
-    "WarzoneRAT",
     "XWorm",
     "XenoRAT",
-    "Zloader",
 ]
 
 
@@ -67,9 +29,9 @@ CAPE_EXTRACTORS = [
     "repository_url, extractors, python_minor, branch",
     [
         ("https://github.com/jeFF0Falltrades/rat_king_parser", ["RKPMACO"], 10, None),
-        ("https://github.com/CAPESandbox/community", CAPE_EXTRACTORS, 10, None),
+        ("https://github.com/SEKOIA-IO/Community", SEKOIA_EXTRACTORS, 10, None),
     ],
-    ids=("jeFF0Falltrades/rat_king_parser", "CAPESandbox/community"),
+    ids=("jeFF0Falltrades/rat_king_parser", "SEKOIA-IO/Community"),
 )
 def test_public_projects(repository_url: str, extractors: list, python_minor: int, branch: str):
     """Test compatibility with public projects."""
