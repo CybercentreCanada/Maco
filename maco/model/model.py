@@ -48,6 +48,8 @@ class Encryption(ForbidModel):
     iv: Optional[str] = None  # initialisation vector
     seed: Optional[str] = None
     nonce: Optional[str] = None
+    password: Optional[str] = None
+    salt: Optional[str] = None
     constants: List[str] = []
 
     usage: Optional[UsageEnum] = None
