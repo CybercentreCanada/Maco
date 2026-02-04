@@ -106,7 +106,7 @@ class TestModelObject(unittest.TestCase):
                             seed=None,
                             nonce=None,
                             password=None,
-                            salt=None
+                            salt=None,
                             constants=[],
                             usage="binary",
                         ),
