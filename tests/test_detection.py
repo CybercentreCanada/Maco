@@ -17,7 +17,11 @@ SEKOIA_EXTRACTORS = [
     "SNOWLIGHT",
     "TShVariant",
     "Kaiji",
-    # Extractors requiring libmono has been excluded from the assertion
+    # Extractors requiring libmono
+    "Njrat",
+    "QuasarRAT",
+    "XWorm",
+    "XenoRAT",
 ]
 
 
