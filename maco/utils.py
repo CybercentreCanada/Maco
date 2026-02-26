@@ -525,9 +525,12 @@ def run_extractor(
         else:
             # retrieve cached extractor
             extractor = _loaded_extractors[key]
-        if extractor.yara_compiled:
-            matches = extractor.yara_compiled.match(sample_path)
-        loaded = extractor.run(open(sample_path, "rb"), matches=matches)
+        matches = None
+if extractor.yara_compiled:
+    matches = extractor.yara_compiled.match(sample_path)
+
+with open(sample_path, "rb") as f:
+    loaded = extractor.run(f, matches=matches)
     else:
         # execute extractor in child process with separate virtual environment
         # Write temporary script in the same directory as extractor to resolve relative imports
