@@ -525,12 +525,15 @@ def run_extractor(
         else:
             # retrieve cached extractor
             extractor = _loaded_extractors[key]
-        matches = None
-if extractor.yara_compiled:
-    matches = extractor.yara_compiled.match(sample_path)
 
-with open(sample_path, "rb") as f:
-    loaded = extractor.run(f, matches=matches)
+        # Initialise matches to None (YARA not executed)
+        matches = None
+        if extractor.yara_compiled:
+            matches = extractor.yara_compiled.match(sample_path)
+
+        with open(sample_path, "rb") as f:
+            loaded = extractor.run(f, matches=matches)
+
     else:
         # execute extractor in child process with separate virtual environment
         # Write temporary script in the same directory as extractor to resolve relative imports
@@ -587,4 +590,5 @@ with open(sample_path, "rb") as f:
                         raise Exception(exception) from e
                 # ensure that extractor logging is available
                 logger.info(f"maco extractor stderr:\n{stderr}")
+
     return loaded
