@@ -299,7 +299,6 @@ class ExtractorModel(ForbidModel):
         class Encryption(Encryption):
             """Encryption usage."""
 
-            pass
 
         encryption: Union[List[Encryption], Encryption, None] = None  # encryption information for the binary
 
@@ -538,7 +537,6 @@ class ExtractorModel(ForbidModel):
     class Encryption(Encryption):
         """Encryption usage."""
 
-        pass
 
     encryption: List[Encryption] = []
 

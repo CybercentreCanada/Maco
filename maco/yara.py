@@ -9,7 +9,7 @@ import yara_x
 
 from maco.exceptions import SyntaxError
 
-RULE_ID_RE = re.compile("(\w+)? ?rule (\w+)")
+RULE_ID_RE = re.compile(r"(\w+)? ?rule (\w+)")
 
 
 # Create interfaces that resembles yara-python (but is running yara-x under the hood)
