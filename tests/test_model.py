@@ -1,7 +1,8 @@
 """Model validation testing."""
 
+from __future__ import annotations
+
 import unittest
-from typing import Dict
 
 from pydantic import ValidationError
 
@@ -325,7 +326,7 @@ class TestModelObject(unittest.TestCase):
             },
         )
 
-    def verify(self, in1, in2: Dict) -> Dict:
+    def verify(self, in1, in2: dict) -> dict:
         """Verify the returned data matches the schema."""
         resp = collector._verify_response(in1)
         self.assertEqual(resp, in2)
@@ -437,7 +438,7 @@ class TestModelDict(unittest.TestCase):
             }
         )
 
-    def verify(self, config: Dict) -> Dict:
+    def verify(self, config: dict) -> dict:
         """Verify the returned data matches the schema."""
         tmp = model.ExtractorModel.model_validate(config)
         resp = collector._verify_response(tmp)

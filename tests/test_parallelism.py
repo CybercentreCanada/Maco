@@ -1,9 +1,9 @@
 """Test extractor loading and import rewriting when executed in parallel."""
 
 import os
+import unittest
 
 from maco.collector import Collector
-import unittest
 
 
 class TestParallelism(unittest.TestCase):

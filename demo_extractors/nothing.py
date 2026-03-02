@@ -1,7 +1,8 @@
 """Demo extractor that returns nothing."""
 
+from __future__ import annotations
+
 from io import BytesIO
-from typing import List
 
 from maco import extractor, yara
 
@@ -23,12 +24,12 @@ class Nothing(extractor.Extractor):
         }
         """
 
-    def run(self, stream: BytesIO, matches: List[yara.Match]):
+    def run(self, stream: BytesIO, matches: list[yara.Match]):
         """Run the analysis process.
 
         Args:
             stream (BytesIO): file object from disk/network/memory.
-            matches (List[yara.Match]): yara rule matches
+            matches (list[yara.Match]): yara rule matches
         """
         # return config model formatted results
         return

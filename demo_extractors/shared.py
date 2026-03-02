@@ -1,6 +1,6 @@
 """Custom model based on Maco's model."""
 
-from typing import Optional
+from __future__ import annotations
 
 import pydantic
 
@@ -18,4 +18,4 @@ class MyCustomModel(model.ExtractorModel):
         key3: int
 
     # set a custom class here as valid for the 'other' property
-    other: Optional[Other] = None
+    other: Other | None = None

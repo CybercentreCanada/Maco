@@ -1,15 +1,16 @@
 """yara-python facade that uses yara-x."""
 
+from __future__ import annotations
+
 import re
 from collections import namedtuple
 from itertools import cycle
-from typing import Dict, List, Union
 
 import yara_x
 
 from maco.exceptions import SyntaxError
 
-RULE_ID_RE = re.compile("(\w+)? ?rule (\w+)")
+RULE_ID_RE = re.compile(r"(\w+)? ?rule (\w+)")
 
 
 # Create interfaces that resembles yara-python (but is running yara-x under the hood)
@@ -43,7 +44,7 @@ class StringMatch:
         """Initializes StringMatch."""
         self.identifier = pattern.identifier
         self.instances = [StringMatchInstance(match, file_content) for match in pattern.matches]
-        self._is_xor = any([match.xor_key for match in pattern.matches])
+        self._is_xor = any(match.xor_key for match in pattern.matches)
 
     def is_xor(self):
         """Checks if string match is xor'd.
@@ -62,7 +63,7 @@ class Match:
         self.rule = rule.identifier
         self.namespace = rule.namespace
         self.tags = list(rule.tags) or []
-        self.meta = dict()
+        self.meta = {}
         # Ensure metadata doesn't get overwritten
         for k, v in rule.metadata:
             self.meta.setdefault(k, []).append(v)
@@ -72,7 +73,7 @@ class Match:
 class Rules:
     """Rules."""
 
-    def __init__(self, source: str = None, sources: Dict[str, str] = None):
+    def __init__(self, source: str | None = None, sources: dict[str, str] | None = None):
         """Initializes Rules.
 
         Raises:
@@ -85,12 +86,12 @@ class Rules:
         try:
             self._rules = []
             compiler = yara_x.Compiler(relaxed_re_syntax=True)
-            for namespace, source in sources.items():
+            for namespace, source_code in sources.items():
                 compiler.new_namespace(namespace)
-                for rule_type, id in RULE_ID_RE.findall(source):
-                    is_global = True if rule_type == "global" else False
+                for rule_type, id in RULE_ID_RE.findall(source_code):
+                    is_global = rule_type == "global"
                     self._rules.append(Rule(namespace=namespace, identifier=id, is_global=is_global))
-                compiler.add_source(source)
+                compiler.add_source(source_code)
             self.scanner = yara_x.Scanner(compiler.build())
         except yara_x.CompileError as e:
             raise SyntaxError(e)
@@ -101,10 +102,9 @@ class Rules:
         Yields:
             YARA rules
         """
-        for rule in self._rules:
-            yield rule
+        yield from self._rules
 
-    def match(self, filepath: str = None, data: Union[bytes, bytearray] = None) -> List[Match]:
+    def match(self, filepath: str | None = None, data: bytes | bytearray | None = None) -> list[Match]:
         """Performs a scan to check for YARA rules matches based on the file, either given by path or buffer.
 
         Returns:
@@ -120,7 +120,7 @@ class Rules:
         return [Match(m, data) for m in self.scanner.scan(data).matching_rules]
 
 
-def compile(source: str = None, sources: Dict[str, str] = None) -> Rules:
+def compile(source: str | None = None, sources: dict[str, str] | None = None) -> Rules:
     """Compiles YARA rules from source or from sources.
 
     Returns:

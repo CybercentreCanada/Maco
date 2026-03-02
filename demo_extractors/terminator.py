@@ -1,7 +1,8 @@
 """Example extractor that terminates early during extraction."""
 
+from __future__ import annotations
+
 from io import BytesIO
-from typing import List, Optional
 
 from maco import extractor, model, yara
 from maco.exceptions import AnalysisAbortedException
@@ -14,12 +15,12 @@ class Terminator(extractor.Extractor):
     author = "skynet"
     last_modified = "1997-08-29"
 
-    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: list[yara.Match]) -> model.ExtractorModel | None:
         """Run the analysis process but terminate early.
 
         Args:
             stream (BytesIO): file object from disk/network/memory.
-            matches (List[yara.Match]): yara rule matches
+            matches (list[yara.Match]): yara rule matches
 
         Raises:
             AnalysisAbortedException: Extractor has decided to terminate early
