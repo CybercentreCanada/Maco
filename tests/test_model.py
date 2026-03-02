@@ -332,7 +332,7 @@ class TestModelObject(unittest.TestCase):
         self.assertEqual(resp, in2)
 
 
-class TestModeldict(unittest.TestCase):
+class TestModelDict(unittest.TestCase):
     """Test verifying dicts against the schema."""
 
     def test_model_1(self):
