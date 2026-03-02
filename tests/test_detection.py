@@ -17,7 +17,7 @@ SEKOIA_EXTRACTORS = [
     "SNOWLIGHT",
     "TShVariant",
     "Kaiji",
-    "ChaosRat"
+    "ChaosRat",
     # Extractors requiring libmono
     "Njrat",
     "QuasarRAT",
