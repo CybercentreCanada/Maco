@@ -1,4 +1,5 @@
 """Base class for an extractor script."""
+
 from __future__ import annotations
 
 import logging

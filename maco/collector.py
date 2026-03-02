@@ -1,4 +1,5 @@
 """Convenience functions for discovering your extractors."""
+
 from __future__ import annotations
 
 import inspect
