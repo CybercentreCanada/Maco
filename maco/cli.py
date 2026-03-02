@@ -1,5 +1,7 @@
 """CLI example of how extractors can be executed."""
 
+from __future__ import annotations
+
 import argparse
 import base64
 import binascii
@@ -10,7 +12,7 @@ import logging
 import os
 import sys
 from importlib.metadata import version
-from typing import BinaryIO, List, Tuple
+from typing import BinaryIO
 
 import cart
 
@@ -47,10 +49,10 @@ def process_file(
     unneutered = io.BytesIO()
     try:
         cart.unpack_stream(stream, unneutered)
-    except Exception:
+    except Exception as e:  # noqa: BLE001
         # use original stream if anything goes wrong here
         # i.e. invalid/malformed cart
-        pass
+        logger.debug(f"Failed to unpack CaRT stream: {e}")
     else:
         # use unneutered stream
         stream = unneutered
@@ -63,7 +65,7 @@ def process_file(
     else:
         # execute all extractors with no yara information
         # note - extractors may rely on a yara hit so this may cause errors
-        runs = {x: [] for x in collected.extractors.keys()}
+        runs = {x: [] for x in collected.extractors}
     if not runs:
         return
 
@@ -75,8 +77,8 @@ def process_file(
         logger.info(f"run {extractor_name} extractor from rules {[x.rule for x in hits]}")
         try:
             resp = collected.extract(stream, extractor_name)
-        except Exception as e:
-            logger.exception(f"extractor error with {path_file} ({e})")
+        except Exception:
+            logger.exception(f"extractor error with {path_file}")
             resp = None
         # encode binary data so we can print as json
         if resp:
@@ -104,7 +106,7 @@ def process_file(
                             output_stream = io.BytesIO()
                             try:
                                 cart.pack_stream(in_stream, output_stream)
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 logger.error(f"Error trying to CaRT binary output ({row['sha256']}) from {path_file}.")
                             else:
                                 output_stream.seek(0)
@@ -129,8 +131,8 @@ def process_file(
 def process_filesystem(
     path_extractors: str,
     path_samples: str,
-    include: List[str],
-    exclude: List[str],
+    include: list[str],
+    exclude: list[str],
     *,
     pretty: bool,
     force: bool,
@@ -138,7 +140,7 @@ def process_filesystem(
     create_venv: bool = False,
     skip_install: bool = False,
     extracted_dir: str = "",
-) -> Tuple[int, int, int]:
+) -> tuple[int, int, int]:
     """Process filesystem with extractors and print results of extraction.
 
     Returns:
@@ -150,8 +152,8 @@ def process_filesystem(
         path_extractors, include=include, exclude=exclude, create_venv=create_venv, skip_install=skip_install
     )
 
-    logger.info(f"extractors loaded: {[x for x in collected.extractors.keys()]}\n")
-    for _, extractor in collected.extractors.items():
+    logger.info(f"extractors loaded: {[x for x in collected.extractors]}\n")
+    for extractor in collected.extractors.values():
         extractor_meta = extractor["metadata"]
         logger.info(
             f"{extractor_meta['family']} by {extractor_meta['author']}"
@@ -170,7 +172,7 @@ def process_filesystem(
         walker = os.walk(path_samples)
     else:
         logger.error(f"not file or folder: {path_samples}")
-        exit(2)
+        sys.exit(2)
     try:
         base_directory = os.path.abspath(path_samples)
         for path, _, files in walker:
@@ -196,11 +198,9 @@ def process_filesystem(
                             num_hits += 1
                             if any(x for x in resp.values()):
                                 num_extracted += 1
-                except Exception as e:
-                    logger.exception(f"file error with {path_file} ({e})")
+                except Exception:
+                    logger.exception(f"file error with {path_file}")
                     continue
-    except:
-        raise
     finally:
         logger.info("")
         logger.info(f"{num_analysed} analysed, {num_hits} hits, {num_extracted} extracted")

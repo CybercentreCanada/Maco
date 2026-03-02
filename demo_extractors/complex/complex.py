@@ -1,7 +1,8 @@
 """Demo complex extractor."""
 
+from __future__ import annotations
+
 from io import BytesIO
-from typing import List, Optional
 
 from demo_extractors.complex import complex_utils
 from maco import extractor, model, yara
@@ -40,12 +41,12 @@ class Complex(extractor.Extractor):
         }
         """
 
-    def run(self, stream: BytesIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BytesIO, matches: list[yara.Match]) -> model.ExtractorModel | None:
         """Run the analysis process.
 
         Args:
             stream (BytesIO): file object from disk/network/memory.
-            matches (List[yara.Match]): yara rule matches
+            matches (list[yara.Match]): yara rule matches
 
         Returns:
             (Optional[model.ExtractorModel]): model of results

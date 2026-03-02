@@ -19,7 +19,7 @@ class TestHelpersFindExtractors(unittest.TestCase):
         # extractors = helpers.find_extractors(target)
         self.assertEqual(len(m.extractors), 4)
         self.assertEqual(
-            {x for x in m.extractors.keys()},
+            {x for x in m.extractors},
             {"Complex", "Elfy", "LimitOther", "Nothing"},
         )
 

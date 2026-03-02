@@ -1,4 +1,5 @@
 """Convenience functions for discovering your extractors."""
+from __future__ import annotations
 
 import inspect
 import logging
@@ -7,7 +8,7 @@ import os
 import sys
 from tempfile import NamedTemporaryFile
 from types import ModuleType
-from typing import Any, BinaryIO, Dict, List, TypedDict, Union
+from typing import Any, BinaryIO, TypedDict
 
 from multiprocess import Manager, Process, Queue
 from pydantic import BaseModel
@@ -18,7 +19,7 @@ from maco.exceptions import AnalysisAbortedException, ExtractorLoadError
 logger = logging.getLogger("maco.lib.helpers")
 
 
-def _verify_response(resp: Union[BaseModel, dict]) -> Dict:
+def _verify_response(resp: BaseModel | dict) -> dict:
     """Enforce types and verify properties, and remove defaults.
 
     Args:
@@ -69,8 +70,8 @@ class Collector:
     def __init__(
         self,
         path_extractors: str,
-        include: List[str] = None,
-        exclude: List[str] = None,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
         create_venv: bool = False,
         skip_install: bool = False,
     ):
@@ -90,7 +91,7 @@ class Collector:
 
         path_extractors = os.path.realpath(path_extractors)
         self.path: str = path_extractors
-        self.extractors: Dict[str, ExtractorRegistration] = {}
+        self.extractors: dict[str, ExtractorRegistration] = {}
 
         with Manager() as manager:
             extractors = manager.dict()
@@ -112,12 +113,12 @@ class Collector:
 
                     # initialise and register
                     logger.debug(f"register '{name}'")
-                    extractors[name] = dict(
-                        venv=venv,
-                        module_path=module.__file__,
-                        module_name=member.__module__,
-                        extractor_class=member.__name__,
-                        metadata={
+                    extractors[name] = {
+                        "venv": venv,
+                        "module_path": module.__file__,
+                        "module_name": member.__module__,
+                        "extractor_class": member.__name__,
+                        "metadata": {
                             "family": member.family,
                             "author": member.author,
                             "last_modified": member.last_modified,
@@ -125,7 +126,7 @@ class Collector:
                             "result_sharing": member.result_sharing,
                             "description": member.__doc__,
                         },
-                    )
+                    }
                     namespaced_rules[name] = member.yara_rule or extractor.DEFAULT_YARA_RULE.format(name=name)
 
             # multiprocess logging is awkward - set up a queue to ensure we can log
@@ -142,12 +143,12 @@ class Collector:
                     utils.import_extractors,
                     extractor_module_callback,
                 ),
-                kwargs=dict(
-                    root_directory=path_extractors,
-                    scanner=yara.compile(source=utils.MACO_YARA_RULE),
-                    create_venv=create_venv and os.path.isdir(path_extractors),
-                    skip_install=skip_install,
-                ),
+                kwargs={
+                    "root_directory": path_extractors,
+                    "scanner": yara.compile(source=utils.MACO_YARA_RULE),
+                    "create_venv": create_venv and os.path.isdir(path_extractors),
+                    "skip_install": skip_install,
+                },
             )
             p.start()
             p.join()
@@ -164,7 +165,7 @@ class Collector:
             # compile yara rules gathered from extractors
             self.rules = yara.compile(sources=dict(namespaced_rules))
 
-    def match(self, stream: BinaryIO) -> Dict[str, List[yara.Match]]:
+    def match(self, stream: BinaryIO) -> dict[str, list[yara.Match]]:
         """Return extractors that should run based on yara rules."""
         # execute yara rules on file to find extractors we should run
         # yara can't run on a stream so we give it a bytestring
@@ -183,7 +184,7 @@ class Collector:
         self,
         stream: BinaryIO,
         extractor_name: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run extractor with stream and verify output matches the model.
 
         Args:

@@ -1,8 +1,9 @@
 """Base class for an extractor script."""
+from __future__ import annotations
 
 import logging
 import textwrap
-from typing import BinaryIO, List, Optional, Union
+from typing import BinaryIO
 
 from maco import model, yara
 from maco.exceptions import InvalidExtractor
@@ -22,7 +23,7 @@ class Extractor:
     Override this docstring with a good description of your extractor.
     """
 
-    family: Union[str, List[str]] = None  # family or families of malware that is detected by the extractor
+    family: str | list[str] = None  # family or families of malware that is detected by the extractor
     author: str = None  # author of the extractor (name@organisation)
     last_modified: str = None  # last modified date (YYYY-MM-DD)
     sharing: str = "TLP:CLEAR"  # who can this be shared with?
@@ -62,7 +63,7 @@ class Extractor:
             if x.is_global:
                 raise InvalidExtractor(f"{x.identifier} yara rule must not be global")
 
-    def run(self, stream: BinaryIO, matches: List[yara.Match]) -> Optional[model.ExtractorModel]:
+    def run(self, stream: BinaryIO, matches: list[yara.Match]) -> model.ExtractorModel | None:
         """Run the analysis process and return dict matching.
 
         :param stream: file object from disk/network/memory.

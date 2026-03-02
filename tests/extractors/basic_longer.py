@@ -1,7 +1,8 @@
 """Basic longer extractor."""
 
+from __future__ import annotations
+
 from io import BytesIO
-from typing import List
 
 from maco import extractor, model, yara
 
@@ -23,7 +24,7 @@ class BasicLonger(extractor.Extractor):
         }
         """
 
-    def run(self, stream: BytesIO, matches: List[yara.Match]) -> model.ExtractorModel:
+    def run(self, stream: BytesIO, matches: list[yara.Match]) -> model.ExtractorModel:
         """Run the extractor.
 
         Returns:
@@ -33,5 +34,5 @@ class BasicLonger(extractor.Extractor):
         # this model defines what can go in the 'other' dict
         tmp = model.ExtractorModel(family="basic_longer")
         tmp.campaign_id.append("12345")
-        tmp.other = dict(key1="key1", key2=True, key3=45)
+        tmp.other = {"key1": "key1", "key2": True, "key3": 45}
         return tmp

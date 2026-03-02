@@ -40,7 +40,7 @@ class BaseTest(unittest.TestCase):
             Exception: when name or path is not set.
         """
         if not cls.name or not cls.path:
-            raise Exception("name and path must be set")
+            raise Exception("name and path must be set")  # noqa: TRY002
         cls.c = collector.Collector(cls.path, include=[cls.name], create_venv=cls.create_venv)
         return super().setUpClass()
 
@@ -58,8 +58,7 @@ class BaseTest(unittest.TestCase):
         runs = self.c.match(stream)
         if not runs:
             raise NoHitException("no yara rule hit")
-        resp = self.c.extract(stream, self.name)
-        return resp
+        return self.c.extract(stream, self.name)
 
     @classmethod
     def _get_location(cls) -> str:
