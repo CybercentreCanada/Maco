@@ -495,12 +495,12 @@ def run_extractor(
         venv_script (str): Script to run extractor in a virtual environment
         json_decoder (Base64Decoder): Decoder used for JSON
 
+    Returns:
+        Union[Dict[str, dict], model.ExtractorModel]: Results from extractor
+
     Raises:
         AnalysisAbortedException: Raised when extractor voluntarily terminates execution
         Exception: Raised when extractor raises an exception
-
-    Returns:
-        Union[Dict[str, dict], model.ExtractorModel]: Results from extractor
     """
     if not venv:
         key = f"{module_name}_{extractor_class}"
