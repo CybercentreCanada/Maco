@@ -68,6 +68,21 @@ class TestComplexVenv(base_test.BaseTest):
         self.assertEqual(ret["version"], "5")
 
 
+class TestComplexVenvWithCache(base_test.BaseTest):
+    """Test that complex extractor can be used in full venv isolation with caching."""
+
+    name = "Complex"
+    path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = True
+    enable_venv_cache = True
+
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+        self.assertEqual(ret["family"], "complex")
+        self.assertEqual(ret["version"], "5")
+
+
 class TestTerminator(base_test.BaseTest):
     """Test that terminator extractor can be used in base environment."""
 
@@ -87,6 +102,20 @@ class TestTerminatorVenv(base_test.BaseTest):
     name = "Terminator"
     path = os.path.join(__file__, "../../demo_extractors")
     create_venv = True
+
+    def test_extract(self):
+        """Tests that we can run an extractor through maco."""
+        ret = self.extract(self.load_cart("data/trigger_complex.txt.cart"))
+        self.assertEqual(ret, None)
+
+
+class TestTerminatorVenvWithCaching(base_test.BaseTest):
+    """Test that terminator extractor can be used in base environment with venv caching."""
+
+    name = "Terminator"
+    path = os.path.join(__file__, "../../demo_extractors")
+    create_venv = True
+    enable_venv_cache = True
 
     def test_extract(self):
         """Tests that we can run an extractor through maco."""

@@ -234,7 +234,9 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
     return extractor_dirs, extractor_files
 
 
-def _install_required_packages(create_venv: bool, directories: list[str], python_version: str, logger: Logger):
+def _install_required_packages(
+    create_venv: bool, enable_venv_cache: bool, directories: list[str], python_version: str, logger: Logger
+):
     venvs = []
     env = deepcopy(os.environ)
     stop_directory = os.path.dirname(sorted(directories)[0])
@@ -261,7 +263,9 @@ def _install_required_packages(create_venv: bool, directories: list[str], python
                 # This prevents issues during maco development and building extractors against local libraries.
                 if create_venv:
                     # when running in custom virtual environment, always upgrade packages.
-                    install_command.extend(["--upgrade", "--no-cache"])
+                    install_command.extend(["--upgrade"])
+                    if not enable_venv_cache:
+                        install_command.extend(["--no-cache"])
 
                 # Update the pip install command depending on where the dependencies are coming from
                 if "requirements.txt" in req_files:
@@ -434,6 +438,7 @@ def import_extractors(
     root_directory: str,
     scanner: yara.Rules,
     create_venv: bool,
+    enable_venv_cache: bool,
     logger: Logger,
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
     skip_install: bool = False,
@@ -445,6 +450,7 @@ def import_extractors(
         root_directory (str): Root directory to look for extractors
         scanner (yara.Rules): Scanner to look for extractors that match YARA rule
         create_venv (bool): Create/Use virtual environments
+        enable_venv_cache (bool): When creating a virtual environment enable/disable package caching
         logger (Logger): Logger to use
         python_version (str): Version of python to use when creating virtual environments
         skip_install (bool): Skip installation of Python dependencies for extractors
@@ -456,7 +462,7 @@ def import_extractors(
 
     if not skip_install:
         # Install packages into the current environment or dynamically created virtual environments
-        venvs = _install_required_packages(create_venv, extractor_dirs, python_version, logger)
+        venvs = _install_required_packages(create_venv, enable_venv_cache, extractor_dirs, python_version, logger)
     else:
         # Look for pre-existing virtual environments, if any
         logger.info("Checking for pre-existing virtual environment(s)..")
