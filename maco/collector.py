@@ -74,6 +74,7 @@ class Collector:
         include: list[str] | None = None,
         exclude: list[str] | None = None,
         create_venv: bool = False,
+        enable_venv_cache: bool = False,
         skip_install: bool = False,
     ):
         """Discover and load extractors from file system.
@@ -149,6 +150,7 @@ class Collector:
                     "scanner": yara.compile(source=utils.MACO_YARA_RULE),
                     "create_venv": create_venv and os.path.isdir(path_extractors),
                     "skip_install": skip_install,
+                    "enable_venv_cache": enable_venv_cache,
                 },
             )
             p.start()
