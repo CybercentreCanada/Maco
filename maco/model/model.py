@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ForbidModel(BaseModel):
@@ -39,22 +39,22 @@ class Encryption(ForbidModel):
         ransom = "ransom"
         other = "other"
 
-    algorithm: str | None = None
-    public_key: str | None = None
-    key: str | None = None  # private key or symmetric key
-    provider: str | None = None  # encryption library used. openssl, homebrew, etc.
+    algorithm: Optional[str] = None
+    public_key: Optional[str] = None
+    key: Optional[str] = None  # private key or symmetric key
+    provider: Optional[str] = None  # encryption library used. openssl, homebrew, etc.
 
-    mode: str | None = None  # block vs stream
+    mode: Optional[str] = None  # block vs stream
     # base 64'd binary data for these details?
     # TODO to confirm usage of these different properties
-    iv: str | None = None  # initialisation vector
-    seed: str | None = None
-    nonce: str | None = None
-    password: str | None = None
-    salt: str | None = None
-    constants: list[str] = []
+    iv: Optional[str] = None  # initialisation vector
+    seed: Optional[str] = None
+    nonce: Optional[str] = None
+    password: Optional[str] = None
+    salt: Optional[str] = None
+    constants: List[str] = Field(default_factory=list)
 
-    usage: UsageEnum | None = None
+    usage: Optional[UsageEnum] = None
 
 
 class CategoryEnum(str, Enum):
@@ -240,10 +240,10 @@ class ExtractorModel(ForbidModel):
         * Some use cases always seem to exist where a property should not be set
     """
 
-    family: str | list[str]  # family or families of malware that was detected
-    version: str | None = None  # version/variant of malware
-    category: list[CategoryEnum] = []  # capability/purpose of the malware
-    attack: list[str] = []  # mitre att&ck reference ids, e.g. 'T1129'
+    family: Union[str, List[str]]  # family or families of malware that was detected
+    version: Optional[str] = None  # version/variant of malware
+    category: List[CategoryEnum] = Field(default_factory=list)  # capability/purpose of the malware
+    attack: List[str] = Field(default_factory=list)  # mitre att&ck reference ids, e.g. 'T1129'
 
     #
     # simple config properties
@@ -252,28 +252,28 @@ class ExtractorModel(ForbidModel):
     # capabilities of the malware enabled/disabled in config
     # note these are probably malware-specific capabilities so no attempt to normalise has been made
     # note - av/sandbox detection should be noted by 'detect_<product>'
-    capability_enabled: list[str] = []
-    capability_disabled: list[str] = []
+    capability_enabled: List[str] = Field(default_factory=list)
+    capability_disabled: List[str] = Field(default_factory=list)
 
-    campaign_id: list[str] = []  # Server/Campaign Id for malware
-    identifier: list[str] = []  # UUID/Identifiers for deployed instance
-    decoded_strings: list[str] = []  # decoded strings from within malware
-    password: list[str] = []  # Any password extracted from the binary
-    mutex: list[str] = []  # mutex to prevent multiple instances
-    pipe: list[str] = []  # pipe name used for communication
-    sleep_delay: int | None = None  # time to sleep/delay execution (milliseconds)
+    campaign_id: List[str] = Field(default_factory=list)  # Server/Campaign Id for malware
+    identifier: List[str] = Field(default_factory=list)  # UUID/Identifiers for deployed instance
+    decoded_strings: List[str] = Field(default_factory=list)  # decoded strings from within malware
+    password: List[str] = Field(default_factory=list)  # Any password extracted from the binary
+    mutex: List[str] = Field(default_factory=list)  # mutex to prevent multiple instances
+    pipe: List[str] = Field(default_factory=list)  # pipe name used for communication
+    sleep_delay: Optional[int] = None  # time to sleep/delay execution (milliseconds)
     # additional time applied to sleep_delay (milliseconds).
     # Jitter implementations can vary but usually it is a value from which a random number is generated and
     # added/subtracted to the sleep_delay to make behaviour more unpredictable
-    sleep_delay_jitter: int | None = None
-    inject_exe: list[str] = []  # name of executable to inject into
+    sleep_delay_jitter: Optional[int] = None
+    inject_exe: List[str] = Field(default_factory=list)  # name of executable to inject into
 
     # configuration or clustering/research data that doesnt fit the other fields
     # * rarely used by decoders or specific to one decoder
     # to prevent key explosion, the keys must not be dynamically generated
     # e.g. api_imports, api_checksums, num_imports, import_hash + many more
     # data stored here must always be JSON-serialisable
-    other: dict[str, Any] = {}
+    other: Dict[str, Any] = Field(default_factory=dict)
 
     #
     # embedded binary data
@@ -288,22 +288,22 @@ class ExtractorModel(ForbidModel):
             config = "config"  # sometimes malware uses json/formatted text for config
             other = "other"
 
-        datatype: TypeEnum | None = None  # what the binary data is used for
+        datatype: Optional[TypeEnum] = None  # what the binary data is used for
         data: bytes  # binary data, not json compatible
 
         # other information for the extracted binary rather than the config
         # data stored here must always be JSON-serialisable
         # e.g. filename, extension, relationship label
-        other: dict[str, Any] = {}
+        other: Dict[str, Any] = Field(default_factory=dict)
 
         # convenience for ret.encryption.append(ret.Encryption(*properties))
         # Define as class as only way to allow for this to be accessed and not have pydantic try to parse it.
         class Encryption(Encryption):
             """Encryption usage."""
 
-        encryption: list[Encryption] | Encryption | None = None  # encryption information for the binary
+        encryption: Optional[Union[Encryption, List[Encryption]]] = None  # encryption information for the binary
 
-    binaries: list[Binary] = []
+    binaries: List[Binary] = Field(default_factory=list)
 
     #
     # communication protocols
@@ -311,33 +311,33 @@ class ExtractorModel(ForbidModel):
     class FTP(ForbidModel):
         """Usage of FTP connection."""
 
-        username: str | None = None
-        password: str | None = None
-        hostname: str | None = None
-        port: int | None = None
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        path: str | None = None
+        path: Optional[str] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    ftp: list[FTP] = []
+    ftp: List[FTP] = Field(default_factory=list)
 
     class SMTP(ForbidModel):
         """Usage of SMTP."""
 
         # credentials and location of server
-        username: str | None = None
-        password: str | None = None
-        hostname: str | None = None
-        port: int | None = None
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        mail_to: list[str] = []  # receivers
-        mail_from: str | None = None  # sender
-        subject: str | None = None
+        mail_to: List[str] = Field(default_factory=list)  # receivers
+        mail_from: Optional[str] = None  # sender
+        subject: Optional[str] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    smtp: list[SMTP] = []  # SMTP server for malware
+    smtp: List[SMTP] = Field(default_factory=list)  # SMTP server for malware
 
     class Http(ForbidModel):
         """Usage of HTTP connection."""
@@ -347,63 +347,63 @@ class ExtractorModel(ForbidModel):
         # as we lose that information.
         # e.g. extra '?' or '/' when unnecessary.
         # or something that is technically an invalid uri but still works
-        uri: str | None = None
+        uri: Optional[str] = None
 
         # on the other hand we might not have enough info to construct a uri
-        protocol: str | None = None  # http,https
-        username: str | None = None
-        password: str | None = None
-        hostname: str | None = None  # (A host/hostname can be an IP, domain or hostname)
-        port: int | None = None
-        path: str | None = None
-        query: str | None = None
-        fragment: str | None = None
+        protocol: Optional[str] = None  # http,https
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None  # (A host/hostname can be an IP, domain or hostname)
+        port: Optional[int] = None
+        path: Optional[str] = None
+        query: Optional[str] = None
+        fragment: Optional[str] = None
 
-        user_agent: str | None = None  # user agent sent by malware
-        method: str | None = None  # get put delete etc
-        headers: dict[str, str] | None = None  # custom/additional HTTP headers
-        max_size: int | None = None
+        user_agent: Optional[str] = None  # user agent sent by malware
+        method: Optional[str] = None  # get put delete etc
+        headers: Optional[Dict[str, str]] = None  # custom/additional HTTP headers
+        max_size: Optional[int] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    http: list[Http] = []
+    http: List[Http] = Field(default_factory=list)
 
     class SSH(ForbidModel):
         """Usage of ssh connection."""
 
-        username: str | None = None
-        password: str | None = None
-        hostname: str | None = None
-        port: int | None = None
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    ssh: list[SSH] = []
+    ssh: List[SSH] = Field(default_factory=list)
 
     class Proxy(ForbidModel):
         """Usage of proxy connection."""
 
-        protocol: str | None = None  # socks5,http
-        username: str | None = None
-        password: str | None = None
-        hostname: str | None = None
-        port: int | None = None
+        protocol: Optional[str] = None  # socks5,http
+        username: Optional[str] = None
+        password: Optional[str] = None
+        hostname: Optional[str] = None
+        port: Optional[int] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    proxy: list[Proxy] = []
+    proxy: List[Proxy] = Field(default_factory=list)
 
     class ICMP(ForbidModel):
         """Usage of ICMP."""
 
-        type: int | None = None
-        code: int | None = None
-        header: str | None = None  # Some malware uses non-standard header fields
-        hostname: str | None = None
+        type: Optional[int] = None
+        code: Optional[int] = None
+        header: Optional[str] = None  # Some malware uses non-standard header fields
+        hostname: Optional[str] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    icmp: list[ICMP] = []
+    icmp: List[ICMP] = Field(default_factory=list)
 
     #
     # inter process communication (IPC)
@@ -413,46 +413,46 @@ class ExtractorModel(ForbidModel):
 
         # A record stored on disk, or a record synthesized on demand by a file
         # server, which can be accessed by multiple processes.
-        file: list[str] | None = None
+        file: Optional[List[str]] = None
         # Data sent over a network interface, either to a different process on
         # the same computer or to another computer on the network. Stream
         # oriented (TCP; data written through a socket requires formatting to
         # preserve message boundaries) or more rarely message-oriented (UDP,
         # SCTP).
-        socket: list[str] | None = None
+        socket: Optional[List[str]] = None
         # Similar to an internet socket, but all communication occurs within
         # the kernel. Domain sockets use the file system as their address
         # space. Processes reference a domain socket as an inode, and multiple
         # processes can communicate with one socket.
-        unix_domain_socket: list[str] | None = None
+        unix_domain_socket: Optional[List[str]] = None
         # A file mapped to RAM and can be modified by changing memory
         # addresses directly instead of outputting to a stream. This shares
         # the same benefits as a standard file.
-        memory_mapped_file: bytes | list[str] | None = None
+        memory_mapped_file: Optional[Union[bytes, List[str]]] = None
         # A data stream similar to a socket, but which usually preserves
         # message boundaries. Typically implemented by the operating system,
         # they allow multiple processes to read and write to the message queue
         # without being directly connected to each other.
-        message_queue: list[str] | None = None
+        message_queue: Optional[List[str]] = None
         # A unidirectional data channel using standard input and output. Data
         # written to the write-end of the pipe is buffered by the operating
         # system until it is read from the read-end of the pipe. Two-way
         # communication between processes can be achieved by using two pipes
         # in opposite "directions".
-        anonymous_pipe: list[str] | None = None
+        anonymous_pipe: Optional[List[str]] = None
         # A pipe that is treated like a file. Instead of using standard input
         # and output as with an anonymous pipe, processes write to and read
         # from a named pipe, as if it were a regular file.
-        named_pipe: list[str] | None = None
+        named_pipe: Optional[List[str]] = None
         # The process names involved in the IPC communication
-        process_names: list[str] | None = None
+        process_names: Optional[List[str]] = None
         # Multiple processes are given access to the same block of memory,
         # which creates a shared buffer for the processes to communicate with
         # each other.
-        shared_memory: bytes | None = None
-        usage: ConnUsageEnum | None = None
+        shared_memory: Optional[bytes] = None
+        usage: Optional[ConnUsageEnum] = None
 
-    ipc: list[IPC] = []  # Inter-Process Communications (similar to 'pipe' but more detailed)
+    ipc: List[IPC] = Field(default_factory=list)  # Inter-Process Communications (similar to 'pipe' but more detailed)
 
     class DNS(ForbidModel):
         """Direct usage of DNS."""
@@ -508,27 +508,27 @@ class ExtractorModel(ForbidModel):
             URI = "URI"
             ZONEMD = "ZONEMD"
 
-        ip: str | None = None
-        port: int | None = None  # The default value is 53
-        hostname: str | None = None  # This is the query hostname
-        record_type: RecordTypeEnum | None = None  # The DNS record type that is queried
-        usage: ConnUsageEnum | None = None
+        ip: Optional[str] = None
+        port: Optional[int] = None  # The default value is 53
+        hostname: Optional[str] = None  # This is the query hostname
+        record_type: Optional[RecordTypeEnum] = None  # The DNS record type that is queried
+        usage: Optional[ConnUsageEnum] = None
 
-    dns: list[DNS] = []  # custom DNS address to use for name resolution
+    dns: List[DNS] = Field(default_factory=list)  # custom DNS address to use for name resolution
 
     class Connection(ForbidModel):
         """Generic TCP/UDP usage."""
 
-        client_ip: str | None = None
-        client_port: int | None = None
-        server_ip: str | None = None
-        server_domain: str | None = None
-        server_port: int | None = None
+        client_ip: Optional[str] = None
+        client_port: Optional[int] = None
+        server_ip: Optional[str] = None
+        server_domain: Optional[str] = None
+        server_port: Optional[int] = None
 
-        usage: ConnUsageEnum | None = None
+        usage: Optional[ConnUsageEnum] = None
 
-    tcp: list[Connection] = []
-    udp: list[Connection] = []
+    tcp: List[Connection] = Field(default_factory=list)
+    udp: List[Connection] = Field(default_factory=list)
 
     #
     # complex configuration properties
@@ -538,17 +538,17 @@ class ExtractorModel(ForbidModel):
     class Encryption(Encryption):
         """Encryption usage."""
 
-    encryption: list[Encryption] = []
+    encryption: List[Encryption] = Field(default_factory=list)
 
     class Service(ForbidModel):
         """OS service usage by malware."""
 
-        dll: str | None = None  # dll that the service is loaded from
-        name: str | None = None  # service/driver name for persistence
-        display_name: str | None = None  # display name for service
-        description: str | None = None  # description for service
+        dll: Optional[str] = None  # dll that the service is loaded from
+        name: Optional[str] = None  # service/driver name for persistence
+        display_name: Optional[str] = None  # display name for service
+        description: Optional[str] = None  # description for service
 
-    service: list[Service] = []
+    service: List[Service] = Field(default_factory=list)
 
     class Cryptocurrency(ForbidModel):
         """Cryptocoin usage (ransomware/miner)."""
@@ -560,13 +560,13 @@ class ExtractorModel(ForbidModel):
             miner = "miner"  # use gpu/cpu to mint coins
             other = "other"
 
-        coin: str | None = None  # BTC,ETH,USDT,BNB, etc
-        address: str | None = None
-        ransom_amount: float | None = None  # number of coins required (if hardcoded)
+        coin: Optional[str] = None  # BTC,ETH,USDT,BNB, etc
+        address: Optional[str] = None
+        ransom_amount: Optional[float] = None  # number of coins required (if hardcoded)
 
         usage: UsageEnum
 
-    cryptocurrency: list[Cryptocurrency] = []
+    cryptocurrency: List[Cryptocurrency] = Field(default_factory=list)
 
     class Path(ForbidModel):
         """Path used by malware."""
@@ -584,9 +584,9 @@ class ExtractorModel(ForbidModel):
 
         # C:\User\tmp\whatever.txt or /some/unix/folder/path
         path: str
-        usage: UsageEnum | None = None
+        usage: Optional[UsageEnum] = None
 
-    paths: list[Path] = []  # files/directories used by malware
+    paths: List[Path] = Field(default_factory=list)  # files/directories used by malware
 
     class Registry(ForbidModel):
         """Registry usage by malware."""
@@ -601,6 +601,6 @@ class ExtractorModel(ForbidModel):
             other = "other"
 
         key: str
-        usage: UsageEnum | None = None
+        usage: Optional[UsageEnum] = None
 
-    registry: list[Registry] = []
+    registry: List[Registry] = Field(default_factory=list)
