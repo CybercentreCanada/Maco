@@ -301,7 +301,7 @@ class ExtractorModel(ForbidModel):
         class Encryption(Encryption):
             """Encryption usage."""
 
-        encryption: Encryption | list[Encryption] | None = None  # encryption information for the binary
+        encryption: list[Encryption] | Encryption | None = None  # encryption information for the binary
 
     binaries: list[Binary] = Field(default_factory=list)
 
