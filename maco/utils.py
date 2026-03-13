@@ -438,8 +438,8 @@ def import_extractors(
     root_directory: str,
     scanner: yara.Rules,
     create_venv: bool,
-    enable_venv_cache: bool,
     logger: Logger,
+    enable_venv_cache: bool = False,
     python_version: str = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
     skip_install: bool = False,
 ):
@@ -450,8 +450,8 @@ def import_extractors(
         root_directory (str): Root directory to look for extractors
         scanner (yara.Rules): Scanner to look for extractors that match YARA rule
         create_venv (bool): Create/Use virtual environments
-        enable_venv_cache (bool): When creating a virtual environment enable/disable package caching
         logger (Logger): Logger to use
+        enable_venv_cache (bool): When creating a virtual environment enable/disable package caching
         python_version (str): Version of python to use when creating virtual environments
         skip_install (bool): Skip installation of Python dependencies for extractors
     """
