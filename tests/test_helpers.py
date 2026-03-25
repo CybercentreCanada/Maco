@@ -33,7 +33,26 @@ class TestHelpersCompileYara(unittest.TestCase):
         m = collector.Collector(target)
         self.assertEqual(
             {x.identifier for x in m.rules},
-            {"Elfy", "Complex", "ComplexSubtext", "Nothing", "ComplexAlt", "LimitOther", "Terminator"},
+            {
+                "Elfy",
+                "Complex",
+                "ComplexSubtext",
+                "Nothing",
+                "ComplexAlt",
+                "LimitOther",
+                "Terminator",
+                "casing",
+                "slow",
+                "loopy",
+                "cannot_count",
+                "glob",
+                "more_glob",
+                "so_true",
+                "bools",
+                "aaa",
+                "real_good_rule",
+                "hex_is_hard",
+            },
         )
 
 
