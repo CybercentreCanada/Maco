@@ -759,3 +759,8 @@ class ExtractorModel(ForbidModel):
         usage: UsageEnum | None = None
 
     registry: list[Registry] = []
+
+    class ScheduledTask(ForbidModel):
+        """Scheduled task usage by malware."""
+
+    scheduled_tasks: list[ScheduledTask] = []
