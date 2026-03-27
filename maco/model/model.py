@@ -198,6 +198,161 @@ class CategoryEnum(str, Enum):
     worm = "worm"
 
 
+class ScheduledTask(ForbidModel):
+    """Scheduled task usage by malware."""
+
+    class TaskOperationEnum(str, Enum):
+        """Task operation type."""
+        change = "CHANGE"  # Changes the properties of a scheduled task.
+        create = "CREATE"  # Schedules a new task.
+        delete = "DELETE"  # Deletes a scheduled task.
+        end = "END"  # Stops a program started by a task.
+        query = "QUERY"  # Displays tasks scheduled to run on the computer.
+        run = "RUN"  # Starts a scheduled task immediately.
+
+    class ScheduledTypeEnum(str, Enum):
+        """Task schedule type."""
+        minute = "MINUTE"
+        hourly = "HOURLY"
+        daily = "DAILY"
+        weekly = "WEEKLY"
+        monthly = "MONTHLY"
+        once = "ONCE"
+        onstart = "ONSTART"
+        onlogon = "ONLOGON"
+        onidle = "ONIDLE"
+        onevent = "ONEVENT"
+        other = "OTHER"
+
+    class RunAsEnum(str, Enum):
+        """Task run as type."""
+        system = "SYSTEM"  # Run the task with SYSTEM privileges
+        user = "USER"  # Run the task with user privileges
+
+    class RunLevelEnum(str, Enum):
+        """Task run level."""
+        highest = "HIGHEST"  # Run the task with the highest privileges.
+        limited = "LIMITED"  # Run the task with limited privileges.
+
+    class OutputFormatEnum(str, Enum):
+        """Task query output format."""
+        table = "TABLE"
+        list = "LIST"
+        csv = "CSV"
+
+    class UsageEnum(str, Enum):
+        """Scheduled task usage."""
+        persistence = "persistence"  # Stay alive on the system.
+        defense_evasion = "defense_evasion"  # Hide activity by asking svchost.exe/taskhostw.exe to run the payload.
+        privilege_escalation = "privilege_escalation"  # Run with higher privileges than the malware normally has.
+        lateral_movement = "lateral_movement"  # Move to other systems.
+        staging_data = "staging_data"  # Store data for later retrieval by malware.
+        other = "other"
+
+    usage: UsageEnum | None = None
+    raw_command: str | None = None  # raw command used for the scheduled task.
+
+     # The operation type of the scheduled task command (change|create|delete|end|run|query).
+    task_type: TaskOperationEnum | None = None
+
+    # -----------------------------------------------
+    # Options found in (change|create|delete|end|run)
+    # -----------------------------------------------
+
+    # /sc <scheduletype>
+    schedule_type: ScheduledTypeEnum | None = None  # Defines the task type.
+
+    # /tn <taskname>
+    task_name: str | None = None  # Name of the scheduled task.
+
+    # /tr <taskrun>
+    task_run: str | None = None  # Specifies the program or command that the task runs.
+
+    # [/s <computer> [/u [<domain>\]<user> [/p <password>]]]]
+    remote_computer: str | None = None  # The name or IP address of a remote computer.
+    user_domain: str | None = None  # The user account domain or computer name to which the user belongs.
+    user_account: str | None = None  # The user account to use when running the task (default is current logged on user).
+    user_password: str | None = None  # Specifies the password for the user account.
+
+    # [/ru {[<domain>\]<user> | system}] [/rp <password>]
+    run_as: RunAsEnum | None = None  # The account to run the task as.
+    run_as_domain: str | None = None  # The domain of the account to run the task as.
+    run_as_user: str | None = None  # The user of the account to run the task as.
+    run_as_password: str | None = None  # The password of the account to run the task as.
+
+    # [/mo <modifier>]
+    modifier: str | None = None  # The modifier for the schedule type.
+
+    # [/d <day>[,<day>...] | *]
+    day: str | None = None  # Specifies how often the task runs within its schedule type.
+
+    # [/m <month>[,<month>...]]
+    month: str | None = None  # Specifies a month or months of the year during which the scheduled task should run.
+
+    # [/i <idletime>]
+    idle_time: str | None = None  # Specifies the idle time to wait before running the task.
+
+    # [/st <starttime>]
+    start_time: str | None = None  # Specifies the start time to run the task (format is HH:mm (24-hour time)).
+
+    # [/ri <interval>]
+    interval: str | None = None  # Specifies the repetition interval for the task.
+
+    # [{/et <endtime> | /du <duration>} [/k]]
+    end_time: str | None = None  # Specifies the end time for the task.
+    duration: str | None = None  # Specifies the duration for which the task should run.
+    k: bool | None = None  # Specifies whether the task will be terminated if it runs longer than the end time or duration.
+
+    # [/sd <startdate>]
+    start_date: str | None = None  # Specifies the start date to run the task (format is MM/dd/yyyy).
+
+    # [/ed <enddate>]
+    end_date: str | None = None  # Specifies the end date to run the task (format is MM/dd/yyyy).
+
+    # /ec <channelname>
+    channel_name: str | None = None  # Specifies the event log channel to use in an event-based task (ONEVENT).
+
+    # [/it]
+    interactive: bool | None = None  # Specifies that the task runs only when the user is logged on interactively.
+
+    # [/np]
+    no_password: bool | None = None  # Specifies that the task does not require a password (/u or /ru).
+
+    # [/z]
+    auto_delete: bool | None = None  # Specifies that the task will be deleted after it runs.
+
+    # [/xml <xmlfile>]
+    xml: str | None = None  # Specifies an XML file that contains the task definition.
+
+    # [/v1]
+    v1: bool | None = None  # Specifies that the task should be created using the version 1 task scheduler.
+
+    # [/f]
+    force: bool | None = None  # Specifies to create/delete the task and suppress warnings.
+
+    # [/rl <level>]
+    run_level: RunLevelEnum | None = None  # Specifies the run level for the task (HIGHEST or LIMITED).
+
+    # [/delay <delaytime>]
+    delay_time: str | None = None  # Specifies the wait time to delay running the task after it's triggered.
+
+    # [/hresult]
+    hresult: str | None = None  # Specifies the process exit code to be in HRESULT format.
+
+    # ----------------------------
+    # Options for schtasks (query)
+    # ----------------------------
+
+    # [/fo {TABLE | LIST | CSV}]
+    output_format: OutputFormatEnum | None = None  # Specifies the output format of the query results.
+
+    # [/nh]
+    no_header: bool | None = None  # Specifies whether to display column headers in the output (TABLE).
+
+    # [/v]
+    add_advanced_properties: bool | None = None  # Specifies to display all the properties of the scheduled tasks in the output (TABLE or LIST).
+
+
 class ExtractorModel(ForbidModel):
     r"""Captured config/iocs, unpacked binaries and other malware properties from a robo-analyst.
 
@@ -604,3 +759,8 @@ class ExtractorModel(ForbidModel):
         usage: UsageEnum | None = None
 
     registry: list[Registry] = []
+
+    class ScheduledTask(ForbidModel):
+        """Scheduled task usage by malware."""
+
+    scheduled_tasks: list[ScheduledTask] = []
