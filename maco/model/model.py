@@ -203,6 +203,7 @@ class ScheduledTask(ForbidModel):
 
     class TaskOperationEnum(str, Enum):
         """Task operation type."""
+
         change = "CHANGE"  # Changes the properties of a scheduled task.
         create = "CREATE"  # Schedules a new task.
         delete = "DELETE"  # Deletes a scheduled task.
@@ -212,6 +213,7 @@ class ScheduledTask(ForbidModel):
 
     class ScheduledTypeEnum(str, Enum):
         """Task schedule type."""
+
         minute = "MINUTE"
         hourly = "HOURLY"
         daily = "DAILY"
@@ -226,22 +228,26 @@ class ScheduledTask(ForbidModel):
 
     class RunAsEnum(str, Enum):
         """Task run as type."""
+
         system = "SYSTEM"  # Run the task with SYSTEM privileges
         user = "USER"  # Run the task with user privileges
 
     class RunLevelEnum(str, Enum):
         """Task run level."""
+
         highest = "HIGHEST"  # Run the task with the highest privileges.
         limited = "LIMITED"  # Run the task with limited privileges.
 
     class OutputFormatEnum(str, Enum):
         """Task query output format."""
+
         table = "TABLE"
         list = "LIST"
         csv = "CSV"
 
     class UsageEnum(str, Enum):
         """Scheduled task usage."""
+
         persistence = "persistence"  # Stay alive on the system.
         defense_evasion = "defense_evasion"  # Hide activity by asking svchost.exe/taskhostw.exe to run the payload.
         privilege_escalation = "privilege_escalation"  # Run with higher privileges than the malware normally has.
@@ -252,7 +258,7 @@ class ScheduledTask(ForbidModel):
     usage: UsageEnum | None = None
     raw_command: str | None = None  # raw command used for the scheduled task.
 
-     # The operation type of the scheduled task command (change|create|delete|end|run|query).
+    # The operation type of the scheduled task command (change|create|delete|end|run|query).
     task_type: TaskOperationEnum | None = None
 
     # -----------------------------------------------
@@ -271,7 +277,9 @@ class ScheduledTask(ForbidModel):
     # [/s <computer> [/u [<domain>\]<user> [/p <password>]]]]
     remote_computer: str | None = None  # The name or IP address of a remote computer.
     user_domain: str | None = None  # The user account domain or computer name to which the user belongs.
-    user_account: str | None = None  # The user account to use when running the task (default is current logged on user).
+    user_account: str | None = (
+        None  # The user account to use when running the task (default is current logged on user).
+    )
     user_password: str | None = None  # Specifies the password for the user account.
 
     # [/ru {[<domain>\]<user> | system}] [/rp <password>]
@@ -301,7 +309,9 @@ class ScheduledTask(ForbidModel):
     # [{/et <endtime> | /du <duration>} [/k]]
     end_time: str | None = None  # Specifies the end time for the task.
     duration: str | None = None  # Specifies the duration for which the task should run.
-    k: bool | None = None  # Specifies whether the task will be terminated if it runs longer than the end time or duration.
+    k: bool | None = (
+        None  # Specifies whether the task will be terminated if it runs longer than the end time or duration.
+    )
 
     # [/sd <startdate>]
     start_date: str | None = None  # Specifies the start date to run the task (format is MM/dd/yyyy).
@@ -350,7 +360,9 @@ class ScheduledTask(ForbidModel):
     no_header: bool | None = None  # Specifies whether to display column headers in the output (TABLE).
 
     # [/v]
-    add_advanced_properties: bool | None = None  # Specifies to display all the properties of the scheduled tasks in the output (TABLE or LIST).
+    add_advanced_properties: bool | None = (
+        None  # Specifies to display all the properties of the scheduled tasks in the output (TABLE or LIST).
+    )
 
 
 class ExtractorModel(ForbidModel):

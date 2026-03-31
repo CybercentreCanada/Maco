@@ -1,25 +1,22 @@
-"""Helper functions to help generating specific objects from model.py"""
+"""Helper functions to help generating specific objects from model.py."""
 
-import re
+from __future__ import annotations
+
 import logging
-from maco.model import ScheduledTask
-from typing import Optional
+import re
 
+from maco.model import ScheduledTask
 
 logger = logging.getLogger("maco.lib.helpers")
+
 
 # --------------------------------------------------------
 # Functions to help generating the 'ScheduledTask' object.
 # --------------------------------------------------------
 def replace_control_chars_with_escapes(string: str) -> str:
-    """
-    This function replaces control characters in a string with their corresponding escape sequences.
+    """This function replaces control characters in a string with their corresponding escape sequences.
     It is useful for preserving common Windows path escape sequences when control characters have been
     pre-interpreted during the parsing of the command string.
-
-    Input: C:\Windows\System32\narrator.exe
-    Not escaped: C:\Windows\System32arrator.exe
-    Escaped: C:\Windows\System32\narrator.exe
 
     Args:
         string (str): The input string to process.
@@ -27,6 +24,7 @@ def replace_control_chars_with_escapes(string: str) -> str:
     Returns:
         str: The string with the control characters replaced by escape sequences.
     """
+
     return string.translate(
         {
             ord("\b"): r"\b",
@@ -39,9 +37,8 @@ def replace_control_chars_with_escapes(string: str) -> str:
     )
 
 
-def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> Optional[str|int]:
-    """
-    This function searches for a field in the command string using a regex pattern. It simplifies
+def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> str | int | None:
+    """This function searches for a field in the command string using a regex pattern. It simplifies
     the process of extracting values from the input string based on specific patterns.
 
     Arguments:
@@ -56,6 +53,7 @@ def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> Optional
     Returns:
         Optional[str|int]: The extracted value if found, otherwise None.
     """
+
     match = re.search(pattern, cmd)
 
     if match:
@@ -75,17 +73,19 @@ def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> Optional
     return None
 
 
-def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
-    """
-    Parse a scheduled task command string into its components. This function simplifies the process of
-    generating a ScheduledTask object from a command string.
+def parse_scheduled_task_command(cmd: str) -> ScheduledTask | None:
+    r"""Parse a scheduled task command string into its components. This function simplifies
+    the process of generating a ScheduledTask object from a command string.
+
+    Ex. schtasks /Create /tn "Task" /tr "C:\\Program Files\\MyApp\app.exe" /sc daily
 
     Args:
-        command (str): The task scheduler command to parse (Ex.'schtasks /Create /tn "My Task" /tr "C:\\Program Files\\MyApp\\app.exe" /sc daily').
+        cmd (str): The task scheduler command to parse
 
     Returns:
         ScheduledTaskCommand: The parsed command stored as a ScheduledTask object or None if malformated.
     """
+
     st = ScheduledTask()
     st.raw_command = cmd
     logger.debug(f"------------------\nScheduledTask:\n{cmd}\n------------------")
@@ -94,16 +94,20 @@ def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
     # Step 1: Identify the task scheduler command (optionally with a full path). [REQUIRED]
     # --------------------
     schtasks = search_field_using_regex(cmd, r"(?i)(?:^|[\\/\s])schtasks(?:\.exe)?(?=\s|$)", 0) is not None
-    if not schtasks: return None
+    if not schtasks:
+        return None
 
     # --------------------
     # Step 2: Extract the task type that follows the schtasks command (Ex. /Create, /END, /rUn). [REQUIRED]
     # --------------------
     task_type = search_field_using_regex(cmd, r"(?i)\/(create|change|delete|end|run|query)(?=\s|$)", 1)
     if task_type:
-        try: st.task_type = st.TaskOperationEnum(task_type.upper())
-        except ValueError: return None # Invalid task type, required so return.
-    else: return None
+        try:
+            st.task_type = st.TaskOperationEnum(task_type.upper())
+        except ValueError:
+            return None  # Invalid task type, required so return.
+    else:
+        return None
     logger.debug(f"\ttask_type: {st.task_type}")
 
     # --------------------
@@ -117,8 +121,10 @@ def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
     # --------------------
     schedule_type = search_field_using_regex(cmd, r'(?i)(?:^|\s)/sc\s+(?:"([^"]+)"|(\S+))', 2)
     if schedule_type:
-        try: st.schedule_type = st.ScheduledTypeEnum(schedule_type.upper())
-        except ValueError: pass # Invalid task type, ignore.
+        try:
+            st.schedule_type = st.ScheduledTypeEnum(schedule_type.upper())
+        except ValueError:
+            pass  # Invalid task type, ignore.
     logger.debug(f"\tschedule_type: {st.schedule_type}")
 
     # --------------------
@@ -205,8 +211,10 @@ def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
     # --------------------
     run_level = search_field_using_regex(cmd, r'(?i)(?:^|\s)/rl\s+(?:"([^"]+)"|(\S+))', 2)
     if run_level:
-        try: st.run_level = st.RunLevelEnum(run_level.upper())
-        except ValueError: pass # Invalid task type, ignore.
+        try:
+            st.run_level = st.RunLevelEnum(run_level.upper())
+        except ValueError:
+            pass  # Invalid task type, ignore.
     logger.debug(f"\trun_level: {st.run_level}")
 
     # --------------------
@@ -265,19 +273,19 @@ def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
     # --------------------
     # Step 25: Extract the flag (/it) to run the task only when the user is logged on interactively. [OPT]
     # --------------------
-    st.interactive = search_field_using_regex(cmd, r'(?i)(?:^|\s)/it\b', 0) is not None
+    st.interactive = search_field_using_regex(cmd, r"(?i)(?:^|\s)/it\b", 0) is not None
     logger.debug(f"\tinteractive: {st.interactive}")
 
     # --------------------
     # Step 26: Extract the flag (/np) to specify that the task does not require a password. [OPT]
     # --------------------
-    st.no_password = search_field_using_regex(cmd, r'(?i)(?:^|\s)/np\b', 0) is not None
+    st.no_password = search_field_using_regex(cmd, r"(?i)(?:^|\s)/np\b", 0) is not None
     logger.debug(f"\tno_password: {st.no_password}")
 
     # --------------------
     # Step 27: Extract the flag (/z) to specify that the task will be deleted after it runs. [OPT]
     # --------------------
-    st.auto_delete = search_field_using_regex(cmd, r'(?i)(?:^|\s)/z\b', 0) is not None
+    st.auto_delete = search_field_using_regex(cmd, r"(?i)(?:^|\s)/z\b", 0) is not None
     logger.debug(f"\tauto_delete: {st.auto_delete}")
 
     # --------------------
@@ -290,13 +298,13 @@ def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
     # Step 29: Extract the flag (/v1) that specifies the task should be created using the version 1
     # task scheduler. [OPT]
     # --------------------
-    st.v1 = search_field_using_regex(cmd, r'(?i)(?:^|\s)/v1\b', 0) is not None
+    st.v1 = search_field_using_regex(cmd, r"(?i)(?:^|\s)/v1\b", 0) is not None
     logger.debug(f"\tv1: {st.v1}")
 
     # --------------------
     # Step 30: Extract the flag (/f) to specify to create/delete the task and suppress warnings. [OPT]
     # --------------------
-    st.force = search_field_using_regex(cmd, r'(?i)(?:^|\s)/f\b', 0) is not None
+    st.force = search_field_using_regex(cmd, r"(?i)(?:^|\s)/f\b", 0) is not None
     logger.debug(f"\tforce: {st.force}")
 
     # --------------------
@@ -310,21 +318,23 @@ def parse_scheduled_task_command(cmd: str) -> Optional[ScheduledTask]:
     # --------------------
     output_format = search_field_using_regex(cmd, r'(?i)(?:^|\s)/fo\s+(?:"([^"]+)"|(\S+))', 2)
     if output_format:
-        try: st.output_format = st.OutputFormatEnum(output_format.upper())
-        except ValueError: pass # Invalid output format, ignore.
+        try:
+            st.output_format = st.OutputFormatEnum(output_format.upper())
+        except ValueError:
+            pass  # Invalid output format, ignore.
     logger.debug(f"\toutput_format: {st.output_format}")
 
     # --------------------
     # Step 33: Extract the flag (/nh) to specify whether to display column headers in the output (TABLE). [OPT]
     # --------------------
-    st.no_header = search_field_using_regex(cmd, r'(?i)(?:^|\s)/nh\b', 0) is not None
+    st.no_header = search_field_using_regex(cmd, r"(?i)(?:^|\s)/nh\b", 0) is not None
     logger.debug(f"\tno_header: {st.no_header}")
 
     # --------------------
     # Step 34: Extract the flag (/v) to display all properties of the scheduled tasks in the output
     # (TABLE / LIST). [OPT]
     # --------------------
-    st.add_advanced_properties = search_field_using_regex(cmd, r'(?i)(?:^|\s)/v\b', 0) is not None
+    st.add_advanced_properties = search_field_using_regex(cmd, r"(?i)(?:^|\s)/v\b", 0) is not None
     logger.debug(f"\tadd_advanced_properties: {st.add_advanced_properties}")
 
     return st
