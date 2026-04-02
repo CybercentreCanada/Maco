@@ -172,8 +172,8 @@ def parse_scheduled_task_command(cmd: str) -> ScheduledTask | None:
     # Step 12: Extract the flag (/k) that stops the program that the task runs at the time specified by
     # /et or /du. [OPT]
     # --------------------
-    st.k = search_field_using_regex(cmd, r"(?i)(?:^|\s)/k(?=\s|$)", 0) is not None
-    logger.debug(f"\tterminate_if_runs_longer: {st.k}")
+    st.kill = search_field_using_regex(cmd, r"(?i)(?:^|\s)/k(?=\s|$)", 0) is not None
+    logger.debug(f"\tkill: {st.kill}")
 
     # --------------------
     # Step 13: Extract the task start date from '/sd <startdate>' [OPT]
