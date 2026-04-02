@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from collections import namedtuple
 from itertools import cycle
@@ -79,6 +80,8 @@ class Rules:
         Raises:
             SyntaxError: Raised when there's a syntax error in the YARA rule.
         """
+        self.logger = logging.getLogger("maco.extractor")
+
         Rule = namedtuple("Rule", "identifier namespace is_global")
         if source:
             sources = {"default": source}
@@ -91,7 +94,21 @@ class Rules:
                 for rule_type, id in RULE_ID_RE.findall(source_code):
                     is_global = rule_type == "global"
                     self._rules.append(Rule(namespace=namespace, identifier=id, is_global=is_global))
-                compiler.add_source(source_code)
+                compiler.add_source(source_code, origin=namespace)
+
+            # display warnings only when scanning for extractors but not when we later run them
+            if (warnings := compiler.warnings()) and warnings[0]["labels"][0]["code_origin"] != "default":
+                affected = set()
+                for w in warnings:
+                    affected.add(w["labels"][0]["code_origin"])
+                    origin = w["labels"][0]["code_origin"]
+                    if text := w.get("text"):
+                        self.logger.debug(f"yara-x warning in {origin}:\n {text}")
+                self.logger.warning(
+                    f"yara-x raises warnings for rules from the following extractors: {', '.join(sorted(affected))}"
+                )
+                self.logger.warning("run maco from the cli with -vv to see these warnings")
+
             self.scanner = yara_x.Scanner(compiler.build())
         except yara_x.CompileError as e:
             raise SyntaxError(e)
