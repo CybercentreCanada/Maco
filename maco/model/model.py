@@ -309,7 +309,7 @@ class ScheduledTask(ForbidModel):
     # [{/et <endtime> | /du <duration>} [/k]]
     end_time: str | None = None  # Specifies the end time for the task.
     duration: str | None = None  # Specifies the duration for which the task should run.
-    k: bool | None = (
+    kill: bool | None = (
         None  # Specifies whether the task will be terminated if it runs longer than the end time or duration.
     )
 
