@@ -15,6 +15,7 @@ logger = logging.getLogger("maco.lib.helpers")
 # --------------------------------------------------------
 def replace_control_chars_with_escapes(string: str) -> str:
     """This function replaces control characters in a string with their corresponding escape sequences.
+
     It is useful for preserving common Windows path escape sequences when control characters have been
     pre-interpreted during the parsing of the command string.
 
@@ -24,7 +25,6 @@ def replace_control_chars_with_escapes(string: str) -> str:
     Returns:
         str: The string with the control characters replaced by escape sequences.
     """
-
     return string.translate(
         {
             ord("\b"): r"\b",
@@ -38,8 +38,9 @@ def replace_control_chars_with_escapes(string: str) -> str:
 
 
 def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> str | int | None:
-    """This function searches for a field in the command string using a regex pattern. It simplifies
-    the process of extracting values from the input string based on specific patterns.
+    """This function searches for a field in the command string using a regex pattern.
+
+    It simplifies the process of extracting values from the input string based on specific patterns.
 
     Arguments:
         cmd (str): The command string to search.
@@ -53,7 +54,6 @@ def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> str | in
     Returns:
         Optional[str|int]: The extracted value if found, otherwise None.
     """
-
     match = re.search(pattern, cmd)
 
     if match:
@@ -74,9 +74,9 @@ def search_field_using_regex(cmd: str, pattern: str, data_type: int) -> str | in
 
 
 def parse_scheduled_task_command(cmd: str) -> ScheduledTask | None:
-    r"""Parse a scheduled task command string into its components. This function simplifies
-    the process of generating a ScheduledTask object from a command string.
+    r"""Parse a scheduled task command string into its components.
 
+    This function simplifies the process of generating a ScheduledTask object from a command string.
     Ex. schtasks /Create /tn "Task" /tr "C:\\Program Files\\MyApp\app.exe" /sc daily
 
     Args:
@@ -85,7 +85,6 @@ def parse_scheduled_task_command(cmd: str) -> ScheduledTask | None:
     Returns:
         ScheduledTaskCommand: The parsed command stored as a ScheduledTask object or None if malformated.
     """
-
     st = ScheduledTask()
     st.raw_command = cmd
     logger.debug(f"------------------\nScheduledTask:\n{cmd}\n------------------")
