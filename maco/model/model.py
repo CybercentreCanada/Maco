@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ForbidModel(BaseModel):
@@ -52,7 +52,7 @@ class Encryption(ForbidModel):
     nonce: str | None = None
     password: str | None = None
     salt: str | None = None
-    constants: list[str] = []
+    constants: list[str] = Field(default_factory=list)
 
     usage: UsageEnum | None = None
 
@@ -409,8 +409,8 @@ class ExtractorModel(ForbidModel):
 
     family: str | list[str]  # family or families of malware that was detected
     version: str | None = None  # version/variant of malware
-    category: list[CategoryEnum] = []  # capability/purpose of the malware
-    attack: list[str] = []  # mitre att&ck reference ids, e.g. 'T1129'
+    category: list[CategoryEnum] = Field(default_factory=list)  # capability/purpose of the malware
+    attack: list[str] = Field(default_factory=list)  # mitre att&ck reference ids, e.g. 'T1129'
 
     #
     # simple config properties
@@ -419,28 +419,28 @@ class ExtractorModel(ForbidModel):
     # capabilities of the malware enabled/disabled in config
     # note these are probably malware-specific capabilities so no attempt to normalise has been made
     # note - av/sandbox detection should be noted by 'detect_<product>'
-    capability_enabled: list[str] = []
-    capability_disabled: list[str] = []
+    capability_enabled: list[str] = Field(default_factory=list)
+    capability_disabled: list[str] = Field(default_factory=list)
 
-    campaign_id: list[str] = []  # Server/Campaign Id for malware
-    identifier: list[str] = []  # UUID/Identifiers for deployed instance
-    decoded_strings: list[str] = []  # decoded strings from within malware
-    password: list[str] = []  # Any password extracted from the binary
-    mutex: list[str] = []  # mutex to prevent multiple instances
-    pipe: list[str] = []  # pipe name used for communication
+    campaign_id: list[str] = Field(default_factory=list)  # Server/Campaign Id for malware
+    identifier: list[str] = Field(default_factory=list)  # UUID/Identifiers for deployed instance
+    decoded_strings: list[str] = Field(default_factory=list)  # decoded strings from within malware
+    password: list[str] = Field(default_factory=list)  # Any password extracted from the binary
+    mutex: list[str] = Field(default_factory=list)  # mutex to prevent multiple instances
+    pipe: list[str] = Field(default_factory=list)  # pipe name used for communication
     sleep_delay: int | None = None  # time to sleep/delay execution (milliseconds)
     # additional time applied to sleep_delay (milliseconds).
     # Jitter implementations can vary but usually it is a value from which a random number is generated and
     # added/subtracted to the sleep_delay to make behaviour more unpredictable
     sleep_delay_jitter: int | None = None
-    inject_exe: list[str] = []  # name of executable to inject into
+    inject_exe: list[str] = Field(default_factory=list)  # name of executable to inject into
 
     # configuration or clustering/research data that doesnt fit the other fields
     # * rarely used by decoders or specific to one decoder
     # to prevent key explosion, the keys must not be dynamically generated
     # e.g. api_imports, api_checksums, num_imports, import_hash + many more
     # data stored here must always be JSON-serialisable
-    other: dict[str, Any] = {}
+    other: dict[str, Any] = Field(default_factory=dict)
 
     #
     # embedded binary data
@@ -461,7 +461,7 @@ class ExtractorModel(ForbidModel):
         # other information for the extracted binary rather than the config
         # data stored here must always be JSON-serialisable
         # e.g. filename, extension, relationship label
-        other: dict[str, Any] = {}
+        other: dict[str, Any] = Field(default_factory=dict)
 
         # convenience for ret.encryption.append(ret.Encryption(*properties))
         # Define as class as only way to allow for this to be accessed and not have pydantic try to parse it.
@@ -470,7 +470,7 @@ class ExtractorModel(ForbidModel):
 
         encryption: list[Encryption] | Encryption | None = None  # encryption information for the binary
 
-    binaries: list[Binary] = []
+    binaries: list[Binary] = Field(default_factory=list)
 
     #
     # communication protocols
@@ -487,7 +487,7 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum | None = None
 
-    ftp: list[FTP] = []
+    ftp: list[FTP] = Field(default_factory=list)
 
     class SMTP(ForbidModel):
         """Usage of SMTP."""
@@ -498,13 +498,13 @@ class ExtractorModel(ForbidModel):
         hostname: str | None = None
         port: int | None = None
 
-        mail_to: list[str] = []  # receivers
+        mail_to: list[str] = Field(default_factory=list)  # receivers
         mail_from: str | None = None  # sender
         subject: str | None = None
 
         usage: ConnUsageEnum | None = None
 
-    smtp: list[SMTP] = []  # SMTP server for malware
+    smtp: list[SMTP] = Field(default_factory=list)  # SMTP server for malware
 
     class Http(ForbidModel):
         """Usage of HTTP connection."""
@@ -533,7 +533,7 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum | None = None
 
-    http: list[Http] = []
+    http: list[Http] = Field(default_factory=list)
 
     class SSH(ForbidModel):
         """Usage of ssh connection."""
@@ -545,7 +545,7 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum | None = None
 
-    ssh: list[SSH] = []
+    ssh: list[SSH] = Field(default_factory=list)
 
     class Proxy(ForbidModel):
         """Usage of proxy connection."""
@@ -558,7 +558,7 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum | None = None
 
-    proxy: list[Proxy] = []
+    proxy: list[Proxy] = Field(default_factory=list)
 
     class ICMP(ForbidModel):
         """Usage of ICMP."""
@@ -570,7 +570,7 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum | None = None
 
-    icmp: list[ICMP] = []
+    icmp: list[ICMP] = Field(default_factory=list)
 
     #
     # inter process communication (IPC)
@@ -619,7 +619,7 @@ class ExtractorModel(ForbidModel):
         shared_memory: bytes | None = None
         usage: ConnUsageEnum | None = None
 
-    ipc: list[IPC] = []  # Inter-Process Communications (similar to 'pipe' but more detailed)
+    ipc: list[IPC] = Field(default_factory=list)  # Inter-Process Communications (similar to 'pipe' but more detailed)
 
     class DNS(ForbidModel):
         """Direct usage of DNS."""
@@ -681,7 +681,7 @@ class ExtractorModel(ForbidModel):
         record_type: RecordTypeEnum | None = None  # The DNS record type that is queried
         usage: ConnUsageEnum | None = None
 
-    dns: list[DNS] = []  # custom DNS address to use for name resolution
+    dns: list[DNS] = Field(default_factory=list)  # custom DNS address to use for name resolution
 
     class Connection(ForbidModel):
         """Generic TCP/UDP usage."""
@@ -694,8 +694,8 @@ class ExtractorModel(ForbidModel):
 
         usage: ConnUsageEnum | None = None
 
-    tcp: list[Connection] = []
-    udp: list[Connection] = []
+    tcp: list[Connection] = Field(default_factory=list)
+    udp: list[Connection] = Field(default_factory=list)
 
     #
     # complex configuration properties
@@ -705,7 +705,7 @@ class ExtractorModel(ForbidModel):
     class Encryption(Encryption):
         """Encryption usage."""
 
-    encryption: list[Encryption] = []
+    encryption: list[Encryption] = Field(default_factory=list)
 
     class Service(ForbidModel):
         """OS service usage by malware."""
@@ -715,7 +715,7 @@ class ExtractorModel(ForbidModel):
         display_name: str | None = None  # display name for service
         description: str | None = None  # description for service
 
-    service: list[Service] = []
+    service: list[Service] = Field(default_factory=list)
 
     class Cryptocurrency(ForbidModel):
         """Cryptocoin usage (ransomware/miner)."""
@@ -733,7 +733,7 @@ class ExtractorModel(ForbidModel):
 
         usage: UsageEnum
 
-    cryptocurrency: list[Cryptocurrency] = []
+    cryptocurrency: list[Cryptocurrency] = Field(default_factory=list)
 
     class Path(ForbidModel):
         """Path used by malware."""
@@ -753,7 +753,7 @@ class ExtractorModel(ForbidModel):
         path: str
         usage: UsageEnum | None = None
 
-    paths: list[Path] = []  # files/directories used by malware
+    paths: list[Path] = Field(default_factory=list)  # files/directories used by malware
 
     class Registry(ForbidModel):
         """Registry usage by malware."""
@@ -770,7 +770,7 @@ class ExtractorModel(ForbidModel):
         key: str
         usage: UsageEnum | None = None
 
-    registry: list[Registry] = []
+    registry: list[Registry] = Field(default_factory=list)
 
     class ScheduledTask(ForbidModel):
         """Scheduled task usage by malware."""
