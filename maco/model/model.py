@@ -19,6 +19,7 @@ class ConnUsageEnum(str, Enum):
 
     c2 = "c2"  # issue commands to malware
     upload = "upload"  # get data out of the network
+    dead_drop_resolver = "dead_drop_resolver"  # resolve dead drop locations
     download = "download"  # fetch dynamic config, second stage, etc
     propagate = "propagate"  # spread through the network
     tunnel = "tunnel"  # communicate through the network
