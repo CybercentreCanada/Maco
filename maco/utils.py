@@ -77,6 +77,10 @@ import logging
 try:
     # Respect cases where the extractor is tied to certain version of yara-python for processing
     import yara
+
+    if not hasattr(yara, "compile"):
+        raise ImportError("Loaded version does not have compile method, falling back to MACO's yara interface")
+
 except:
     # Otherwise fallback to MACO's interface for yara-python==4.5.x
     from maco import yara
