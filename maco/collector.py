@@ -147,7 +147,7 @@ class Collector:
                 ),
                 kwargs={
                     "root_directory": path_extractors,
-                    "scanner": yara.compile(source=utils.MACO_YARA_RULE),
+                    "scanner_source": utils.MACO_YARA_RULE,
                     "create_venv": create_venv and os.path.isdir(path_extractors),
                     "skip_install": skip_install,
                     "enable_venv_cache": enable_venv_cache,
@@ -198,21 +198,24 @@ class Collector:
             (Dict[str, Any]): Results from extractor
         """
         extractor = self.extractors[extractor_name]
+        temp_sample_name = None
         try:
             # Run extractor on a copy of the sample
-            with NamedTemporaryFile() as sample_path:
+            with NamedTemporaryFile(delete=False) as sample_path:
+                temp_sample_name = sample_path.name
                 sample_path.write(stream.read())
                 sample_path.flush()
-                # enforce types and verify properties, and remove defaults
-                return _verify_response(
-                    utils.run_extractor(
-                        sample_path.name,
-                        module_name=extractor["module_name"],
-                        extractor_class=extractor["extractor_class"],
-                        module_path=extractor["module_path"],
-                        venv=extractor["venv"],
-                    )
+
+            # enforce types and verify properties, and remove defaults
+            return _verify_response(
+                utils.run_extractor(
+                    temp_sample_name,
+                    module_name=extractor["module_name"],
+                    extractor_class=extractor["extractor_class"],
+                    module_path=extractor["module_path"],
+                    venv=extractor["venv"],
                 )
+            )
         except AnalysisAbortedException:
             # Extractor voluntarily aborted analysis of sample
             return
@@ -223,3 +226,8 @@ class Collector:
             # make sure to reset where we are in the file
             # otherwise follow on extractors are going to read 0 bytes
             stream.seek(0)
+            if temp_sample_name:
+                try:
+                    os.unlink(temp_sample_name)
+                except FileNotFoundError:
+                    pass
