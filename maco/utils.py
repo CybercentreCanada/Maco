@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 from importlib.machinery import SourceFileLoader
+from pathlib import Path
 
 from multiprocess import Process, Queue
 
@@ -210,7 +211,7 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
                     # Replace any relative importing with absolute
                     changed_imports = False
                     curr_dir = os.path.dirname(path)
-                    split = curr_dir.split("/")[::-1]
+                    split = Path(curr_dir).parts[::-1]
                     for pattern in [RELATIVE_FROM_IMPORT_RE, RELATIVE_FROM_RE]:
                         for match in pattern.findall(data):
                             depth = match.count(b".")
@@ -329,7 +330,7 @@ def find_and_insert_venv(path: str, venvs: list[str]) -> tuple[str, str]:
     venv = None
     for venv in sorted(venvs, reverse=True):
         venv_parent = os.path.dirname(venv)
-        if path.startswith(f"{venv_parent}/"):
+        if os.path.commonpath([os.path.abspath(path), os.path.abspath(venv_parent)]) == os.path.abspath(venv_parent):
             # Found the virtual environment that's the closest to extractor
             break
 
@@ -338,7 +339,11 @@ def find_and_insert_venv(path: str, venvs: list[str]) -> tuple[str, str]:
 
     if venv:
         # Insert the venv's site-packages into the PATH temporarily to load the module
-        for site_package in glob(os.path.join(venv, "lib/python*/site-packages")):
+        site_package_patterns = [
+            os.path.join(venv, "lib", "python*", "site-packages"),
+            os.path.join(venv, "Lib", "site-packages"),
+        ]
+        for site_package in [path for pattern in site_package_patterns for path in glob(pattern)]:
             if site_package not in sys.path:
                 sys.path.insert(2, site_package)
             break
@@ -410,7 +415,8 @@ def register_extractors(
         # Load the potential extractors directly from the source file
         registration_processes = []
         for extractor_source_file in extractor_files:
-            module_name = extractor_source_file.replace(f"{parent_directory}/", "").replace("/", ".")[:-3]
+            module_name = os.path.splitext(os.path.relpath(extractor_source_file, parent_directory))[0]
+            module_name = module_name.replace(os.sep, ".")
             p = Process(
                 target=register_extractor_module,
                 args=(extractor_source_file, module_name, venvs, extractor_module_callback, logger),
@@ -440,7 +446,7 @@ def import_extractors(
     extractor_module_callback: Callable[[ModuleType, str], bool],
     *,
     root_directory: str,
-    scanner: yara.Rules,
+    scanner_source: str,
     create_venv: bool,
     logger: Logger,
     enable_venv_cache: bool = False,
@@ -452,13 +458,14 @@ def import_extractors(
     Args:
         extractor_module_callback (Callable[[ModuleType, str], bool]): Callback used to register extractors
         root_directory (str): Root directory to look for extractors
-        scanner (yara.Rules): Scanner to look for extractors that match YARA rule
+        scanner_source (str): Scanner YARA source to look for extractors
         create_venv (bool): Create/Use virtual environments
         logger (Logger): Logger to use
         enable_venv_cache (bool): When creating a virtual environment enable/disable package caching
         python_version (str): Version of python to use when creating virtual environments
         skip_install (bool): Skip installation of Python dependencies for extractors
     """
+    scanner = yara.compile(source=scanner_source)
     extractor_dirs, extractor_files = scan_for_extractors(root_directory, scanner, logger)
 
     logger.info(f"Extractor files found based on scanner ({len(extractor_files)}).")
@@ -544,13 +551,16 @@ def run_extractor(
     else:
         # execute extractor in child process with separate virtual environment
         # Write temporary script in the same directory as extractor to resolve relative imports
-        python_exe = os.path.join(venv, "bin", "python")
+        python_exe = (
+            os.path.join(venv, "Scripts", "python.exe") if os.name == "nt" else os.path.join(venv, "bin", "python")
+        )
         dirname = os.path.dirname(module_path)
         with tempfile.NamedTemporaryFile(
             "w", dir=dirname, suffix=".py"
         ) as script, tempfile.NamedTemporaryFile() as output:
             parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
-            root_directory = module_path[:-3].rsplit(module_name.split(".", 1)[1].replace(".", "/"))[0]
+            module_leaf = module_name.split(".", 1)[1].replace(".", os.sep)
+            root_directory = module_path[:-3].rsplit(module_leaf, 1)[0]
 
             script.write(
                 venv_script.format(
@@ -563,7 +573,8 @@ def run_extractor(
             )
             script.flush()
             cwd = root_directory
-            custom_module = script.name[:-3].replace(root_directory, "").replace("/", ".")
+            custom_module = os.path.splitext(os.path.relpath(script.name, root_directory))[0]
+            custom_module = custom_module.replace(os.sep, ".")
 
             if custom_module.startswith("src."):
                 # src layout found, which means the actual module content is within 'src' directory
