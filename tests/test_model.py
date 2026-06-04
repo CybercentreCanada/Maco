@@ -443,3 +443,37 @@ class TestModelDict(unittest.TestCase):
         tmp = model.ExtractorModel.model_validate(config)
         resp = collector._verify_response(tmp)
         self.assertEqual(resp, config)
+
+
+def test_http_fill_in():
+    """Test that the model validation fills in the gaps for HTTP data when only a URI is provided."""
+    config = {
+        "family": "scuba",
+        "version": "lotso_stuff",
+        "http": [
+            {
+                "uri": "https://blarg.com/malz?query=1#fragment",
+                "usage": "c2",
+            }
+        ],
+    }
+
+    # The expectation is the process of model validation should fill in the gaps in the data based on the provided URI
+    expected = {
+        "family": "scuba",
+        "version": "lotso_stuff",
+        "http": [
+            {
+                "uri": "https://blarg.com/malz?query=1#fragment",
+                "protocol": "https",
+                "hostname": "blarg.com",
+                "path": "/malz",
+                "query": "query=1",
+                "fragment": "fragment",
+                "usage": "c2",
+            }
+        ],
+    }
+    tmp = model.ExtractorModel.model_validate(config)
+    resp = collector._verify_response(tmp)
+    assert resp == expected

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ForbidModel(BaseModel):
@@ -533,6 +534,27 @@ class ExtractorModel(ForbidModel):
         max_size: int | None = None
 
         usage: ConnUsageEnum | None = None
+
+        @model_validator(mode="before")
+        def fill_in(cls, data: dict[str, Any]) -> dict[str, Any]:
+            """Fill in the missing http properties from the uri if it exists, and set protocol to http if not set."""
+
+            # Assume the protocol is http by default
+            data.setdefault("protocol", "http")
+
+            # If there is a URI, parse it and fill in any missing components for completeness
+            if "uri" in data and data["uri"] is not None:
+                parsed = urlparse(data["uri"])
+                if parsed.scheme:
+                    # Use the scheme from the URI if it exists
+                    data["protocol"] = parsed.scheme.lower()
+
+                for part in ["username", "password", "hostname", "port", "path", "query", "fragment"]:
+                    # Assign the value from the parsed URI if it exists, otherwise keep the existing value in data
+                    value = data.get(part, getattr(parsed, part))
+                    if value:
+                        data[part] = value
+            return data
 
     http: list[Http] = Field(default_factory=list)
 
