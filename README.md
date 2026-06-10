@@ -169,6 +169,9 @@ Install this package with `pip install maco`.
 
 All required Python packages are in the `requirements.txt`.
 
+For tests to pass `libmono` must be installed
+The recommended way to do that on linux is to run the command `sudo apt install mono-devel mono-complete -y`
+
 # CLI Usage
 
 ```bash

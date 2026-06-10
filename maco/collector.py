@@ -20,7 +20,7 @@ from maco.exceptions import AnalysisAbortedException, ExtractorLoadError
 logger = logging.getLogger("maco.lib.helpers")
 
 
-def _verify_response(resp: BaseModel | dict) -> dict:
+def _verify_response(resp: BaseModel | dict) -> model.ExtractorModel | None:
     """Enforce types and verify properties, and remove defaults.
 
     Args:
@@ -40,9 +40,7 @@ def _verify_response(resp: BaseModel | dict) -> dict:
     resp = model.ExtractorModel.model_validate(resp)
     # coerce sets to correct types
     # otherwise we end up with sets where we expect lists
-    resp = model.ExtractorModel(**resp.model_dump())
-    # dump model to dict
-    return resp.model_dump(exclude_defaults=True)
+    return model.ExtractorModel(**resp.model_dump())
 
 
 class ExtractorMetadata(TypedDict):
@@ -168,14 +166,14 @@ class Collector:
             # compile yara rules gathered from extractors
             self.rules = yara.compile(sources=dict(namespaced_rules))
 
-    def match(self, stream: BinaryIO) -> dict[str, list[yara.Match]]:
+    def match(self, stream: BinaryIO) -> dict[str, list[yara.Match]] | None:
         """Return extractors that should run based on yara rules."""
         # execute yara rules on file to find extractors we should run
         # yara can't run on a stream so we give it a bytestring
         matches = self.rules.match(data=stream.read())
         stream.seek(0)
         if not matches:
-            return
+            return None
         # get all rules that hit for each extractor
         runs = {}
         for match in matches:
@@ -187,7 +185,7 @@ class Collector:
         self,
         stream: BinaryIO,
         extractor_name: str,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         """Run extractor with stream and verify output matches the model.
 
         Args:
@@ -196,6 +194,25 @@ class Collector:
 
         Returns:
             (Dict[str, Any]): Results from extractor
+        """
+        return_val = self.extract_model(stream=stream, extractor_name=extractor_name)
+        if return_val is None:
+            return
+        return return_val.model_dump(exclude_defaults=True)
+
+    def extract_model(
+        self,
+        stream: BinaryIO,
+        extractor_name: str,
+    ) -> model.ExtractorModel | None:
+        """Run extractor with stream and verify output matches the model.
+
+        Args:
+            stream (BinaryIO): Binary stream to analyze
+            extractor_name (str): Name of extractor to analyze stream
+
+        Returns:
+            (ExtractorModel|None): Results from extractor or None if the extractor exited early.
         """
         extractor = self.extractors[extractor_name]
         temp_sample_name = None
@@ -218,7 +235,7 @@ class Collector:
             )
         except AnalysisAbortedException:
             # Extractor voluntarily aborted analysis of sample
-            return
+            return None
         except Exception:
             # caller can deal with the exception
             raise

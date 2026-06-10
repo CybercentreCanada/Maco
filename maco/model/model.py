@@ -777,3 +777,15 @@ class ExtractorModel(ForbidModel):
         """Scheduled task usage by malware."""
 
     scheduled_tasks: list[ScheduledTask] = []
+
+    class Warning(ForbidModel):
+        """List of warnings for extraction actions that went wrong but were recovered.
+
+        Useful when an extractor can get some information out of a binary but;
+        can't fully extract other information as expected.
+        """
+
+        message: str
+        stack_trace: str = ""
+
+    warnings: list[Warning] = []
