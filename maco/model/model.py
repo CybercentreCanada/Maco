@@ -788,4 +788,4 @@ class ExtractorModel(ForbidModel):
         message: str
         stack_trace: str
 
-    warnings: list[Warning]
+    warnings: list[Warning] = []

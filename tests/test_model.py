@@ -329,6 +329,8 @@ class TestModelObject(unittest.TestCase):
     def verify(self, in1, in2: dict) -> dict:
         """Verify the returned data matches the schema."""
         resp = collector._verify_response(in1)
+        if resp:
+            resp = resp.model_dump(exclude_defaults=True)
         self.assertEqual(resp, in2)
 
 
@@ -442,4 +444,6 @@ class TestModelDict(unittest.TestCase):
         """Verify the returned data matches the schema."""
         tmp = model.ExtractorModel.model_validate(config)
         resp = collector._verify_response(tmp)
+        if resp:
+            resp = resp.model_dump(exclude_defaults=True)
         self.assertEqual(resp, config)
