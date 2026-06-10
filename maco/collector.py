@@ -195,43 +195,10 @@ class Collector:
         Returns:
             (Dict[str, Any]): Results from extractor
         """
-        extractor = self.extractors[extractor_name]
-        temp_sample_name = None
-        try:
-            # Run extractor on a copy of the sample
-            with NamedTemporaryFile(delete=False) as sample_path:
-                temp_sample_name = sample_path.name
-                sample_path.write(stream.read())
-                sample_path.flush()
-
-            # enforce types and verify properties, and remove defaults
-            return_val = _verify_response(
-                utils.run_extractor(
-                    temp_sample_name,
-                    module_name=extractor["module_name"],
-                    extractor_class=extractor["extractor_class"],
-                    module_path=extractor["module_path"],
-                    venv=extractor["venv"],
-                )
-            )
-            if return_val is None:
-                return
-            return return_val.model_dump(exclude_defaults=True)
-        except AnalysisAbortedException:
-            # Extractor voluntarily aborted analysis of sample
+        return_val = self.extract_model(stream=stream, extractor_name=extractor_name)
+        if return_val is None:
             return
-        except Exception:
-            # caller can deal with the exception
-            raise
-        finally:
-            # make sure to reset where we are in the file
-            # otherwise follow on extractors are going to read 0 bytes
-            stream.seek(0)
-            if temp_sample_name:
-                try:
-                    os.unlink(temp_sample_name)
-                except FileNotFoundError:
-                    pass
+        return return_val.model_dump(exclude_defaults=True)
 
     def extract_model(
         self,
