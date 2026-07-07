@@ -194,7 +194,7 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
             elif node in ["setup.py"]:
                 # Ignore setup files and markers for package directories
                 continue
-            elif "test" in node:
+            elif node.startswith("test_"):
                 # Ignore test files
                 continue
             elif "deprecated" in node:
