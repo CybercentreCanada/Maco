@@ -200,6 +200,9 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
             elif "deprecated" in node:
                 # Ignore deprecated files
                 continue
+            elif "__pycache__" in node:
+                # Ignore __pycache__ dirs since these cause issues when running in parallel
+                continue
 
             if os.path.isfile(os.path.join(directory, node)):
                 # Scan Python file for potential extractors
