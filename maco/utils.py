@@ -247,7 +247,7 @@ def _install_required_packages(
 ):
     venvs = []
     env = deepcopy(os.environ)
-    stop_directory = os.path.dirname(sorted(directories)[0])
+    stop_directory = os.path.dirname(min(directories))
     # Track directories that we've already visited
     visited_dirs = []
     for dir in directories:
