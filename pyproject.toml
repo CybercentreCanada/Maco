@@ -43,6 +43,7 @@ exclude = ["test", "tests", "extractors", "model_setup", "extractor_setup"]
 
 [tool.ruff]
 line-length = 120
+extend-exclude = ["README.md"]
 
 [tool.ruff.format]
 docstring-code-format = true
