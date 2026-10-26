@@ -31,12 +31,16 @@ jobs:
   - job: run_test
     strategy:
       matrix:
-        Python3_10:
-          python.version: "3.10"
         Python3_11:
           python.version: "3.11"
         Python3_12:
           python.version: "3.12"
+        Python3_13:
+          python.version: '3.13'
+        Python3_14:
+          python.version: '3.14'
+        Python3_15:
+          python.version: '3.15'
     timeoutInMinutes: 10
 
     steps:
