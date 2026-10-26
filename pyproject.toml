@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "maco"
 description = "Maco is a framework for creating and using malware configuration extractors."
 dynamic = ["version", "readme", "dependencies"]
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 authors = [{ name = "sl-govau" }]
 maintainers = [{ name = "cccs-rs" }]
 license = { file = "LICENSE.md" }

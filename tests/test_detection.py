@@ -30,7 +30,8 @@ SEKOIA_EXTRACTORS = [
     "repository_url, extractors, python_minor, branch",
     [
         ("https://github.com/jeFF0Falltrades/rat_king_parser", ["RKPMACO"], 10, None),
-        ("https://github.com/SEKOIA-IO/Community", SEKOIA_EXTRACTORS, 10, None),
+        # TODO: Change this to point to the upstream before merge
+        ("https://github.com/cccs-rs/Sekoia-Community", SEKOIA_EXTRACTORS, 10, None),
     ],
     ids=("jeFF0Falltrades/rat_king_parser", "SEKOIA-IO/Community"),
 )
