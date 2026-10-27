@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,7 +14,7 @@ class ForbidModel(BaseModel):
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
 
-class ConnUsageEnum(str, Enum):
+class ConnUsageEnum(StrEnum):
     """Purpose of the connection."""
 
     c2 = "c2"  # issue commands to malware
@@ -31,7 +31,7 @@ class ConnUsageEnum(str, Enum):
 class Encryption(ForbidModel):
     """Encryption usage."""
 
-    class UsageEnum(str, Enum):
+    class UsageEnum(StrEnum):
         """Purpose of the encryption."""
 
         config = "config"
@@ -58,7 +58,7 @@ class Encryption(ForbidModel):
     usage: UsageEnum | None = None
 
 
-class CategoryEnum(str, Enum):
+class CategoryEnum(StrEnum):
     """Category of the malware."""
 
     # Software that shows you extra promotions that you cannot control as you use your PC.
@@ -202,7 +202,7 @@ class CategoryEnum(str, Enum):
 class ScheduledTask(ForbidModel):
     """Scheduled task usage by malware."""
 
-    class TaskOperationEnum(str, Enum):
+    class TaskOperationEnum(StrEnum):
         """Task operation type."""
 
         change = "CHANGE"  # Changes the properties of a scheduled task.
@@ -212,7 +212,7 @@ class ScheduledTask(ForbidModel):
         query = "QUERY"  # Displays tasks scheduled to run on the computer.
         run = "RUN"  # Starts a scheduled task immediately.
 
-    class ScheduledTypeEnum(str, Enum):
+    class ScheduledTypeEnum(StrEnum):
         """Task schedule type."""
 
         minute = "MINUTE"
@@ -227,26 +227,26 @@ class ScheduledTask(ForbidModel):
         onevent = "ONEVENT"
         other = "OTHER"
 
-    class RunAsEnum(str, Enum):
+    class RunAsEnum(StrEnum):
         """Task run as type."""
 
         system = "SYSTEM"  # Run the task with SYSTEM privileges
         user = "USER"  # Run the task with user privileges
 
-    class RunLevelEnum(str, Enum):
+    class RunLevelEnum(StrEnum):
         """Task run level."""
 
         highest = "HIGHEST"  # Run the task with the highest privileges.
         limited = "LIMITED"  # Run the task with limited privileges.
 
-    class OutputFormatEnum(str, Enum):
+    class OutputFormatEnum(StrEnum):
         """Task query output format."""
 
         table = "TABLE"
         list = "LIST"
         csv = "CSV"
 
-    class UsageEnum(str, Enum):
+    class UsageEnum(StrEnum):
         """Scheduled task usage."""
 
         persistence = "persistence"  # Stay alive on the system.
@@ -449,7 +449,7 @@ class ExtractorModel(ForbidModel):
     class Binary(ForbidModel):
         """Binary data extracted by decoder."""
 
-        class TypeEnum(str, Enum):
+        class TypeEnum(StrEnum):
             """Type of binary data."""
 
             payload = "payload"  # contained within the original file
@@ -625,7 +625,7 @@ class ExtractorModel(ForbidModel):
     class DNS(ForbidModel):
         """Direct usage of DNS."""
 
-        class RecordTypeEnum(str, Enum):
+        class RecordTypeEnum(StrEnum):
             """DNS record types."""
 
             A = "A"
@@ -721,7 +721,7 @@ class ExtractorModel(ForbidModel):
     class Cryptocurrency(ForbidModel):
         """Cryptocoin usage (ransomware/miner)."""
 
-        class UsageEnum(str, Enum):
+        class UsageEnum(StrEnum):
             """Cryptocoin usage."""
 
             ransomware = "ransomware"  # request money to unlock
@@ -739,7 +739,7 @@ class ExtractorModel(ForbidModel):
     class Path(ForbidModel):
         """Path used by malware."""
 
-        class UsageEnum(str, Enum):
+        class UsageEnum(StrEnum):
             """Purpose of the path."""
 
             c2 = "c2"  # file/folder issues commands to malware
@@ -759,7 +759,7 @@ class ExtractorModel(ForbidModel):
     class Registry(ForbidModel):
         """Registry usage by malware."""
 
-        class UsageEnum(str, Enum):
+        class UsageEnum(StrEnum):
             """Registry usage."""
 
             persistence = "persistence"  # stay alive
