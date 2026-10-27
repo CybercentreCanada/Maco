@@ -39,8 +39,6 @@ jobs:
           python.version: '3.13'
         Python3_14:
           python.version: '3.14'
-        Python3_15:
-          python.version: '3.15'
     timeoutInMinutes: 10
 
     steps:
