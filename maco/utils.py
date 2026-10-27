@@ -13,28 +13,20 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from importlib.machinery import SourceFileLoader
-from pathlib import Path
-
-from multiprocess import Process, Queue
-
-from maco import yara
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
-
+import tomllib
 from base64 import b64decode
+from collections.abc import Callable
 from copy import deepcopy
 from glob import glob
+from importlib.machinery import SourceFileLoader
 from logging import Logger
+from pathlib import Path
 from types import ModuleType
-from typing import Callable
 
+from multiprocess import Process, Queue
 from uv import find_uv_bin
 
-from maco import model
+from maco import model, yara
 from maco.exceptions import AnalysisAbortedException
 from maco.extractor import Extractor
 
@@ -191,7 +183,7 @@ def scan_for_extractors(root_directory: str, scanner: yara.Rules, logger: Logger
             elif not node.endswith(".py") and os.path.isfile(path):
                 # Ignore scanning non-Python files
                 continue
-            elif node in ["setup.py"]:
+            elif node == "setup.py":
                 # Ignore setup files and markers for package directories
                 continue
             elif node.startswith("test_"):
@@ -531,7 +523,7 @@ def run_extractor(
                 import_path = module_path[: -4 - len(module_name)]
                 sys.path.insert(1, import_path)
                 mod = importlib.import_module(module_name)
-                extractor_cls = mod.__getattribute__(extractor_class)
+                extractor_cls = getattr(mod, extractor_class)
                 extractor = extractor_cls()
 
                 # Add to cache
@@ -558,9 +550,10 @@ def run_extractor(
             os.path.join(venv, "Scripts", "python.exe") if os.name == "nt" else os.path.join(venv, "bin", "python")
         )
         dirname = os.path.dirname(module_path)
-        with tempfile.NamedTemporaryFile(
-            "w", dir=dirname, suffix=".py"
-        ) as script, tempfile.NamedTemporaryFile() as output:
+        with (
+            tempfile.NamedTemporaryFile("w", dir=dirname, suffix=".py") as script,
+            tempfile.NamedTemporaryFile() as output,
+        ):
             parent_package_path = dirname.rsplit(module_name.split(".", 1)[0], 1)[0]
             module_leaf = module_name.split(".", 1)[1].replace(".", os.sep)
             root_directory = module_path[:-3].rsplit(module_leaf, 1)[0]
