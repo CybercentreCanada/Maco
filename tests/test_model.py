@@ -549,7 +549,7 @@ class TestModelObject(unittest.TestCase):
                 parse_scheduled_task_command(
                     'schtasks /create /tn "MyRemoteTask2" /tr "C:\\Scripts\\new\\rackup.cmd" /sc ONEVENT /st 02:00 '
                     '/s REMOTE-PC01 /u DOMAIN\\AdminUser /p AdminPassword123 /ru SYSTEM /rp "" /mo 5 /et 04:00 /du '
-                    '2:00 /sd 01/01/2024 /ed 12/31/2024 /hresult 0x1 /v1 /f /rl HIGHEST /delay 00:05:00 /ri 51940 '
+                    "2:00 /sd 01/01/2024 /ed 12/31/2024 /hresult 0x1 /v1 /f /rl HIGHEST /delay 00:05:00 /ri 51940 "
                     '/i 214 /m JAN,MAR,JUL /d 1,15 /delay 00:05:00 /ec "System"'
                 ),
             ],
