@@ -773,9 +773,6 @@ class ExtractorModel(ForbidModel):
 
     registry: list[Registry] = Field(default_factory=list)
 
-    class ScheduledTask(ForbidModel):
-        """Scheduled task usage by malware."""
-
     scheduled_tasks: list[ScheduledTask] = []
 
     class Warning(ForbidModel):
