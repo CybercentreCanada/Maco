@@ -620,6 +620,8 @@ class TestModelObject(unittest.TestCase):
                     usage="download",
                     fragment="/s/aaaaaaa/not_malware.exe?dl=1",
                     domain="www.dropbox.com",
+                ),
+            ],
             scheduled_tasks=[
                 parse_scheduled_task_command(
                     '\\System32\\schtasks.exe /Create /SC MINUTE /MO 13 /TN "LogoffWorker" /TR'
@@ -715,6 +717,8 @@ class TestModelObject(unittest.TestCase):
                         "fragment": "/s/aaaaaaa/not_malware.exe?dl=1",
                         "domain": "www.dropbox.com",
                         "usage": "download",
+                    },
+                ],
                 "scheduled_tasks": [
                     {
                         "raw_command": '\\System32\\schtasks.exe /Create /SC MINUTE /MO 13 /TN "LogoffWorker" /TR',
