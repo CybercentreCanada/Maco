@@ -245,6 +245,35 @@ class TestModelObject(unittest.TestCase):
                 em.Registry(key="HKLM_LOCAL_USER/some/location/to/key", usage="store_data"),
                 em.Registry(key="HKLM_LOCAL_USER/system/location", usage="read"),
             ],
+            online_services=[
+                em.OnlineService(
+                    service_name="many buckets",
+                    container="the_malware_bucket",
+                    identifier="important_document.pdf.exe",
+                    token="abc123",
+                    api_key="d41d8cd98f00b204e9800998ecf8427e",
+                    secret="SSSSHHHHHHH",
+                    username="cletus",
+                    password="hunter2",
+                    region="us-east-1",
+                    domain="www.example.com",
+                    url="files.example.com/payload/?exploit=1&soup=tomato",
+                    fragment="?malware=plz&fun=yes",
+                    usage="download",
+                ),
+                em.OnlineService(
+                    service_name="Steam", api_key="0754ac3ddc26ee4ccfde05f81a2eafac", usage="dead_drop_resolver"
+                ),
+                em.OnlineService(
+                    service_name="VirusTotal",
+                    api_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    identifier="exfil.zip",
+                    usage="upload",
+                ),
+                em.OnlineService(
+                    service_name="Pastebin", url="https://pastebin.com/raw/VbSn9AnN", identifier="VbSn9AnN", usage="c2"
+                ),
+            ],
         )
         self.verify(
             tmp,
@@ -323,6 +352,40 @@ class TestModelObject(unittest.TestCase):
                         "usage": "store_data",
                     },
                     {"key": "HKLM_LOCAL_USER/system/location", "usage": "read"},
+                ],
+                "online_services": [
+                    {
+                        "service_name": "many buckets",
+                        "container": "the_malware_bucket",
+                        "identifier": "important_document.pdf.exe",
+                        "token": "abc123",
+                        "api_key": "d41d8cd98f00b204e9800998ecf8427e",
+                        "secret": "SSSSHHHHHHH",
+                        "username": "cletus",
+                        "password": "hunter2",
+                        "region": "us-east-1",
+                        "domain": "www.example.com",
+                        "url": "files.example.com/payload/?exploit=1&soup=tomato",
+                        "fragment": "?malware=plz&fun=yes",
+                        "usage": "download",
+                    },
+                    {
+                        "service_name": "Steam",
+                        "api_key": "0754ac3ddc26ee4ccfde05f81a2eafac",
+                        "usage": "dead_drop_resolver",
+                    },
+                    {
+                        "service_name": "VirusTotal",
+                        "api_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "identifier": "exfil.zip",
+                        "usage": "upload",
+                    },
+                    {
+                        "service_name": "Pastebin",
+                        "url": "https://pastebin.com/raw/VbSn9AnN",
+                        "identifier": "VbSn9AnN",
+                        "usage": "c2",
+                    },
                 ],
             },
         )
@@ -542,6 +605,23 @@ class TestModelObject(unittest.TestCase):
                 em.Warning(message="random warning message"),
                 em.Warning(message="random warning message with trace", stack_trace="Stack trace value!"),
             ],
+            online_services=[
+                em.OnlineService(
+                    service_name="Azure",
+                    api_key="abcd1234ef567890",
+                    token="1234abcd567890ef",
+                    secret="shhhhh",
+                    usage="upload",
+                ),
+                em.OnlineService(
+                    service_name="Dropbox",
+                    api_key="1111111111111112",
+                    secret="shhhh",
+                    usage="download",
+                    fragment="/s/aaaaaaa/not_malware.exe?dl=1",
+                    domain="www.dropbox.com",
+                ),
+            ],
             scheduled_tasks=[
                 parse_scheduled_task_command(
                     '\\System32\\schtasks.exe /Create /SC MINUTE /MO 13 /TN "LogoffWorker" /TR'
@@ -621,6 +701,23 @@ class TestModelObject(unittest.TestCase):
                 "warnings": [
                     {"message": "random warning message"},
                     {"message": "random warning message with trace", "stack_trace": "Stack trace value!"},
+                ],
+                "online_services": [
+                    {
+                        "service_name": "Azure",
+                        "api_key": "abcd1234ef567890",
+                        "token": "1234abcd567890ef",
+                        "secret": "shhhhh",
+                        "usage": "upload",
+                    },
+                    {
+                        "service_name": "Dropbox",
+                        "api_key": "1111111111111112",
+                        "secret": "shhhh",
+                        "fragment": "/s/aaaaaaa/not_malware.exe?dl=1",
+                        "domain": "www.dropbox.com",
+                        "usage": "download",
+                    },
                 ],
                 "scheduled_tasks": [
                     {

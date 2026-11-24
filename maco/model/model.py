@@ -786,3 +786,39 @@ class ExtractorModel(ForbidModel):
         stack_trace: str = ""
 
     warnings: list[Warning] = []
+
+    class OnlineService(ForbidModel):
+        """Online service used by malware."""
+
+        # Online services use all manner of authentication and access schemes, we aim to capture most use cases
+        # but won't be able to match variable names with all platforms.
+        # This is intended to store data that doesn't fit into the Http field.
+
+        # the name of the service
+        service_name: str
+        # the bucket, storage account name or container that holds a desired resource
+        container: str | None = None
+        # filepath, filename or other identifier for the desired resource
+        identifier: str | None = None
+        # any type of token required to access a resource
+        token: str | None = None
+        # any key or identifier required to use an API to retrieve
+        api_key: str | None = None
+        # any secret required access to a resource
+        secret: str | None = None
+        # any username or account name associated with a resource
+        username: str | None = None
+        # any password used to access a resource
+        password: str | None = None
+        # the region associated with the storage container or account
+        region: str | None = None
+        # the domain connected to
+        domain: str | None = None
+        # a download link for a resource that otherwise wouldn't be a Http connection
+        url: str | None = None
+        # any partial url fragments used
+        fragment: str | None = None
+
+        usage: ConnUsageEnum
+
+    online_services: list[OnlineService] = []
